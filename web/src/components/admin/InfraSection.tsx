@@ -169,7 +169,7 @@ function NodeGroupTable({ group }: { group: AdminClusterNodeGroup }) {
               <th className="pb-2 pr-4 font-medium">
                 {i18n.t('components.admin.infraSection.table.pods')}
               </th>
-              <th className="pb-2 font-medium">{group.group === 'sandbox' ? 'SBX' : 'NAP'}</th>
+              <th className="pb-2 font-medium">{group.group === 'sandbox' ? 'SBX' : 'QAP'}</th>
             </tr>
           </thead>
           <tbody>

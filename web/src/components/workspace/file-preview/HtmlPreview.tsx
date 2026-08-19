@@ -9,7 +9,7 @@ interface HtmlPreviewProps {
  * Uses `srcDoc` (not `src`): the content FileViewer already fetched is reused
  * directly — no second request, no auth question. The `sandbox` attribute
  * without `allow-same-origin` forces the document into an opaque origin, so a
- * script in the file can't reach the NAP app's DOM, cookies or `/api`.
+ * script in the file can't reach the QAP app's DOM, cookies or `/api`.
  * `allow-scripts` keeps interactive reports (charts, etc.) working.
  *
  * Caveat: relative resources (`./style.css`, `<img src="logo.png">`) won't

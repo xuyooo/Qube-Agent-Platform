@@ -268,7 +268,7 @@ export function ConnectorsApp({ instanceId }: AppComponentProps) {
 
 /**
  * ServiceTokens — platform-issued tokens the agent uses to authenticate
- * to NAP APIs from outside.
+ * to QAP APIs from outside.
  */
 export function ServiceTokensApp({ instanceId }: AppComponentProps) {
   return (

@@ -27,7 +27,7 @@ export function Menubar({ scope, workspaceId, onOpenCommandPalette }: MenubarPro
       <div className="flex items-center gap-2">
         <Link
           to="/"
-          aria-label="NAP"
+          aria-label="QAP"
           className="flex items-center text-foreground transition-opacity hover:opacity-80"
         >
           <Logo className="h-4 w-auto" />

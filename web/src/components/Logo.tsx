@@ -1,13 +1,13 @@
 import { cn } from '@/lib/utils'
 
 /**
- * Neutree Agent Platform brand mark.
+ * Qube Agent Platform brand mark.
  *
- * Shares the Neutree node-network glyph (the inference platform's logo) so NAP
+ * Shares the Neutree node-network glyph (the inference platform's logo) so QAP
  * reads as the same brand family; the single highlighted top node — the
- * orchestrator root — is NAP's variant marker. The mark body inherits
+ * orchestrator root — is QAP's variant marker. The mark body inherits
  * `currentColor` (brand navy on light, light on dark via the wrapper's text
- * color); the top node stays the fixed NAP accent. Brand colors live outside
+ * color); the top node stays the fixed QAP accent. Brand colors live outside
  * the design-token system on purpose.
  */
 export function Logo({ className }: { className?: string }) {
@@ -17,7 +17,7 @@ export function Logo({ className }: { className?: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="Neutree Agent Platform"
+      aria-label="Qube Agent Platform"
       className={cn('text-[#0C2849] dark:text-slate-100', className)}
     >
       <path

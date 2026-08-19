@@ -1,6 +1,6 @@
 ## Appearance
 
-Customize NAP appearance and notification sound.
+Customize QAP appearance and notification sound.
 
 ### Theme
 

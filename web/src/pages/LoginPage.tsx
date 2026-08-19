@@ -98,7 +98,7 @@ export function LoginPage() {
         <CardHeader className="flex flex-col items-center space-y-3 text-center">
           <Logo className="h-12 w-auto" />
           <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Neutree Agent Platform</CardTitle>
+            <CardTitle className="text-2xl font-bold">Qube Agent Platform</CardTitle>
             <CardDescription>{t('pages.login.subtitle')}</CardDescription>
           </div>
         </CardHeader>
