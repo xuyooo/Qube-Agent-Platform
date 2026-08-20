@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { NapClient } from '../../internal/client/src'
+import { QapClient } from '../../internal/client/src'
 import { type E2eProfile, loadProfile } from './config'
 
 // ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ import { type E2eProfile, loadProfile } from './config'
 interface Harness {
   profile: E2eProfile
   /** Client authenticated as the throwaway run user, via service token. */
-  client: NapClient
+  client: QapClient
   /** Plaintext service token, handed to test workers so they can rebuild the client. */
   serviceToken: string
   /** Identifier shared by every resource this run creates. */
@@ -36,7 +36,7 @@ let harness: Harness | undefined
 let adminCookie: string | undefined
 
 // ---------------------------------------------------------------------------
-// Admin session (raw fetch — admin routes are deliberately not on NapClient)
+// Admin session (raw fetch — admin routes are deliberately not on QapClient)
 // ---------------------------------------------------------------------------
 
 async function adminLogin(profile: E2eProfile): Promise<void> {
@@ -172,7 +172,7 @@ export async function setupHarness(): Promise<Harness> {
 
   // The control plane always derives a service token's owner from the caller,
   // so the token has to be minted by the run user itself rather than by admin.
-  const userClient = new NapClient({ baseUrl: profile.baseUrl })
+  const userClient = new QapClient({ baseUrl: profile.baseUrl })
   await userClient.auth.login(username, password)
   const token = await userClient.serviceTokens.create({ name: `e2e-${runId}` })
   // The plaintext token is returned exactly once, at creation.
@@ -182,7 +182,7 @@ export async function setupHarness(): Promise<Harness> {
 
   const bootstrapped: Harness = {
     profile,
-    client: new NapClient({ baseUrl: profile.baseUrl, serviceToken: token.token }),
+    client: new QapClient({ baseUrl: profile.baseUrl, serviceToken: token.token }),
     serviceToken: token.token,
     runId,
     username,
@@ -200,7 +200,7 @@ export async function setupHarness(): Promise<Harness> {
 // Teardown
 // ---------------------------------------------------------------------------
 
-async function waitForStopped(client: NapClient, wsId: string, maxWaitMs = 90_000) {
+async function waitForStopped(client: QapClient, wsId: string, maxWaitMs = 90_000) {
   const start = Date.now()
   while (Date.now() - start < maxWaitMs) {
     const list = await client.workspaces.list()
@@ -215,7 +215,7 @@ async function waitForStopped(client: NapClient, wsId: string, maxWaitMs = 90_00
  * the reconciler reclaims their Kubernetes resources; the rest is best effort,
  * because the final user delete is what actually proves the account is clean.
  */
-async function releaseResources(client: NapClient): Promise<string[]> {
+async function releaseResources(client: QapClient): Promise<string[]> {
   const problems: string[] = []
 
   try {

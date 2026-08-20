@@ -1,7 +1,7 @@
 /**
  * Register the built-in OAuth clients that high-tier services log in with.
  *
- * sandbox-service and browser-service authenticate end users via NAP OAuth
+ * sandbox-service and browser-service authenticate end users via QAP OAuth
  * (PKCE public clients — no client_secret). Their fixed client_ids
  * (`sandbox-service` / `browser-service`) must exist in `oauth_clients` or
  * `GET /api/oauth/authorize` returns 400 invalid_client. Cloud deployments

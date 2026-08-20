@@ -1,6 +1,6 @@
 # Visual Patterns & Conventions
 
-Recurring decisions that keep NAP UI coherent. These encode taste the existing
+Recurring decisions that keep QAP UI coherent. These encode taste the existing
 app already follows — match them.
 
 ## Icons — lucide, never emoji

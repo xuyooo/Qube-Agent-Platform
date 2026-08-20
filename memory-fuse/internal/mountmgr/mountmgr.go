@@ -19,8 +19,8 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/cpclient"
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/memfs"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/cpclient"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/memfs"
 )
 
 // ContentCache is the disk-backed cache shared across all mounts. Optional;
@@ -31,7 +31,7 @@ type ContentCache interface {
 }
 
 type Options struct {
-	CPURL           string        // cp base URL, e.g. http://nap-cp.default.svc:3000
+	CPURL           string        // cp base URL, e.g. http://qap-cp.default.svc:3000
 	Token           string        // this workspace's own cp credential (WORKSPACE_TOKEN)
 	WorkspaceID     string        // baked into cp URLs for /workspace/v1/workspaces/<id>/...
 	MountRoot       string        // typically /mnt/memory

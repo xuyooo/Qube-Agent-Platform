@@ -5,7 +5,7 @@ description: A permissioned shared file system that lets workspaces hand files t
 
 Every workspace has its own file system. That isolation is the point — but it also means a file A writes is invisible to B. When several agents work on one deliverable (a planner splits the work, workers each take a piece, someone files the result), they need a controlled way to share files.
 
-**AFS (Agent File System)** is what NAP provides for that: a permissioned shared file system that an agent sees as a directory in its container, and a user sees as the **Cloud Drive** tab in the Files app.
+**AFS (Agent File System)** is what QAP provides for that: a permissioned shared file system that an agent sees as a directory in its container, and a user sees as the **Cloud Drive** tab in the Files app.
 
 ## What it solves
 
@@ -68,7 +68,7 @@ AFS is a separate set of components, written in Rust, in two kinds of process:
 
 Each shared directory gets an immutable `access_key` when it's created. The key and the read-only/read-write mode are enforced on the gRPC calls: a host that wants to mount has to present the right key, and on revocation the controller tells every mounting afs-fuse to unmount by force. The path inside the container disappears on the spot.
 
-In NAP the shape is: one afs-controller in the cluster, one afs-fuse sidecar injected into each workspace pod, and the control plane mapping "user / workspace / who-shared-with-whom" onto the controller's "directory / mount / access_key". Users and agents see the Cloud Drive and the MCP tools; access keys and directory IDs stay underneath.
+In QAP the shape is: one afs-controller in the cluster, one afs-fuse sidecar injected into each workspace pod, and the control plane mapping "user / workspace / who-shared-with-whom" onto the controller's "directory / mount / access_key". Users and agents see the Cloud Drive and the MCP tools; access keys and directory IDs stay underneath.
 
 ## A few habits worth having
 

@@ -59,7 +59,7 @@ export class UndiciGitSourceClient implements GitSourceClient {
     const url = `${base}/repos/${source.owner}/${source.repo}/commits/${encodeURIComponent(ref)}`
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github.sha',
-      'User-Agent': 'nap-skill-import',
+      'User-Agent': 'qap-skill-import',
     }
     if (token) headers.Authorization = `Bearer ${token}`
     try {
@@ -82,7 +82,7 @@ export class UndiciGitSourceClient implements GitSourceClient {
     const base = `${proto}//${source.host}/api/v4`
     const projectId = encodeURIComponent(`${source.owner}/${source.repo}`)
     const url = `${base}/projects/${projectId}/repository/commits/${encodeURIComponent(ref)}`
-    const headers: Record<string, string> = { 'User-Agent': 'nap-skill-import' }
+    const headers: Record<string, string> = { 'User-Agent': 'qap-skill-import' }
     if (token) headers['PRIVATE-TOKEN'] = token
     try {
       const res = await fetch(url, { headers })

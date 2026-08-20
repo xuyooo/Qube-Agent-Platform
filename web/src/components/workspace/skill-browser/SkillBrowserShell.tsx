@@ -448,7 +448,7 @@ export function SkillBrowserShell<TSkill extends SkillListItem>({
       }
       dragPayloadRef.current = { fromEntryPath: entryPath, name, isDir: isDirEntry }
       e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('application/x-nap-files-move', '1')
+      e.dataTransfer.setData('application/x-qap-files-move', '1')
     },
     [canManageFiles, selectedSkill],
   )

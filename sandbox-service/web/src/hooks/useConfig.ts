@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 
 interface Config {
-  napUrl: string
+  qapUrl: string
   sandboxDomain: string
 }
 
-const defaultConfig: Config = { napUrl: '', sandboxDomain: '' }
+const defaultConfig: Config = { qapUrl: '', sandboxDomain: '' }
 
 let cached: Config | null = null
 

@@ -1,4 +1,4 @@
-module github.com/neutree-ai/agent-platform/memory-fuse
+module github.com/xuyooo/Qube-Agent-Platform/memory-fuse
 
 go 1.25.0
 

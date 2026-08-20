@@ -1,7 +1,7 @@
 {
   "loginPage": {
     "subtitle": "Log in to use the sandbox service",
-    "loginButton": "Log in with NAP"
+    "loginButton": "Log in with QAP"
   },
   "home": {
     "logout": "Log out",
@@ -38,8 +38,8 @@
     "title": "Usage Guide",
     "auth": {
       "heading": "Authentication",
-      "description": "All API requests require a NAP Service Token. Go to",
-      "linkLabel": "NAP Platform > Integration > Service Tokens",
+      "description": "All API requests require a QAP Service Token. Go to",
+      "linkLabel": "QAP Platform > Integration > Service Tokens",
       "descriptionSuffix": "to create one."
     },
     "sdk": {

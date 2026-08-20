@@ -1,6 +1,6 @@
-// Verify NAP service tokens via control-plane API
+// Verify QAP service tokens via control-plane API
 
-const NAP_URL = process.env.NAP_INTERNAL_URL || process.env.NAP_OAUTH_URL || 'http://localhost:3000'
+const QAP_URL = process.env.QAP_INTERNAL_URL || process.env.QAP_OAUTH_URL || 'http://localhost:3000'
 
 interface TokenUser {
   sub: string
@@ -20,7 +20,7 @@ export async function verifyServiceToken(token: string): Promise<TokenUser | nul
   }
 
   try {
-    const res = await fetch(`${NAP_URL}/api/auth/me`, {
+    const res = await fetch(`${QAP_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(5000),
     })

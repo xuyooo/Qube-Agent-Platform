@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 /**
  * Qube Agent Platform brand mark.
  *
- * Shares the Neutree node-network glyph (the inference platform's logo) so QAP
+ * Shares the Qube node-network glyph (the platform's logo) so QAP
  * reads as the same brand family; the single highlighted top node — the
  * orchestrator root — is QAP's variant marker. The mark body inherits
  * `currentColor` (brand navy on light, light on dark via the wrapper's text

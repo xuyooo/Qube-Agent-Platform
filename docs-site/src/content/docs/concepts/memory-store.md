@@ -3,7 +3,7 @@ title: Memory Store
 description: Structured memory that outlives a session, shared across workspaces and exposed to agents as files
 ---
 
-Sessions are independent by default: what the agent learned last time isn't there the next time. The **memory store** is how NAP closes that gap — whatever you or the agent write into it enters the agent's working context from the next session onward.
+Sessions are independent by default: what the agent learned last time isn't there the next time. The **memory store** is how QAP closes that gap — whatever you or the agent write into it enters the agent's working context from the next session onward.
 
 The memory store replaces the early "one Markdown file per workspace" version of memory, and it brings:
 
@@ -89,7 +89,7 @@ Think of `MEMORY.md` as the board at the library entrance and the subfiles as th
 
 ## The platform prompt layer
 
-To make a mechanism like this work, NAP stacks a **platform prompt** on top of the system prompt you wrote. The platform maintains it and assembles it per session:
+To make a mechanism like this work, QAP stacks a **platform prompt** on top of the system prompt you wrote. The platform maintains it and assembles it per session:
 
 - Notes on the agent type and the registered built-in skills (the `platform` skill, for one)
 - **The names of every mounted store, plus each store's `MEMORY.md`**

@@ -12,12 +12,12 @@
  * become `{ok: false, status, error}` so route handlers can decide HTTP
  * surface without try/catch noise.
  *
- * Env: SKILLS_CONTENT_URL (default: http://nap-skills:3008)
+ * Env: SKILLS_CONTENT_URL (default: http://qap-skills:3008)
  */
 
 import type { SkillMeta, SkillSource, SkillVersion } from './db/types'
 
-const SKILLS_CONTENT_URL = process.env.SKILLS_CONTENT_URL || 'http://nap-skills:3008'
+const SKILLS_CONTENT_URL = process.env.SKILLS_CONTENT_URL || 'http://qap-skills:3008'
 
 // ── result shape ───────────────────────────────────────────────────────────
 

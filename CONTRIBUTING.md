@@ -1,4 +1,4 @@
-# Contributing to Neutree Agent Platform
+# Contributing to Qube Agent Platform
 
 Thanks for your interest in contributing! This document covers how to propose changes, the local development setup, and the conventions we follow.
 

@@ -81,8 +81,8 @@ spec:
             - name: AGENT_NODE_SELECTOR
               value: "${AGENT_NODE_SELECTOR}"
             # Injected into workspace pods as CP_URL (k8s-provider). Without it
-            # the code falls back to http://nap-cp:3000, which only resolves
-            # when APP_PREFIX is "nap". Keep in sync with control-plane.yaml.
+            # the code falls back to http://qap-cp:3000, which only resolves
+            # when APP_PREFIX is "qap". Keep in sync with control-plane.yaml.
             - name: CP_SERVICE_URL
               value: "http://${APP_PREFIX}-cp:3000"
             - name: AFS_ENABLED

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 
 interface Config {
-  napUrl: string
+  qapUrl: string
 }
 
-const defaultConfig: Config = { napUrl: '' }
+const defaultConfig: Config = { qapUrl: '' }
 
 let cached: Config | null = null
 

@@ -28,7 +28,7 @@ const app = new OpenAPIHono()
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
   type: 'http',
   scheme: 'bearer',
-  description: 'NAP OAuth access token or service token',
+  description: 'QAP OAuth access token or service token',
 })
 
 // Subdomain preview: {id}-{port}.<SANDBOX_DOMAIN> → proxy to sandbox
@@ -54,7 +54,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 // Public config endpoint (no auth required, consumed by frontend)
 app.get('/api/config', (c) =>
   c.json({
-    napUrl: process.env.NAP_OAUTH_URL || process.env.SANDBOX_SERVICE_URL || '',
+    qapUrl: process.env.QAP_OAUTH_URL || process.env.SANDBOX_SERVICE_URL || '',
     sandboxDomain: SANDBOX_DOMAIN,
   }),
 )
@@ -102,10 +102,10 @@ app.route('/api', api)
 app.doc31('/api/docs/openapi.json', {
   openapi: '3.1.0',
   info: {
-    title: 'NAP Sandbox Service',
+    title: 'QAP Sandbox Service',
     version: '0.1.0',
     description:
-      'Owner-scoped lifecycle + exec API for ephemeral sandboxes (OpenSandbox SDK). Auth: Bearer token (NAP OAuth or service token) — UI also supports session cookie.',
+      'Owner-scoped lifecycle + exec API for ephemeral sandboxes (OpenSandbox SDK). Auth: Bearer token (QAP OAuth or service token) — UI also supports session cookie.',
   },
   servers: [{ url: '/' }],
   tags: [
@@ -118,7 +118,7 @@ app.get(
   '/api/docs',
   Scalar({
     url: '/api/docs/openapi.json',
-    pageTitle: 'NAP Sandbox Service API',
+    pageTitle: 'QAP Sandbox Service API',
     hideClientButton: true,
   } as any),
 )

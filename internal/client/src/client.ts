@@ -1,4 +1,4 @@
-import { HttpClient, NapApiError } from './http'
+import { HttpClient, QapApiError } from './http'
 import type { HttpClientOptions } from './http'
 import { AuthApi } from './auth'
 import { WorkspacesApi } from './workspaces'
@@ -16,9 +16,9 @@ import { SkillsApi } from './skills'
 import { ChannelGatewayApi } from './channel-gateway'
 import { AsrApi } from './asr'
 
-export type { HttpClientOptions as NapClientOptions }
+export type { HttpClientOptions as QapClientOptions }
 
-export class NapClient {
+export class QapClient {
   readonly auth: AuthApi
   readonly workspaces: WorkspacesApi
   readonly sessions: SessionsApi
@@ -55,4 +55,4 @@ export class NapClient {
   }
 }
 
-export { NapApiError }
+export { QapApiError }

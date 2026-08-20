@@ -1,6 +1,6 @@
-// Browser sandbox lifecycle — calls NAP Sandbox Service
+// Browser sandbox lifecycle — calls QAP Sandbox Service
 
-const SANDBOX_SERVICE_URL = process.env.SANDBOX_SERVICE_URL || 'http://nap-sandbox:3006'
+const SANDBOX_SERVICE_URL = process.env.SANDBOX_SERVICE_URL || 'http://qap-sandbox:3006'
 
 const BROWSER_IMAGE = process.env.BROWSER_IMAGE || 'chromium-headful:latest'
 

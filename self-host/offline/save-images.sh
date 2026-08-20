@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # ============================================================================
-# Save all images + prereqs for an air-gapped Neutree Agent Platform install
+# Save all images + prereqs for an air-gapped Qube Agent Platform install
 # ============================================================================
 # Runs on a CONNECTED build host. Produces:
-#   nap-images.tar.gz          — all container images (docker save | gzip)
+#   qap-images.tar.gz          — all container images (docker save | gzip)
 #   ../prereqs/                — CNPG operator YAML + NFS provisioner Helm chart
 #
 # The image set is DERIVED, not hand-maintained: we render the manifests with
@@ -25,20 +25,20 @@ RENDERED_DIR="$SELF_HOST_DIR/rendered"
 # Load values.env so REGISTRY / APP_PREFIX / IMAGE_TAG below match what the
 # render (install.sh --render-only, which sources the same file) resolves —
 # a deployment with a non-default APP_PREFIX bundles its own prefixed images
-# instead of the nap-* defaults, and the supplement stays in lockstep with the
+# instead of the qap-* defaults, and the supplement stays in lockstep with the
 # rendered set.
 VALUES_FILE="${VALUES_FILE:-$SELF_HOST_DIR/values.env}"
 if [ -f "$VALUES_FILE" ]; then
   set -a; source "$VALUES_FILE"; set +a
 fi
 
-OUTPUT="${OUTPUT:-$SCRIPT_DIR/nap-images.tar.gz}"
+OUTPUT="${OUTPUT:-$SCRIPT_DIR/qap-images.tar.gz}"
 
 # First-party image coordinates. Defaults match install.sh; the render below is
 # the source of truth for first-party service images, so these only feed the
 # agent-image supplement (agents are spawned dynamically, never in a manifest).
-REGISTRY="${REGISTRY:-ghcr.io/neutree-ai/agent-platform}"
-APP_PREFIX="${APP_PREFIX:-nap}"
+REGISTRY="${REGISTRY:-ghcr.io/xuyooo/qap}"
+APP_PREFIX="${APP_PREFIX:-qap}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 AGENT_IMAGE_TAG="${AGENT_IMAGE_TAG:-latest}"
 AGENT_IMAGE_PREFIX="${AGENT_IMAGE_PREFIX:-${REGISTRY}/${APP_PREFIX}-agent}"

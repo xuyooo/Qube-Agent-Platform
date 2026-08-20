@@ -86,7 +86,7 @@ export interface SkillDeleteBlockers {
  * Occupancy detail surfaced to the owner before a delete / visibility
  * narrowing. The owner's own workspaces are named; other users' workspaces
  * collapse to a count so we never expose who-uses-what across the user
- * boundary (NAP users cannot see each other).
+ * boundary (QAP users cannot see each other).
  */
 export interface SkillDependents {
   own_workspaces: { id: string; name: string }[]

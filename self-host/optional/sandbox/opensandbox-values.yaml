@@ -1,21 +1,21 @@
-# Reference Helm values for installing OpenSandbox alongside NAP.
+# Reference Helm values for installing OpenSandbox alongside QAP.
 #
 # OpenSandbox (github.com/alibaba/OpenSandbox) is a THIRD-PARTY component that
-# powers the optional Code Sandbox capability. NAP does not install it for you.
+# powers the optional Code Sandbox capability. QAP does not install it for you.
 # Install it yourself from the upstream chart (see README "Enabling Code
 # Sandbox"), passing this file with `-f opensandbox-values.yaml`.
 #
 # These values:
 #   - pin the public Docker Hub images (the chart defaults to Alibaba ACR, which
 #     may be slow/unreachable outside CN — override to docker.io/opensandbox/*),
-#   - run the control components in the `nap` namespace and spawn sandbox
-#     workloads there too, so NAP's default OPENSANDBOX_URL
-#     (http://opensandbox-server.nap.svc:80) resolves without extra config.
-# If you install NAP into a different namespace, change every `nap` below and
+#   - run the control components in the `qap` namespace and spawn sandbox
+#     workloads there too, so QAP's default OPENSANDBOX_URL
+#     (http://opensandbox-server.qap.svc:80) resolves without extra config.
+# If you install QAP into a different namespace, change every `qap` below and
 # set OPENSANDBOX_URL in values.env accordingly.
 
 opensandbox-controller:
-  namespaceOverride: "nap"
+  namespaceOverride: "qap"
   controller:
     replicaCount: 1
     logLevel: info
@@ -24,7 +24,7 @@ opensandbox-controller:
       tag: "v0.2.0"
 
 opensandbox-server:
-  namespaceOverride: "nap"
+  namespaceOverride: "qap"
   server:
     replicaCount: 1
     image:
@@ -53,7 +53,7 @@ opensandbox-server:
 
     [kubernetes]
     kubeconfig_path = ""
-    namespace = "nap"
+    namespace = "qap"
     informer_enabled = true
     informer_resync_seconds = 300
     informer_watch_timeout_seconds = 60

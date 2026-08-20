@@ -58,7 +58,7 @@ helm install my-env ./charts/env-runner-k8s \
   --set envToken.token=env_xxxxxxxx \
   --set provider.storageClass=standard \
   --set afs.enabled=true \
-  --set afs.image=ghcr.io/neutree-ai/afs:latest \
+  --set afs.image=ghcr.io/xuyooo/afs:latest \
   --set afs.storageClass=nfs-csi
 ```
 

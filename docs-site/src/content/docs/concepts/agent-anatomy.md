@@ -9,7 +9,7 @@ Five things shape how an agent behaves. They don't sit at the same level, and so
 
 The model sets how sharp the agent is, how it writes, and what it costs. Same prompt, same skills, different model — the difference in the result can be large.
 
-NAP is not tied to a vendor. You bring a model API in through a **Provider**: the endpoint your team already procured, your own Anthropic / OpenAI key, OpenRouter, Azure OpenAI, or anything else compatible. The [provider type has to match the core](/guides/1-setup/), so check the mapping there. An agent picks one Provider and one model on it.
+QAP is not tied to a vendor. You bring a model API in through a **Provider**: the endpoint your team already procured, your own Anthropic / OpenAI key, OpenRouter, Azure OpenAI, or anything else compatible. The [provider type has to match the core](/guides/1-setup/), so check the mapping there. An agent picks one Provider and one model on it.
 
 Beyond that, an agent can also carry a **Small Model** for cheap internal work like file search and code indexing. The agent decides for itself when the big brain is needed and when the small one will do.
 
@@ -44,7 +44,7 @@ A convention for querying an internal knowledge base is a file, so it's a skill.
 
 Sessions are independent by default: what the agent worked out last time is not there the next time. Memory is what closes that gap.
 
-Memory in NAP takes the shape of a **memory store** — a resource of its own that mounts onto one workspace or several. A store holds many records, each versioned, each typed as user / feedback / project / reference. The agent sees a store as a **directory** in its container (`/mnt/memory/<store>/`), which it reads and writes with grep, pipes and on-demand reads.
+Memory in QAP takes the shape of a **memory store** — a resource of its own that mounts onto one workspace or several. A store holds many records, each versioned, each typed as user / feedback / project / reference. The agent sees a store as a **directory** in its container (`/mnt/memory/<store>/`), which it reads and writes with grep, pipes and on-demand reads.
 
 "This user writes in Chinese", "this project's code style is X", "the thing that bit us last time" — all worth keeping, none worth the user repeating. The agent can write to the store itself through a built-in platform tool.
 

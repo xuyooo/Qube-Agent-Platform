@@ -1,12 +1,12 @@
 #!/bin/sh
 # ============================================================================
-# Neutree Agent Platform — one-line installer (CONNECTED)
+# Qube Agent Platform — one-line installer (CONNECTED)
 # ============================================================================
 # Bootstraps a connected (online) self-host install with a single command.
 # POSIX sh — this script is meant to be piped from curl:
 #
 #   Single node, no Kubernetes (installs k3s for you; run as root):
-#     curl -sfL https://docs.neutree.ai/nap/get.sh | sh -
+#     curl -sfL https://docs.neutree.ai/qap/get.sh | sh -
 #
 #   Existing Kubernetes cluster (uses your current kubeconfig):
 #     curl -sfL .../get.sh | sh -s -- --k8s --host=<ip-or-hostname> \
@@ -23,7 +23,7 @@
 #   4. runs install.sh
 #
 # Config lives OUTSIDE the refreshed installer tree (default
-# /opt/nap/values.env) and is never regenerated once it exists — re-running
+# /opt/qap/values.env) and is never regenerated once it exists — re-running
 # the same one-liner refreshes the installer and upgrades in place.
 #
 # Flags:
@@ -35,22 +35,22 @@
 #   --storage-class=SC    existing RWX StorageClass, alternative to NFS (--k8s only)
 #   --version=REF         branch or tag to install (default: main; a vX.Y.Z tag
 #                         also pins IMAGE_TAG to that release)
-#   --dir=DIR             install dir (default: /opt/nap)
+#   --dir=DIR             install dir (default: /opt/qap)
 #   --prepare-only        fetch + generate values.env, but don't install —
 #                         review/edit values.env, then re-run without this flag
 #
 # Env overrides (same precedence as flags, flags win):
-#   NAP_HOST, NAP_ADMIN_PASSWORD, NAP_VERSION, NAP_INSTALL_DIR, NAP_REPO,
+#   QAP_HOST, QAP_ADMIN_PASSWORD, QAP_VERSION, QAP_INSTALL_DIR, QAP_REPO,
 #   KUBECONFIG (--k8s mode; defaults to ~/.kube/config)
 
 set -eu
 
-REPO="${NAP_REPO:-neutree-ai/agent-platform}"
-VERSION="${NAP_VERSION:-main}"
-INSTALL_DIR="${NAP_INSTALL_DIR:-/opt/nap}"
+REPO="${QAP_REPO:-neutree-ai/agent-platform}"
+VERSION="${QAP_VERSION:-main}"
+INSTALL_DIR="${QAP_INSTALL_DIR:-/opt/qap}"
 MODE="single-node"
-HOST="${NAP_HOST:-}"
-ADMIN_PASSWORD_OVERRIDE="${NAP_ADMIN_PASSWORD:-}"
+HOST="${QAP_HOST:-}"
+ADMIN_PASSWORD_OVERRIDE="${QAP_ADMIN_PASSWORD:-}"
 NFS_SERVER_ARG=""
 NFS_PATH_ARG=""
 STORAGE_CLASS_ARG=""
@@ -64,7 +64,7 @@ usage() {
   # $0 is "sh" when piped from curl, so the usage text is inlined here
   # rather than read back from the header comment.
   cat <<'EOF'
-Neutree Agent Platform — one-line installer (connected)
+Qube Agent Platform — one-line installer (connected)
 
 Single node, no Kubernetes (installs k3s for you; run as root):
   curl -sfL .../get.sh | sh -
@@ -84,12 +84,12 @@ Flags:
   --storage-class=SC    existing RWX StorageClass, alternative to NFS (--k8s only)
   --version=REF         branch or tag to install (default: main; a vX.Y.Z tag
                         also pins IMAGE_TAG to that release)
-  --dir=DIR             install dir (default: /opt/nap)
+  --dir=DIR             install dir (default: /opt/qap)
   --prepare-only        fetch + generate values.env, but don't install —
                         review/edit values.env, then re-run without this flag
 
 Env overrides (flags win):
-  NAP_HOST, NAP_ADMIN_PASSWORD, NAP_VERSION, NAP_INSTALL_DIR, NAP_REPO,
+  QAP_HOST, QAP_ADMIN_PASSWORD, QAP_VERSION, QAP_INSTALL_DIR, QAP_REPO,
   KUBECONFIG (--k8s mode; defaults to ~/.kube/config)
 EOF
 }
@@ -244,10 +244,10 @@ prepare_values() {
   # Host: required input on --k8s; autodetected on single-node.
   if [ -z "$HOST" ] && [ "$MODE" = "single-node" ]; then
     HOST="$(detect_host_ip)"
-    [ -n "$HOST" ] && log "Autodetected node IP: $HOST (override with --host= / NAP_HOST=)"
+    [ -n "$HOST" ] && log "Autodetected node IP: $HOST (override with --host= / QAP_HOST=)"
   fi
   [ -n "$HOST" ] || die "could not determine the host address — pass --host=<ip-or-hostname>"
-  set_kv NAP_HOST "$HOST"
+  set_kv QAP_HOST "$HOST"
 
   # Admin password: generated unless supplied; printed in the final summary.
   admin_password="$ADMIN_PASSWORD_OVERRIDE"
@@ -324,13 +324,13 @@ fi
 
 echo ""
 log "============================================================"
-log " Neutree Agent Platform is up."
+log " Qube Agent Platform is up."
 log ""
-log "   URL:      http://$(get_kv NAP_HOST):$(get_kv NAP_NODE_PORT)"
+log "   URL:      http://$(get_kv QAP_HOST):$(get_kv QAP_NODE_PORT)"
 log "   Login:    $(get_kv ADMIN_USERNAME) / $(get_kv ADMIN_PASSWORD)"
 log ""
 log " Next:    set up an API provider and run your first agent —"
-log "          https://docs.neutree.ai/nap/guides/1-setup/"
+log "          https://docs.neutree.ai/qap/guides/1-setup/"
 log ""
 log " Config:  $VALUES_FILE  (credentials live here — keep it safe)"
 log " Upgrade: re-run the same one-line command."

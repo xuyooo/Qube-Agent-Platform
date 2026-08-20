@@ -7,7 +7,7 @@ set -euo pipefail
 # Prepares a bare Linux host (Ubuntu 24.04+ recommended) to run the single-node
 # profile: installs k3s, drops in helm/envsubst/crane/k9s, and seeds k3s
 # containerd with the offline image tarball so install.sh can come up without
-# any external registry. NFS runs in-cluster (nap-nfs-server pod), so no NFS
+# any external registry. NFS runs in-cluster (qap-nfs-server pod), so no NFS
 # server package is required on the host — only the mount.nfs client.
 #
 # Idempotent. Re-run after package upgrades or values.env changes.
@@ -19,7 +19,7 @@ set -euo pipefail
 #   k9s                                 k8s TUI for on-host debugging
 #
 # Reads the host image bundle from:
-#   ../offline/nap-images.tar.gz        (from the main self-host tarball)
+#   ../offline/qap-images.tar.gz        (from the main self-host tarball)
 #   or $IMAGES_ARCHIVE if set.
 # ============================================================================
 
@@ -135,18 +135,18 @@ import_images() {
   if [ -z "$archive" ]; then
     # Default layout: prep tarball is extracted *inside* self-host/, so
     #   $SCRIPT_DIR = .../self-host/single-node-prep
-    #   archive    = .../self-host/offline/nap-images.tar.gz
+    #   archive    = .../self-host/offline/qap-images.tar.gz
     # Customers sometimes extract the prep tarball as a sibling of self-host/
     # instead. Probe both before bailing.
     for cand in \
-      "$SCRIPT_DIR/../offline/nap-images.tar.gz" \
-      "$SCRIPT_DIR/../self-host/offline/nap-images.tar.gz" \
-      "$(dirname "$SCRIPT_DIR")/self-host/offline/nap-images.tar.gz"; do
+      "$SCRIPT_DIR/../offline/qap-images.tar.gz" \
+      "$SCRIPT_DIR/../self-host/offline/qap-images.tar.gz" \
+      "$(dirname "$SCRIPT_DIR")/self-host/offline/qap-images.tar.gz"; do
       if [ -f "$cand" ]; then archive="$cand"; break; fi
     done
   fi
   if [ ! -f "$archive" ]; then
-    die "nap-images.tar.gz not found near $SCRIPT_DIR — extract the main self-host tarball alongside single-node-prep (or set IMAGES_ARCHIVE)"
+    die "qap-images.tar.gz not found near $SCRIPT_DIR — extract the main self-host tarball alongside single-node-prep (or set IMAGES_ARCHIVE)"
   fi
   log "Importing $archive into k3s containerd (primes registry:2 + 3rd-party for install.sh)"
   k3s ctr -n k8s.io images import "$archive"
@@ -155,7 +155,7 @@ import_images() {
 configure_registries() {
   # Tell k3s containerd that the in-cluster registry NodePort speaks plain HTTP;
   # otherwise pod-side pulls would fail the TLS handshake.
-  # NAP_HOST + REGISTRY_NODE_PORT are read from values.env (sourced below if present).
+  # QAP_HOST + REGISTRY_NODE_PORT are read from values.env (sourced below if present).
   local values_file="${VALUES_FILE:-}"
   if [ -z "$values_file" ]; then
     for cand in \
@@ -168,10 +168,10 @@ configure_registries() {
   if [ -f "$values_file" ]; then
     set -a; source "$values_file"; set +a
   fi
-  local host="${NAP_HOST:-}"
+  local host="${QAP_HOST:-}"
   local port="${REGISTRY_NODE_PORT:-30500}"
   if [ -z "$host" ]; then
-    log "WARNING: NAP_HOST not set in $values_file — skipping registries.yaml (re-run preinstall after editing values.env)"
+    log "WARNING: QAP_HOST not set in $values_file — skipping registries.yaml (re-run preinstall after editing values.env)"
     return 0
   fi
   local endpoint="${host}:${port}"
@@ -213,7 +213,7 @@ TOML
 
 check_nfs_client() {
   # Host needs mount.nfs (from nfs-common on Debian/Ubuntu, nfs-utils on RHEL)
-  # so kubelet can mount the in-cluster nap-nfs-server svc for the
+  # so kubelet can mount the in-cluster qap-nfs-server svc for the
   # nfs-subdir-external-provisioner pod. install.sh has no way to provide this
   # post-hoc — the mount happens before the storage class is usable.
   if [ -x /sbin/mount.nfs ] || command -v mount.nfs &>/dev/null; then
@@ -242,7 +242,7 @@ check_nfs_client() {
 
 load_nfs_modules() {
   # Two host kernel modules are needed for in-cluster NFS:
-  #   nfsd — nap-nfs-server container mounts nfsd + rpc_pipefs at startup
+  #   nfsd — qap-nfs-server container mounts nfsd + rpc_pipefs at startup
   #   nfs  — nfs-subdir provisioner / kubelet mounting the NFS export
   # The client `nfs` module is usually autoloaded by mount.nfs, but some distros
   # (observed on Ubuntu 24.04 / kernel 6.8, also some minimal VM templates) ship
@@ -274,19 +274,19 @@ main() {
   configure_registries
   log ""
   if [ -f /etc/rancher/k3s/registries.yaml ]; then
-    # configure_registries wrote the HTTP-mirror config (NAP_HOST was set) —
+    # configure_registries wrote the HTTP-mirror config (QAP_HOST was set) —
     # everything's primed, go straight to install.
     log "Preinstall complete. registries.yaml in place. Next:"
     log "  cd .. && ./install.sh --profile=single-node"
   else
-    # NAP_HOST wasn't set, so configure_registries skipped registries.yaml.
-    # install.sh's single-node preflight will reject this — fill NAP_HOST and
+    # QAP_HOST wasn't set, so configure_registries skipped registries.yaml.
+    # install.sh's single-node preflight will reject this — fill QAP_HOST and
     # re-run preinstall so the HTTP-mirror config gets written.
-    log "Preinstall done, but registries.yaml was NOT written — NAP_HOST is unset in values.env."
+    log "Preinstall done, but registries.yaml was NOT written — QAP_HOST is unset in values.env."
     log "Single-node install needs it. Fill values.env FIRST, then re-run preinstall:"
     log "  cp ../values.env.single-node.example ../values.env   # if not already"
-    log "  vi ../values.env   # set NAP_HOST (+ ADMIN_PASSWORD, secrets)"
-    log "  sudo ./preinstall.sh   # re-run; now registries.yaml picks up NAP_HOST"
+    log "  vi ../values.env   # set QAP_HOST (+ ADMIN_PASSWORD, secrets)"
+    log "  sudo ./preinstall.sh   # re-run; now registries.yaml picks up QAP_HOST"
     log "  cd .. && ./install.sh --profile=single-node"
   fi
 }

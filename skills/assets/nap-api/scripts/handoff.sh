@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# Hand a task to a NAP cloud agent (async chat) and print its reply.
+# Hand a task to a QAP cloud agent (async chat) and print its reply.
 #
 # Usage:
 #   ./handoff.sh "implement what TASK.md describes"     # new session
 #   ./handoff.sh -s <session_id> "now add tests"        # continue a session
 #   echo "long task text..." | ./handoff.sh -           # task from stdin
 #
-# Env: NAP_TOKEN (required), NAP_BASE_URL (default https://nap.example.com),
-#      NAP_WS (required, target workspace id),
+# Env: QAP_TOKEN (required), QAP_BASE_URL (default https://qap.example.com),
+#      QAP_WS (required, target workspace id),
 #      POLL_INTERVAL (default 3s), POLL_MAX (default 200 polls).
 #
 # Keep this file ASCII-only: macOS bash 3.2 miscounts quotes when the *source*
 # holds multibyte chars. Task text is argv, not source, so it may be any language.
 set -euo pipefail
 
-BASE="${NAP_BASE_URL:-https://nap.example.com}"
-WS="${NAP_WS:?set NAP_WS to the target workspace id}"
+BASE="${QAP_BASE_URL:-https://qap.example.com}"
+WS="${QAP_WS:?set QAP_WS to the target workspace id}"
 INTERVAL="${POLL_INTERVAL:-3}"
 MAX="${POLL_MAX:-200}"
-TOKEN="$(printenv NAP_TOKEN || true)"
-[ -n "$TOKEN" ] || { echo "error: NAP_TOKEN not set" >&2; exit 1; }
+TOKEN="$(printenv QAP_TOKEN || true)"
+[ -n "$TOKEN" ] || { echo "error: QAP_TOKEN not set" >&2; exit 1; }
 
 SID=""
 if [ "${1:-}" = "-s" ]; then

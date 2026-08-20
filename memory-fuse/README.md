@@ -1,6 +1,6 @@
 # memory-fuse
 
-A FUSE daemon that mounts a NAP memory store as a directory tree backed by
+A FUSE daemon that mounts a QAP memory store as a directory tree backed by
 the control-plane REST API. Memories are flat path-keyed records on the
 server; this daemon synthesises the directory hierarchy on the fly so
 agents (and humans) can `ls`, `cat`, and (in P3) edit memories with
@@ -30,9 +30,9 @@ docker build -t memory-fuse .     # for sidecar / dev container
 ```sh
 mkdir -p /tmp/mem
 ./memory-fuse \
-    --cp-url https://nap.example.com \
+    --cp-url https://qap.example.com \
     --store-id <store-id> \
-    --token "$NAP_TOKEN" \
+    --token "$QAP_TOKEN" \
     --mount /tmp/mem
 ```
 
@@ -61,9 +61,9 @@ rm /tmp/mem/notes/foo.md               # delete
 ```sh
 docker run --rm --device /dev/fuse --cap-add SYS_ADMIN \
     -v /tmp/mem:/mnt/mem:rshared \
-    -e MEMORY_FUSE_TOKEN=$NAP_TOKEN \
+    -e MEMORY_FUSE_TOKEN=$QAP_TOKEN \
     memory-fuse \
-    --cp-url https://nap.example.com \
+    --cp-url https://qap.example.com \
     --store-id <store-id> \
     --mount /mnt/mem
 ```

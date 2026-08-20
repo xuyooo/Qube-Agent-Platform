@@ -29,7 +29,7 @@ const app = new OpenAPIHono()
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
   type: 'http',
   scheme: 'bearer',
-  description: 'NAP OAuth access token or service token',
+  description: 'QAP OAuth access token or service token',
 })
 
 // Logging (skip health checks and live proxy)
@@ -99,7 +99,7 @@ app.use('/api/*', async (c, next) => {
 // Public config endpoint (no auth required, consumed by frontend)
 app.get('/api/config', (c) =>
   c.json({
-    napUrl: process.env.NAP_OAUTH_URL || process.env.BROWSER_SERVICE_URL || '',
+    qapUrl: process.env.QAP_OAUTH_URL || process.env.BROWSER_SERVICE_URL || '',
   }),
 )
 
@@ -113,10 +113,10 @@ app.route('/api', api)
 app.doc31('/api/docs/openapi.json', {
   openapi: '3.1.0',
   info: {
-    title: 'NAP Browser Service',
+    title: 'QAP Browser Service',
     version: '0.1.0',
     description:
-      'Owner-scoped lifecycle API for ephemeral browser instances. Exposes CDP and live-view endpoints per browser. Auth: Bearer token (NAP OAuth or service token) — UI also supports session cookie.',
+      'Owner-scoped lifecycle API for ephemeral browser instances. Exposes CDP and live-view endpoints per browser. Auth: Bearer token (QAP OAuth or service token) — UI also supports session cookie.',
   },
   servers: [{ url: '/' }],
   tags: [
@@ -129,7 +129,7 @@ app.get(
   '/api/docs',
   Scalar({
     url: '/api/docs/openapi.json',
-    pageTitle: 'NAP Browser Service API',
+    pageTitle: 'QAP Browser Service API',
     hideClientButton: true,
   } as any),
 )

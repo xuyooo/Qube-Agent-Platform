@@ -4,7 +4,7 @@
 # existingSecret), and the agent image settings for your cluster.
 
 image:
-  repository: ghcr.io/neutree-ai/env-runner-k8s
+  repository: ghcr.io/xuyooo/qap-env-runner
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -32,10 +32,10 @@ envToken:
 # memoryFuseImage is set (memory tunnels back to the control plane).
 provider:
   namespace: default
-  agentImagePrefix: ghcr.io/neutree-ai/agent
+  agentImagePrefix: ghcr.io/xuyooo/qap-agent
   agentImageTag: latest
   storageClass: ""
-  memoryFuseImage: ghcr.io/neutree-ai/memory-fuse:latest
+  memoryFuseImage: ghcr.io/xuyooo/qap-memory-fuse:latest
   # "" → no nodeSelector; "k=v,k2=v2" → that selector (matches provider parsing).
   nodeSelector: ""
 
@@ -52,7 +52,7 @@ provider:
 # chart fails fast on.
 afs:
   enabled: false
-  image: ghcr.io/neutree-ai/afs:latest
+  image: ghcr.io/xuyooo/afs:latest
   # RWX-capable storageClass for both the shared FS and the controller DB.
   # Required when afs.enabled.
   storageClass: ""

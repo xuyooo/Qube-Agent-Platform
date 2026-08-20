@@ -109,7 +109,7 @@ MCP 是另一种让 Agent 调用外部工具的方式——通过协议连接一
 
 默认每个 Session 是独立的——上一次对话学到的东西，下次不会自动记得。Memory 解决这个问题。
 
-Neutree Agent Platform 用 **记忆库（Memory Store）** 来管理跨 Session 的记忆。它是一个独立的资源，可以挂给一个或多个 Workspace。完整设计见 [记忆库概念页](/zh-cn/concepts/memory-store/)，这里只讲怎么用。
+Qube Agent Platform 用 **记忆库（Memory Store）** 来管理跨 Session 的记忆。它是一个独立的资源，可以挂给一个或多个 Workspace。完整设计见 [记忆库概念页](/zh-cn/concepts/memory-store/)，这里只讲怎么用。
 
 ### 入口位置
 

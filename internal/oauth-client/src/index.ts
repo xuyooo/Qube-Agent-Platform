@@ -1,5 +1,5 @@
-// NAP OAuth client — shared scaffolding for services that act as OAuth
-// consumers of the NAP control plane. Provides config, PKCE helpers, JWT
+// QAP OAuth client — shared scaffolding for services that act as OAuth
+// consumers of the QAP control plane. Provides config, PKCE helpers, JWT
 // session tokens, the /api/auth/{login,callback,me,logout} routes, and a
 // session-cookie middleware. See forum/ and sandbox-service/ for usage.
 
@@ -43,8 +43,8 @@ export interface OAuthClientOptions {
   clientId: string
   /** Public base URL of this service (used for the OAuth redirect_uri). */
   serviceUrl: string
-  /** NAP control-plane base URL. Defaults to NAP_OAUTH_URL env. */
-  napUrl?: string
+  /** QAP control-plane base URL. Defaults to QAP_OAUTH_URL env. */
+  qapUrl?: string
   /** Cookie name for the session token. */
   cookieName: string
   /** HMAC secret for the session JWT. */
@@ -72,7 +72,7 @@ export interface OAuthClient {
   config: {
     clientId: string
     serviceUrl: string
-    napUrl: string
+    qapUrl: string
     cookieName: string
     callbackUrl: string
     authorizeUrl: string
@@ -124,19 +124,19 @@ function generateState(): string {
 }
 
 export function createOAuthClient(opts: OAuthClientOptions): OAuthClient {
-  const napUrl = opts.napUrl ?? process.env.NAP_OAUTH_URL ?? 'http://localhost:3000'
+  const qapUrl = opts.qapUrl ?? process.env.QAP_OAUTH_URL ?? 'http://localhost:3000'
   const expiresIn = opts.jwtExpiresIn ?? 60 * 60 * 24 * 7
   const cookieSecure = opts.cookieSecure ?? false
 
   const config = {
     clientId: opts.clientId,
     serviceUrl: opts.serviceUrl,
-    napUrl,
+    qapUrl,
     cookieName: opts.cookieName,
     callbackUrl: `${opts.serviceUrl}/api/auth/callback`,
-    authorizeUrl: `${napUrl}/oauth/authorize`,
-    tokenUrl: `${napUrl}/api/oauth/token`,
-    userinfoUrl: `${napUrl}/api/oauth/userinfo`,
+    authorizeUrl: `${qapUrl}/oauth/authorize`,
+    tokenUrl: `${qapUrl}/api/oauth/token`,
+    userinfoUrl: `${qapUrl}/api/oauth/userinfo`,
   }
 
   // PKCE state store. Per-client instance so multiple clients can coexist.

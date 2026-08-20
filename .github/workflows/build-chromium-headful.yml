@@ -26,7 +26,7 @@ on:
       - "chromium-headful-v*"
 
 env:
-  IMAGE: ghcr.io/neutree-ai/agent-platform/chromium-headful
+  IMAGE: ghcr.io/xuyooo/qap/chromium-headful
   UPSTREAM_REPO: onkernel/kernel-images
   UPSTREAM_REF: 4e9359cab045c95d4250aa378c583eaeb9dcc4d8
 

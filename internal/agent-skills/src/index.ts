@@ -1,5 +1,5 @@
 /**
- * Shared skill management for all NAP agent types.
+ * Shared skill management for all QAP agent types.
  *
  * Uses dependency injection for all I/O — fetch, filesystem, shell — so the
  * module is trivially testable without mocking node builtins.

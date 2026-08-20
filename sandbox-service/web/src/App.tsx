@@ -481,7 +481,7 @@ function HomePage() {
                   <p className="text-xs text-gray-600">
                     {t('docs.auth.description')}{' '}
                     <a
-                      href={`${config.napUrl}/integration/tokens`}
+                      href={`${config.qapUrl}/integration/tokens`}
                       target="_blank"
                       rel="noreferrer noopener"
                       className="underline hover:text-gray-700 font-medium"
@@ -505,7 +505,7 @@ function HomePage() {
 
 const client = new SandboxClient({
   baseUrl: 'https://sandbox.example.com',  // sandbox service URL
-  token: 'tos_...',                         // NAP Service Token
+  token: 'tos_...',                         // QAP Service Token
 })
 
 // Create a sandbox

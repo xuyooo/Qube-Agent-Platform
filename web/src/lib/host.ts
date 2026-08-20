@@ -6,10 +6,10 @@
  *
  * Surface is intentionally minimal. New entries land here only when a real
  * plugin needs a piece of host state or logic that it cannot reasonably
- * reimplement (heavy nap-specific behavior — agent session state, workspace
+ * reimplement (heavy qap-specific behavior — agent session state, workspace
  * file overlay, the workspace markdown renderer with file/link integration).
  * Presentation-layer libraries (shadcn, Radix, lucide, zustand, i18n) and
- * any nap-domain API plugins are responsible for themselves; the host does
+ * any qap-domain API plugins are responsible for themselves; the host does
  * not dictate UI style or own per-domain API surface.
  */
 
@@ -38,7 +38,7 @@ import * as ReactJSXRuntime from 'react/jsx-runtime'
 import { events } from './host-events'
 import { type PluginPanel, registerPanel } from './panel-registry'
 
-interface NapHost {
+interface QapHost {
   version: string
   React: typeof React
   ReactDOM: typeof ReactDOM
@@ -74,12 +74,12 @@ interface NapHost {
 
 declare global {
   interface Window {
-    tos?: NapHost
+    tos?: QapHost
   }
 }
 
 export function installHost(): void {
-  const host: NapHost = {
+  const host: QapHost = {
     version: '1.0.0',
     React,
     ReactDOM,

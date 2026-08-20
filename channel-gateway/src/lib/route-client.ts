@@ -1,7 +1,7 @@
-import { NapClient } from '../../../internal/client/src/index'
+import { QapClient } from '../../../internal/client/src/index'
 import * as db from '../services/db'
 
-const NAP_API_URL = process.env.NAP_API_URL || 'http://localhost:3000'
+const QAP_API_URL = process.env.QAP_API_URL || 'http://localhost:3000'
 
 /**
  * Build the platform client to act as when serving a route.
@@ -20,13 +20,13 @@ export async function resolveRouteClient(
   label: string,
   route: { user_id: string },
   connector: { user_id: string },
-  connectorClient: NapClient,
-): Promise<NapClient | null> {
+  connectorClient: QapClient,
+): Promise<QapClient | null> {
   if (route.user_id === connector.user_id) return connectorClient
   const routeToken = await db.getPlatformToken(route.user_id)
   if (!routeToken) {
     console.error(`${label}: no platform token for route owner=${route.user_id}`)
     return null
   }
-  return new NapClient({ baseUrl: NAP_API_URL, serviceToken: routeToken })
+  return new QapClient({ baseUrl: QAP_API_URL, serviceToken: routeToken })
 }

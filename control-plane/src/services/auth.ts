@@ -18,7 +18,7 @@ const LDAP_CONFIG = {
 }
 
 // JWT Configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'nap-jwt-secret-change-me'
+const JWT_SECRET = process.env.JWT_SECRET || 'qap-jwt-secret-change-me'
 const JWT_EXPIRES_IN = 60 * 60 * 24 // 24 hours in seconds
 const JWT_REFRESH_THRESHOLD = JWT_EXPIRES_IN / 2 // Refresh when less than 12 hours remain
 

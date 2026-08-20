@@ -1,13 +1,13 @@
 ---
-name: nap-api
-description: Manage NAP workspaces, prompts, templates, credentials, service tokens, agent files, providers, tags, shares, schedules via REST. Trigger when the user wants to script or automate NAP outside the UI — e.g. "create a workspace", "rotate a token", "bulk-upload prompts", "list agent files in workspace X", CI integration with NAP.
+name: qap-api
+description: Manage QAP workspaces, prompts, templates, credentials, service tokens, agent files, providers, tags, shares, schedules via REST. Trigger when the user wants to script or automate QAP outside the UI — e.g. "create a workspace", "rotate a token", "bulk-upload prompts", "list agent files in workspace X", CI integration with QAP.
 metadata:
   api-version: "0.1.0"
   openapi-version: "3.1.0"
 ---
 
-# NAP Control Plane API
-REST API for the NAP control plane.
+# QAP Control Plane API
+REST API for the QAP control plane.
 
 ## How to Use This Skill
 
@@ -29,7 +29,7 @@ references/
 
 ## Base URL
 
-`https://nap.example.com` — or set `$NAP_BASE_URL` to your deployment's host. Every operation path below is relative to it (e.g. `GET $NAP_BASE_URL/api/workspaces`).
+`https://qap.example.com` — or set `$QAP_BASE_URL` to your deployment's host. Every operation path below is relative to it (e.g. `GET $QAP_BASE_URL/api/workspaces`).
 
 ## Authentication
 
@@ -58,32 +58,32 @@ Non-obvious capability routing (when the operation isn't where you'd first look)
 The most common task, end to end. Send a prompt, poll until the turn ends, read the transcript — no other files needed:
 
 ```bash
-BASE="${NAP_BASE_URL:-https://nap.example.com}"
-NAP_WS="<workspace-id>"
+BASE="${QAP_BASE_URL:-https://qap.example.com}"
+QAP_WS="<workspace-id>"
 
 # 1. Start the turn. mode=async returns 202 immediately with a session id.
-SID=$(curl -s -X POST "$BASE/api/workspaces/$NAP_WS/chat" \
-  -H "Authorization: Bearer $NAP_TOKEN" -H "Content-Type: application/json" \
+SID=$(curl -s -X POST "$BASE/api/workspaces/$QAP_WS/chat" \
+  -H "Authorization: Bearer $QAP_TOKEN" -H "Content-Type: application/json" \
   -d '{"message":"List the files in the repo and summarize the README","mode":"async","source":"api"}' \
   | jq -r .session_id)
 
 # 2. Poll the session until the agent stops running.
 #    chat_status: "agent" = still working · "idle" = finished · "human" = waiting on you (see pending_message)
-while [ "$(curl -s "$BASE/api/workspaces/$NAP_WS/sessions/$SID" \
-    -H "Authorization: Bearer $NAP_TOKEN" | jq -r .chat_status)" = "agent" ]; do
+while [ "$(curl -s "$BASE/api/workspaces/$QAP_WS/sessions/$SID" \
+    -H "Authorization: Bearer $QAP_TOKEN" | jq -r .chat_status)" = "agent" ]; do
   sleep 3
 done
 
 # 3. Read the full transcript for this turn.
-curl -s "$BASE/api/workspaces/$NAP_WS/messages?session_id=$SID" \
-  -H "Authorization: Bearer $NAP_TOKEN" | jq .
+curl -s "$BASE/api/workspaces/$QAP_WS/messages?session_id=$SID" \
+  -H "Authorization: Bearer $QAP_TOKEN" | jq .
 ```
 
 Continue the same conversation by POSTing again with this `session_id` in the body. For token-by-token output instead of polling, omit `mode` (or use `mode: "stream"`) and read the `text/event-stream` of UniversalEvent frames.
 
-## Handoff — local agent → NAP cloud agent
+## Handoff — local agent → QAP cloud agent
 
-A common use of async chat is **delegation**: a local agent (e.g. running on your laptop) hands a chunk of work to a NAP cloud agent that has its own persistent workspace, filesystem, and toolset, then collects the result.
+A common use of async chat is **delegation**: a local agent (e.g. running on your laptop) hands a chunk of work to a QAP cloud agent that has its own persistent workspace, filesystem, and toolset, then collects the result.
 
 The cloud agent is a **fresh, isolated agent** — it shares none of your local context, conversation, or files. Everything it needs travels through the workspace and the prompt, so front-load it:
 
@@ -95,7 +95,7 @@ The cloud agent is a **fresh, isolated agent** — it shares none of your local 
 A ready-to-run driver ships with this skill at **`scripts/handoff.sh`** — call it directly or adapt it. It dispatches a turn, polls until the turn truly ends, and prints the agent's reply. Pass `-s <session_id>` to **continue** an existing session instead of starting a new one — that's how you carry a conversation across calls.
 
 ```bash
-export NAP_TOKEN=<service-token> NAP_WS=<workspace-id>   # NAP_BASE_URL defaults to https://nap.example.com
+export QAP_TOKEN=<service-token> QAP_WS=<workspace-id>   # QAP_BASE_URL defaults to https://qap.example.com
 
 scripts/handoff.sh "implement what TASK.md describes"    # new session -> prints session_id + reply
 scripts/handoff.sh -s <session_id> "now add tests"       # continue that session

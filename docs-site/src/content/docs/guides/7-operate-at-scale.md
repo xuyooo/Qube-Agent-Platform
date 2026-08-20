@@ -10,7 +10,7 @@ The first six chapters were about one agent: configuring it, shaping it, trigger
 - An agent went wrong — how do you hand that session to a colleague?
 - A hundred workspaces in the list — how do you find the one you want?
 
-This chapter is everything in NAP about reuse, sharing and keeping order.
+This chapter is everything in QAP about reuse, sharing and keeping order.
 
 ## The Library: prompts, skills, templates
 

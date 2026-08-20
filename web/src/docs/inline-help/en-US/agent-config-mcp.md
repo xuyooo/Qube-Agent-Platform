@@ -19,5 +19,5 @@ Configure the [MCP](https://modelcontextprotocol.io) servers that the agent can 
 
 | type | Description | Example |
 |------|------|------|
-| `http` | HTTP Streamable | `http://nap-cp:3000/mcp` |
+| `http` | HTTP Streamable | `http://qap-cp:3000/mcp` |
 | `stdio` | Local process | Requires the `command` + `args` fields |

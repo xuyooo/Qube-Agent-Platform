@@ -1,7 +1,7 @@
 {
   "loginPage": {
     "tagline": "登录后使用浏览器服务",
-    "loginButton": "通过 NAP 登录"
+    "loginButton": "通过 QAP 登录"
   },
   "home": {
     "logout": "退出",
@@ -39,8 +39,8 @@
     "title": "使用指南",
     "auth": {
       "heading": "认证",
-      "description": "CDP 和 Recording API 需要 NAP Service Token 认证。 前往",
-      "linkLabel": "NAP 平台 > Integration > Service Tokens",
+      "description": "CDP 和 Recording API 需要 QAP Service Token 认证。 前往",
+      "linkLabel": "QAP 平台 > Integration > Service Tokens",
       "descriptionSuffix": "创建。"
     },
     "agentBrowser": {
@@ -61,7 +61,7 @@
       "wssHint": "点击顶栏 WSS 按钮复制"
     },
     "code": {
-      "serviceTokenComment": "在 NAP 平台创建的 Service Token"
+      "serviceTokenComment": "在 QAP 平台创建的 Service Token"
     }
   }
 }

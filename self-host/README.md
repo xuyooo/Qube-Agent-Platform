@@ -1,4 +1,4 @@
-# Neutree Agent Platform — Self-Hosted
+# Qube Agent Platform — Self-Hosted
 
 One installer serves both kinds of site, and which path runs is decided by
 whether the image bundle is present — there is no second installer and no
@@ -17,7 +17,7 @@ offline CNPG/NFS bundles and wires an imagePullSecret from `REGISTRY_USERNAME` /
 in-cluster registry in [`offline/registry.yaml`](offline/registry.yaml), so a
 lone machine needs no registry of its own.
 
-The [single-node guide](https://docs.neutree.ai/nap/self-host/single-node/)
+The [single-node guide](https://docs.neutree.ai/qap/self-host/single-node/)
 walks both paths step by step, with the air-gapped extras inline.
 
 The **minimal install** brings up the core platform only. The Code Sandbox and
@@ -27,7 +27,7 @@ later (see [Optional capabilities](#optional-capabilities)) without reinstalling
 ## One-line install
 
 `get.sh` wraps the whole flow below — download, secrets, values.env, install —
-into a single command. Configuration lands in `/opt/nap/values.env`; re-running
+into a single command. Configuration lands in `/opt/qap/values.env`; re-running
 the same line refreshes the installer and upgrades in place.
 
 **No Kubernetes yet** — a bare Linux host; installs k3s (plus helm / envsubst
@@ -35,7 +35,7 @@ if missing), autodetects the node IP, generates the admin password and prints
 the login URL + credentials at the end:
 
 ```bash
-curl -sfL https://docs.neutree.ai/nap/get.sh | sudo sh -
+curl -sfL https://docs.neutree.ai/qap/get.sh | sudo sh -
 ```
 
 **Existing Kubernetes cluster** — uses your current kubeconfig; you must name
@@ -43,13 +43,13 @@ the host users reach the platform at and an RWX storage backend (external NFS,
 or a pre-existing RWX StorageClass):
 
 ```bash
-curl -sfL https://docs.neutree.ai/nap/get.sh \
+curl -sfL https://docs.neutree.ai/qap/get.sh \
   | sh -s -- --k8s --host=<ip-or-hostname> --nfs-server=<ip> --nfs-path=</export/path>
 # or with an existing RWX StorageClass:
 #   ... | sh -s -- --k8s --host=<ip-or-hostname> --storage-class=<rwx-storageclass>
 ```
 
-Useful knobs: `NAP_HOST` / `NAP_ADMIN_PASSWORD` env overrides,
+Useful knobs: `QAP_HOST` / `QAP_ADMIN_PASSWORD` env overrides,
 `--version=<tag>` to pin a release, `--dir=` to relocate the install dir, and
 `--prepare-only` to generate `values.env` for review and install on the next
 run. `get.sh --help` lists everything.
@@ -71,7 +71,7 @@ Everything below is the manual path — the same steps, under your control.
 git clone <this-repo> && cd self-host        # or download + extract
 cp values.env.example values.env
 ./gen-secrets.sh                              # fills random machine secrets
-vi values.env                                 # set NAP_HOST, ADMIN_PASSWORD, storage, etc.
+vi values.env                                 # set QAP_HOST, ADMIN_PASSWORD, storage, etc.
 ./install.sh
 ```
 
@@ -82,7 +82,7 @@ vi values.env                                 # set NAP_HOST, ADMIN_PASSWORD, st
 2. Render the manifests with your `values.env` and apply them.
 3. Seed the admin user, OAuth clients, and the MCP catalog via one-shot Jobs.
 
-When it finishes, open `http://<NAP_HOST>:<NAP_NODE_PORT>` and log in with the
+When it finishes, open `http://<QAP_HOST>:<QAP_NODE_PORT>` and log in with the
 admin username / password from `values.env`.
 
 ## Single-node profile
@@ -95,7 +95,7 @@ in-cluster registry and does **not** load any tarball.
 ```bash
 cp values.env.single-node.example values.env
 ./gen-secrets.sh
-vi values.env                                 # set NAP_HOST + ADMIN_PASSWORD
+vi values.env                                 # set QAP_HOST + ADMIN_PASSWORD
 ./install.sh --profile=single-node
 ```
 
@@ -110,7 +110,7 @@ Everything is driven by `values.env`. Key knobs:
 | --- | --- |
 | `REGISTRY` | Public registry path that holds all first-party images (`${REGISTRY}/<svc>:<tag>`). Default points at the official public registry; override only to use a mirror. |
 | `IMAGE_TAG` | Tag for all first-party images. `latest` by default; pin to a release tag for reproducibility. |
-| `NAP_HOST` / `NAP_NODE_PORT` | Where users reach the web UI. |
+| `QAP_HOST` / `QAP_NODE_PORT` | Where users reach the web UI. |
 | `INGRESS_MODE` | `nodeport` (default) or `external` (your own ingress fronts the HTTP services; nodePort lines are stripped). |
 | `PG_*` / `NFS_*` | PostgreSQL and shared-storage settings. |
 | `SANDBOX_ENABLED` / `BROWSER_ENABLED` / `LDAP_ENABLED` | Optional capabilities, all off by default. |
@@ -124,7 +124,7 @@ editing `values.env` and re-running `./install.sh` (it's idempotent).
 
 ### Remote Browser
 
-Lets agents drive a real browser that users watch live over WebRTC. NAP ships
+Lets agents drive a real browser that users watch live over WebRTC. QAP ships
 the browser service and a bundled TURN relay (coturn); enabling it is just
 configuration. The headful Chromium itself runs from a published image
 (`${REGISTRY}/chromium-headful`) built from the upstream
@@ -137,19 +137,19 @@ configuration. The headful Chromium itself runs from a published image
    TURN_HOST=<LAN/WAN IP browsers can reach>   # the node's reachable IP
    # gen-secrets.sh already filled BROWSER_JWT_SECRET / TURN_AUTH_SECRET
    ```
-2. Re-run `./install.sh`. It deploys `nap-browser` + `coturn` and registers the
+2. Re-run `./install.sh`. It deploys `qap-browser` + `coturn` and registers the
    browser OAuth client.
 
 ### Enabling Code Sandbox
 
 Lets agents run code and serve temporary web previews. This is powered by
 **OpenSandbox** (github.com/alibaba/OpenSandbox), a **third-party** component
-that NAP does **not** install for you — you install it from its upstream Helm
-charts, then point NAP at it.
+that QAP does **not** install for you — you install it from its upstream Helm
+charts, then point QAP at it.
 
 > Why separate: OpenSandbox does not publish an installable umbrella/server
 > chart as a release asset; the official path is to install from a source
-> checkout. Keeping it out of NAP's installer avoids coupling the core install
+> checkout. Keeping it out of QAP's installer avoids coupling the core install
 > to that flow.
 
 1. **Install OpenSandbox** (controller + server) per its official method —
@@ -158,18 +158,18 @@ charts, then point NAP at it.
    git clone https://github.com/alibaba/OpenSandbox && cd OpenSandbox/kubernetes/charts
    helm dependency build opensandbox
    helm install opensandbox ./opensandbox \
-     --namespace nap --create-namespace \
+     --namespace qap --create-namespace \
      -f <path-to>/optional/sandbox/opensandbox-values.yaml
    ```
    `optional/sandbox/opensandbox-values.yaml` is a ready-to-use reference: it
    pins the public Docker Hub images (the chart defaults to Alibaba ACR) and
-   runs OpenSandbox in the `nap` namespace so NAP's default `OPENSANDBOX_URL`
-   resolves. Adjust the namespace there if NAP runs elsewhere.
+   runs OpenSandbox in the `qap` namespace so QAP's default `OPENSANDBOX_URL`
+   resolves. Adjust the namespace there if QAP runs elsewhere.
 
-2. **Mount NAP's sandbox pod template** so OpenSandbox spawns sandbox workloads
-   the way NAP expects:
+2. **Mount QAP's sandbox pod template** so OpenSandbox spawns sandbox workloads
+   the way QAP expects:
    ```bash
-   kubectl -n nap create configmap opensandbox-sandbox-template \
+   kubectl -n qap create configmap opensandbox-sandbox-template \
      --from-file=sandbox-template.yaml=optional/sandbox/batchsandbox-template.yaml
    ```
    The reference `opensandbox-values.yaml` already points
@@ -177,15 +177,15 @@ charts, then point NAP at it.
    mount the configmap there on `opensandbox-server` (volume + volumeMount), or
    bake it into your OpenSandbox values.
 
-3. **Enable it in NAP.** In `values.env`:
+3. **Enable it in QAP.** In `values.env`:
    ```bash
    SANDBOX_ENABLED=true
-   # OPENSANDBOX_URL: leave blank if OpenSandbox runs in NAP's namespace;
+   # OPENSANDBOX_URL: leave blank if OpenSandbox runs in QAP's namespace;
    # otherwise set e.g. http://opensandbox-server.opensandbox-system.svc:80
    # gen-secrets.sh already filled SANDBOX_JWT_SECRET / SANDBOX_SERVICE_KEY
    ```
-4. Re-run `./install.sh`. It deploys `nap-sandbox` (which talks to OpenSandbox
-   at `OPENSANDBOX_URL`) and registers the sandbox OAuth client. NAP does not
+4. Re-run `./install.sh`. It deploys `qap-sandbox` (which talks to OpenSandbox
+   at `OPENSANDBOX_URL`) and registers the sandbox OAuth client. QAP does not
    touch OpenSandbox itself.
 
 ## Installer modes
@@ -200,8 +200,8 @@ charts, then point NAP at it.
 
 ## Documentation
 
-The [self-host guide](https://docs.neutree.ai/nap/self-host/) covers deployment,
-upgrade and operations, and the [single-node page](https://docs.neutree.ai/nap/self-host/single-node/)
+The [self-host guide](https://docs.neutree.ai/qap/self-host/) covers deployment,
+upgrade and operations, and the [single-node page](https://docs.neutree.ai/qap/self-host/single-node/)
 is the quickest path for one machine. This README plus the inline comments in
 `values.env.example` are the reference for configuration and the optional
 capabilities.

@@ -501,7 +501,7 @@ function HomePage() {
                     <p className="text-xs text-gray-600">
                       {t('docs.auth.description')}{' '}
                       <a
-                        href={`${config.napUrl}/integration/tokens`}
+                        href={`${config.qapUrl}/integration/tokens`}
                         target="_blank"
                         rel="noreferrer noopener"
                         className="underline hover:text-gray-700 font-medium"
@@ -554,7 +554,7 @@ agent-browser --cdp "$WSS" click "button.submit"`}</pre>
                     <p className="text-xs text-gray-600 mb-2">{t('docs.playwright.description')}</p>
                     <pre className="bg-gray-50 border rounded p-3 text-xs overflow-x-auto whitespace-pre">{`import { chromium } from 'playwright';
 
-const TOKEN = 'tos_...'; // Service Token created on the NAP platform
+const TOKEN = 'tos_...'; // Service Token created on the QAP platform
 
 const browser = await chromium.connectOverCDP(
   '${window.location.origin}/cdp/${detail.id}/',

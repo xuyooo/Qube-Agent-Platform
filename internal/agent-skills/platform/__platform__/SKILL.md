@@ -1,11 +1,11 @@
 ---
-name: {{#dsh}}nap-platform{{/dsh}}{{^dsh}}__platform__{{/dsh}}
-description: NAP workspace capabilities reference. Consult when working with browser automation, sandboxed code execution, file sharing between agents via /mnt/afs, persistent cross-session memory under /mnt/memory, creating or editing skills, proposing workspace configuration changes via Builder Mode, or (Codex) generated images.
+name: {{#dsh}}qap-platform{{/dsh}}{{^dsh}}__platform__{{/dsh}}
+description: QAP workspace capabilities reference. Consult when working with browser automation, sandboxed code execution, file sharing between agents via /mnt/afs, persistent cross-session memory under /mnt/memory, creating or editing skills, proposing workspace configuration changes via Builder Mode, or (Codex) generated images.
 ---
 
-# NAP Workspace Capabilities
+# QAP Workspace Capabilities
 
-The NAP platform provides several runtime facilities inside this workspace. Each capability has a dedicated reference file under `reference/`; read the matching one before using the capability, since exact tool names, paths, and gotchas live there.
+The QAP platform provides several runtime facilities inside this workspace. Each capability has a dedicated reference file under `reference/`; read the matching one before using the capability, since exact tool names, paths, and gotchas live there.
 
 ## Browser Automation
 
@@ -33,7 +33,7 @@ Persistent, cross-session storage mounted under `/mnt/memory/<store_id>/`. Works
 
 ## Skills
 
-`skill_create_draft` / `skill_enter_edit` / `skill_publish` lifecycle for user-authored skills (this `{{#dsh}}nap-platform{{/dsh}}{{^dsh}}__platform__{{/dsh}}` skill itself is platform-managed and not user-editable).
+`skill_create_draft` / `skill_enter_edit` / `skill_publish` lifecycle for user-authored skills (this `{{#dsh}}qap-platform{{/dsh}}{{^dsh}}__platform__{{/dsh}}` skill itself is platform-managed and not user-editable).
 
 → When the user wants to create, edit, or publish a skill — see `reference/skills.md`.
 

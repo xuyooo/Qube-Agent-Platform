@@ -37,9 +37,9 @@ spec:
                 secretKeyRef:
                   name: ${APP_PREFIX}-browser-secret
                   key: JWT_SECRET
-            - name: NAP_OAUTH_URL
+            - name: QAP_OAUTH_URL
               value: "${WEB_PUBLIC_URL}"
-            - name: NAP_INTERNAL_URL
+            - name: QAP_INTERNAL_URL
               value: "http://${APP_PREFIX}-cp:3000"
             - name: OAUTH_CLIENT_ID
               value: "browser-service"

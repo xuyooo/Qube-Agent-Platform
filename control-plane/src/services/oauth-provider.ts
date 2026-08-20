@@ -5,7 +5,7 @@ import { pool } from './db/pool'
 
 // ── Constants ──
 
-const JWT_SECRET = process.env.JWT_SECRET || 'nap-jwt-secret-change-me'
+const JWT_SECRET = process.env.JWT_SECRET || 'qap-jwt-secret-change-me'
 const ACCESS_TOKEN_EXPIRES_IN = 60 * 60 // 1 hour
 const REFRESH_TOKEN_EXPIRES_DAYS = 30
 const AUTH_CODE_EXPIRES_MIN = 10

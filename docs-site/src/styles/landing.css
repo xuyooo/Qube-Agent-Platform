@@ -6,7 +6,7 @@
  * ========================================================================== */
 
 /* --- Section links -------------------------------------------------------- */
-.sl-markdown-content .nap-paths {
+.sl-markdown-content .qap-paths {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
@@ -14,7 +14,7 @@
   margin: 1.5rem auto 0;
 }
 
-.sl-markdown-content .nap-paths a {
+.sl-markdown-content .qap-paths a {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -24,13 +24,13 @@
   text-decoration: none;
 }
 
-.sl-markdown-content .nap-paths a:hover {
+.sl-markdown-content .qap-paths a:hover {
   border-color: var(--sl-color-accent);
 }
 
 /* Eyebrow labels encode the sequence: the main path continues ("Next step"),
  * concepts is the reference rail alongside it. */
-.nap-paths em {
+.qap-paths em {
   font-style: normal;
   font-size: 0.7rem;
   font-weight: 600;
@@ -39,34 +39,34 @@
   color: var(--sl-color-gray-3);
 }
 
-.sl-markdown-content .nap-paths a.nap-next {
+.sl-markdown-content .qap-paths a.qap-next {
   border-color: var(--sl-color-accent);
 }
 
-.nap-paths a.nap-next em {
+.qap-paths a.qap-next em {
   color: var(--sl-color-accent-high);
 }
 
-.sl-markdown-content .nap-paths a.nap-next:hover {
+.sl-markdown-content .qap-paths a.qap-next:hover {
   border-color: var(--sl-color-accent-high);
 }
 
-.nap-paths strong {
+.qap-paths strong {
   color: var(--sl-color-white);
 }
 
-.nap-paths strong::after {
+.qap-paths strong::after {
   content: ' →';
   color: var(--sl-color-gray-3);
 }
 
-.nap-paths span {
+.qap-paths span {
   font-size: 0.85rem;
   color: var(--sl-color-gray-3);
 }
 
 @media (max-width: 40rem) {
-  .sl-markdown-content .nap-paths {
+  .sl-markdown-content .qap-paths {
     grid-template-columns: 1fr;
   }
 }

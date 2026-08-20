@@ -8,9 +8,9 @@ import { initDb, pool } from '../src/services/db/pool'
 
 // The platform MCP server is control-plane's own /mcp endpoint. Derive its host
 // from CP_SERVICE_URL (same env the deployment injects, prefix-aware) so the
-// catalog URL resolves on installs where APP_PREFIX != "nap" (Service is
-// `<prefix>-cp`, not `nap-cp`). Falls back to the default-prefix host.
-const CP_SERVICE_URL = process.env.CP_SERVICE_URL || 'http://nap-cp:3000'
+// catalog URL resolves on installs where APP_PREFIX != "qap" (Service is
+// `<prefix>-cp`, not `qap-cp`). Falls back to the default-prefix host.
+const CP_SERVICE_URL = process.env.CP_SERVICE_URL || 'http://qap-cp:3000'
 
 const SEED: Record<string, Parameters<typeof upsertMcpCatalogEntry>[1]> = {
   'tos-platform': {

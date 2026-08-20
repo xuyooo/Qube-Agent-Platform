@@ -1,4 +1,4 @@
-// Package memfs implements a read-only FUSE view of a NAP memory store.
+// Package memfs implements a read-only FUSE view of a QAP memory store.
 // Memories are flat path-keyed records on the server (e.g. "/notes/foo.md");
 // we synthesise the directory tree on the fly from a periodically refreshed
 // snapshot, and fetch file content lazily on first read.
@@ -16,7 +16,7 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/cpclient"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/cpclient"
 )
 
 // Backend is the subset of cpclient used by the FS — abstracted for tests.

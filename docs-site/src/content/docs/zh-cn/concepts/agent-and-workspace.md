@@ -1,6 +1,6 @@
 ---
 title: Workspace、Agent 与 Session
-description: Neutree Agent Platform 里最常用的三个词，分别是什么
+description: Qube Agent Platform 里最常用的三个词，分别是什么
 ---
 
 这三个词你会反复遇到，先把它们的边界理清，后面所有功能都会变得更好懂。

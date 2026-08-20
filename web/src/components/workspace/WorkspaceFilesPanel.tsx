@@ -852,7 +852,7 @@ export function WorkspaceFilesPanel({
   // Internal DnD (row → folder / breadcrumb = move within the same drive)
   // ---------------------------------------------------------------------------
 
-  const INTERNAL_MIME = 'application/x-nap-files-move'
+  const INTERNAL_MIME = 'application/x-qap-files-move'
   type InternalDragPayload = { fromDir: string; drive: DriveKind; names: string[] }
   // Browsers hide dataTransfer payload from JS during dragOver (security). We
   // stash the active payload here on dragStart so dropTarget validation can

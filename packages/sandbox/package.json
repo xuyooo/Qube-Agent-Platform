@@ -1,7 +1,7 @@
 {
   "name": "@neutree-ai/sandbox",
   "version": "0.1.0",
-  "description": "NAP Sandbox SDK — create and manage isolated sandbox environments",
+  "description": "QAP Sandbox SDK — create and manage isolated sandbox environments",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

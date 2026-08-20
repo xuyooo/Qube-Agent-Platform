@@ -1,16 +1,16 @@
 ---
 title: REST API
-description: 用自己的代码调 NAP —— Service Token 认证，以及交互式参考在哪里
+description: 用自己的代码调 QAP —— Service Token 认证，以及交互式参考在哪里
 ---
 
 Web UI 做的每一件事都走同一套 REST API，你自己的代码只需要一个 **Service Token** 就能用同一套。CI 里开一个 workspace、脚本批量导 prompt、本地 agent 把长任务甩给云端的——都是这一个面。
 
 ## 交互式参考在你自己的实例上
 
-你自己那套 NAP 就在 serve 它：
+你自己那套 QAP 就在 serve 它：
 
 ```
-https://<你的 NAP 域名>/api/docs
+https://<你的 QAP 域名>/api/docs
 ```
 
 登录状态下 `⌘K` → **API 文档** 直接过去。机器可读的文档在旁边：`/api/docs/openapi.json`。
@@ -29,7 +29,7 @@ Authorization: Bearer <token>
 
 ## Base URL 与约定
 
-路径都相对于你的域名，所以列 workspace 是 `GET $NAP_BASE_URL/api/workspaces`。
+路径都相对于你的域名，所以列 workspace 是 `GET $QAP_BASE_URL/api/workspaces`。
 
 有一条约定值得先知道，否则一定会踩：**带路径的 query 参数要整体 URL-encode**。整个值一起编码，里面的斜杠是字面量不是分隔符。原样传中文或带斜杠的值，要么 400，要么路由到别处去。
 
@@ -38,12 +38,12 @@ Authorization: Bearer <token>
 对 service token 来说，**故意没有 exec 端点**。活儿是以 prompt 的形式交给 agent 的，而 agent 背后是它的全套工具——bash、改文件，和它在 UI 里能用的一样：
 
 ```bash
-BASE="${NAP_BASE_URL:?}"
-NAP_WS="<workspace-id>"
+BASE="${QAP_BASE_URL:?}"
+QAP_WS="<workspace-id>"
 
 # 发起一轮。async 立刻返回 202 和一个 session id。
-SID=$(curl -s -X POST "$BASE/api/workspaces/$NAP_WS/chat" \
-  -H "Authorization: Bearer $NAP_TOKEN" -H "Content-Type: application/json" \
+SID=$(curl -s -X POST "$BASE/api/workspaces/$QAP_WS/chat" \
+  -H "Authorization: Bearer $QAP_TOKEN" -H "Content-Type: application/json" \
   -d '{"message":"列一下仓库里的文件，总结 README","mode":"async","source":"api"}' \
   | jq -r .session_id)
 
@@ -64,4 +64,4 @@ SID=$(curl -s -X POST "$BASE/api/workspaces/$NAP_WS/chat" \
 
 ## 接下来
 
-与其自己读操作列表，不如把它交给 agent：[nap-api skill](/zh-cn/api/skills/) 就是从同一份 spec 生成的，本地 agent 靠它来驱动 NAP。
+与其自己读操作列表，不如把它交给 agent：[qap-api skill](/zh-cn/api/skills/) 就是从同一份 spec 生成的，本地 agent 靠它来驱动 QAP。

@@ -51,7 +51,7 @@ const githubAdapter: GitAdapter = {
     const url = `${base}/repos/${source.owner}/${source.repo}/tarball/${ref}`
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'nap-skill-import',
+      'User-Agent': 'qap-skill-import',
     }
     if (token) headers.Authorization = `Bearer ${token}`
     return { url, headers }

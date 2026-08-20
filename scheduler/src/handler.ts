@@ -2,17 +2,17 @@ import type { Job, JobWithMetadata } from 'pg-boss'
 import { type TurnPlugin, runTurn } from '../../internal/sse-consumer/src'
 import * as db from './db'
 
-const NAP_API_URL = process.env.NAP_API_URL || 'http://nap-cp:3000'
-const CG_API_URL = process.env.CG_API_URL || 'http://nap-cg:3002'
+const QAP_API_URL = process.env.QAP_API_URL || 'http://qap-cp:3000'
+const CG_API_URL = process.env.CG_API_URL || 'http://qap-cg:3002'
 
 function getChatEndpoint(workspaceId: string): string {
-  return `${NAP_API_URL}/api/workspaces/${workspaceId}/chat`
+  return `${QAP_API_URL}/api/workspaces/${workspaceId}/chat`
 }
 
 /** CP-level SSE reconnect endpoint. The `session_id` query param scopes the
  *  reconnect to a single turn — a workspace can run several concurrently. */
 function getCpReconnectEndpoint(workspaceId: string, sessionId: string): string {
-  return `${NAP_API_URL}/_proxy/agent/${workspaceId}/cp-reconnect?session_id=${encodeURIComponent(sessionId)}`
+  return `${QAP_API_URL}/_proxy/agent/${workspaceId}/cp-reconnect?session_id=${encodeURIComponent(sessionId)}`
 }
 
 // --- Types ---

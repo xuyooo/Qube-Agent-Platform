@@ -3,7 +3,7 @@ title: Agent 从哪里接到任务
 description: Web UI、Schedule、Connector + Route、HTTP API 四种触发方式
 ---
 
-Workspace 创建好之后，Agent 怎么开始工作？Neutree Agent Platform 提供四种触发方式，从"人手动用"到"完全无人值守"都覆盖。
+Workspace 创建好之后，Agent 怎么开始工作？Qube Agent Platform 提供四种触发方式，从"人手动用"到"完全无人值守"都覆盖。
 
 ## 四种触发方式
 
@@ -32,7 +32,7 @@ Schedule 是**最便宜的自动化形式**——零外部依赖，不需要任�
 
 ## Connector + Route：外部系统推送事件
 
-这是最强大、也是最需要解释的一种。它解决的是："GitLab pipeline 失败时，我想自动触发一个 Agent 去诊断"——让外部系统把事件送到 Neutree Agent Platform。
+这是最强大、也是最需要解释的一种。它解决的是："GitLab pipeline 失败时，我想自动触发一个 Agent 去诊断"——让外部系统把事件送到 Qube Agent Platform。
 
 要让外部事件能进来，需要回答三个问题：
 

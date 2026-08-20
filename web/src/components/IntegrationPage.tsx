@@ -129,7 +129,7 @@ export const CONNECTOR_TYPES: Record<string, ConnectorTypeConfig> = {
       {
         key: 'queue_url',
         label: 'Queue URL',
-        placeholder: 'https://sqs.ap-east-1.amazonaws.com/123456789/nap-webhook-relay',
+        placeholder: 'https://sqs.ap-east-1.amazonaws.com/123456789/qap-webhook-relay',
         required: true,
         sensitive: false,
         helpText: 'SQS Queue URL',

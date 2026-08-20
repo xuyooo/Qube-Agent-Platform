@@ -500,7 +500,7 @@
           "credentials": {
             "queue_url": {
               "label": "Queue URL",
-              "placeholder": "https://sqs.ap-east-1.amazonaws.com/123456789/nap-webhook-relay",
+              "placeholder": "https://sqs.ap-east-1.amazonaws.com/123456789/qap-webhook-relay",
               "helpText": "SQS Queue URL"
             },
             "region": {

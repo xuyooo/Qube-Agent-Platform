@@ -78,7 +78,7 @@ describe('getTarballUrl', () => {
     const { url, headers } = getTarballUrl(s, 'tok')
     expect(url).toBe('https://api.github.com/repos/o/r/tarball/main')
     expect(headers.Authorization).toBe('Bearer tok')
-    expect(headers['User-Agent']).toBe('nap-skill-import')
+    expect(headers['User-Agent']).toBe('qap-skill-import')
   })
 
   it('uses /api/v3 for GitHub Enterprise', () => {

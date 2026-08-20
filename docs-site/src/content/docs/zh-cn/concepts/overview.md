@@ -1,11 +1,11 @@
 ---
-title: Neutree Agent Platform 是什么
+title: Qube Agent Platform 是什么
 description: 把你已经在用的 Agent 搬到自己的基础设施上，托管起来，团队一起用
 ---
 
 多数人第一次用 Agent 是在自己机器上：一个终端、一个人、一次一个 session。这样够用，直到 Agent 得在你合上笔记本之后继续干活，或者别的团队也想用同一个。
 
-Neutree Agent Platform（NAP）就是它的下一站。core、prompt、skills 还是你现在这套，变的是它们跑在你自己的 Kubernetes 集群里，成为一个多人共用的托管服务，7×24 在线，等你或者外部系统把活交过来。
+Qube Agent Platform（QAP）就是它的下一站。core、prompt、skills 还是你现在这套，变的是它们跑在你自己的 Kubernetes 集群里，成为一个多人共用的托管服务，7×24 在线，等你或者外部系统把活交过来。
 
 ## 平台替你管掉的那半
 
@@ -21,7 +21,7 @@ Neutree Agent Platform（NAP）就是它的下一站。core、prompt、skills �
 
 ## Agent 的一生：构建 → 分发 → 优化
 
-在 NAP 上经营一个 Agent，会反复走这三段，文档也按这条主线组织：
+在 QAP 上经营一个 Agent，会反复走这三段，文档也按这条主线组织：
 
 - **构建** — 一个中立、可替换的 core，用 prompt、skills 和 MCP 塑形，底下是平台跑好的中间件，Agent 自己不用带。从[第一个 Agent](/zh-cn/guides/2-first-agent/) 开始。
 - **分发** — 一个 Workspace，五个入口都进得来，按负载选服务形态。用的人那边什么都不用管：不装、不配、也不用自己的 key。见[触发 Agent](/zh-cn/guides/5-trigger-agents/)。

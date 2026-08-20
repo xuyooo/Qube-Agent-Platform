@@ -11,21 +11,21 @@ import type { K8sConfig } from '../../../internal/k8s-provider'
 // into a 502.
 
 const cfg: K8sConfig = {
-  namespace: 'nap',
-  namePrefix: 'nap',
-  agentImagePrefix: 'nap-agent',
+  namespace: 'qap',
+  namePrefix: 'qap',
+  agentImagePrefix: 'qap-agent',
   agentImageTag: 'latest',
   storageClass: 'nfs-csi',
   imagePullSecret: '',
   nodeSelector: undefined,
   workspaceStorageSize: '10Gi',
-  cpServiceUrl: 'http://nap-cp:3000',
+  cpServiceUrl: 'http://qap-cp:3000',
   memoryFuseImage: '',
   multiReplica: false,
   afs: {
     enabled: false,
     image: '',
-    controllerAddr: 'afs-controller.nap.svc:9100',
+    controllerAddr: 'afs-controller.qap.svc:9100',
     fuseServerAddr: '127.0.0.1:9101',
     storagePvc: 'afs-shared-storage',
     configMap: 'afs-fuse-config',
@@ -39,13 +39,13 @@ function apiError(statusCode: number, message = 'boom'): Error & { response: unk
 
 function deployment(wsId: string, replicas: number, readyReplicas: number): k8s.V1Deployment {
   return {
-    metadata: { name: `nap-${wsId}`, labels: { 'workspace-id': wsId } },
+    metadata: { name: `qap-${wsId}`, labels: { 'workspace-id': wsId } },
     spec: { replicas },
     status: { readyReplicas },
   } as unknown as k8s.V1Deployment
 }
 
-function service(wsId: string, clusterIP = '10.96.0.1', name = `nap-${wsId}`): k8s.V1Service {
+function service(wsId: string, clusterIP = '10.96.0.1', name = `qap-${wsId}`): k8s.V1Service {
   return {
     metadata: { name, labels: { 'workspace-id': wsId } },
     spec: { clusterIP },
@@ -197,7 +197,7 @@ describe('observation reflects Service presence', () => {
   it('observeAll: the auto-scaling headless Service does not count as the ClusterIP one', async () => {
     const { provider } = makeApis({
       deployments: [deployment('ws1', 1, 1)],
-      services: [service('ws1', 'None', 'nap-ws1-hl')],
+      services: [service('ws1', 'None', 'qap-ws1-hl')],
     })
     expect((await provider.observeAll()).get('ws1')?.phase).toBe('error')
   })
@@ -230,7 +230,7 @@ describe('stop releases the ClusterIP', () => {
     expect(services).toHaveLength(0)
 
     await provider.start('ws1', 'static')
-    expect(services.map((s) => s.metadata?.name)).toEqual(['nap-ws1'])
+    expect(services.map((s) => s.metadata?.name)).toEqual(['qap-ws1'])
   })
 
   it('stop: tolerates a Service that is already gone', async () => {
@@ -257,7 +257,7 @@ describe('converge paths repair a missing Service', () => {
     })
     await provider.start('ws1', 'static')
     expect(methods()).toContain('createNamespacedService')
-    expect(services.map((s) => s.metadata?.name)).toEqual(['nap-ws1'])
+    expect(services.map((s) => s.metadata?.name)).toEqual(['qap-ws1'])
   })
 
   // A ClusterIP Service on the auto-scaling shape would burn an IP it never

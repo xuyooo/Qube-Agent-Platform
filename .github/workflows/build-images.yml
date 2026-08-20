@@ -5,9 +5,9 @@ name: Build & push images
 #
 # Explicit, per-service builds only (no auto-build on every main push, no
 # lockstep all-at-once release — services version independently):
-#   - workflow_dispatch: `service` builds one image (e.g. nap-scheduler);
+#   - workflow_dispatch: `service` builds one image (e.g. qap-scheduler);
 #     empty builds all.
-#   - push of a per-service tag `<image>-v<x.y.z>` (e.g. nap-cp-v1.2.0):
+#   - push of a per-service tag `<image>-v<x.y.z>` (e.g. qap-cp-v1.2.0):
 #     builds only that image and also tags it with the version.
 #
 # Images are multi-arch (amd64 + arm64), built on native runners — one
@@ -18,15 +18,15 @@ on:
   workflow_dispatch:
     inputs:
       service:
-        description: "Image to build (e.g. nap-scheduler). Empty = all."
+        description: "Image to build (e.g. qap-scheduler). Empty = all."
         required: false
         default: ""
   push:
     tags:
-      - "nap-*-v*"
+      - "qap-*-v*"
 
 env:
-  IMAGE_PREFIX: ghcr.io/neutree-ai/agent-platform
+  IMAGE_PREFIX: ghcr.io/xuyooo/qap
 
 jobs:
   build:
@@ -41,17 +41,17 @@ jobs:
           - { arch: amd64, runner: ubuntu-latest }
           - { arch: arm64, runner: ubuntu-24.04-arm }
         entry:
-          - { image: nap-cp, dockerfile: control-plane/Dockerfile, context: . }
-          - { image: nap-cg, dockerfile: channel-gateway/Dockerfile, context: . }
-          - { image: nap-scheduler, dockerfile: scheduler/Dockerfile, context: . }
-          - { image: nap-env-runner-k8s, dockerfile: env-runner-k8s/Dockerfile, context: . }
-          - { image: nap-skills-content-service, dockerfile: skills-content-service/Dockerfile, context: . }
-          - { image: nap-sandbox, dockerfile: sandbox-service/Dockerfile, context: . }
-          - { image: nap-browser, dockerfile: browser-service/Dockerfile, context: . }
-          - { image: nap-memory-fuse, dockerfile: memory-fuse/Dockerfile, context: memory-fuse }
-          - { image: nap-agent-claude-code, dockerfile: agents/claude-code/Dockerfile, context: . }
-          - { image: nap-agent-codex, dockerfile: agents/codex/Dockerfile, context: . }
-          - { image: nap-agent-goose, dockerfile: agents/goose/Dockerfile, context: . }
+          - { image: qap-cp, dockerfile: control-plane/Dockerfile, context: . }
+          - { image: qap-cg, dockerfile: channel-gateway/Dockerfile, context: . }
+          - { image: qap-scheduler, dockerfile: scheduler/Dockerfile, context: . }
+          - { image: qap-env-runner-k8s, dockerfile: env-runner-k8s/Dockerfile, context: . }
+          - { image: qap-skills-content-service, dockerfile: skills-content-service/Dockerfile, context: . }
+          - { image: qap-sandbox, dockerfile: sandbox-service/Dockerfile, context: . }
+          - { image: qap-browser, dockerfile: browser-service/Dockerfile, context: . }
+          - { image: qap-memory-fuse, dockerfile: memory-fuse/Dockerfile, context: memory-fuse }
+          - { image: qap-agent-claude-code, dockerfile: agents/claude-code/Dockerfile, context: . }
+          - { image: qap-agent-codex, dockerfile: agents/codex/Dockerfile, context: . }
+          - { image: qap-agent-goose, dockerfile: agents/goose/Dockerfile, context: . }
     steps:
       - uses: actions/checkout@v4
 
@@ -67,8 +67,8 @@ jobs:
             want="${{ github.event.inputs.service }}"
             if [ -z "$want" ] || [ "$want" = "$img" ]; then build=true; fi
           elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            ref="${GITHUB_REF_NAME}"     # e.g. nap-cp-v1.2.0
-            tagimg="${ref%-v*}"          # nap-cp
+            ref="${GITHUB_REF_NAME}"     # e.g. qap-cp-v1.2.0
+            tagimg="${ref%-v*}"          # qap-cp
             if [ "$tagimg" = "$img" ]; then build=true; fi
           fi
           echo "build=$build" >> "$GITHUB_OUTPUT"
@@ -131,17 +131,17 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - nap-cp
-          - nap-cg
-          - nap-scheduler
-          - nap-env-runner-k8s
-          - nap-skills-content-service
-          - nap-sandbox
-          - nap-browser
-          - nap-memory-fuse
-          - nap-agent-claude-code
-          - nap-agent-codex
-          - nap-agent-goose
+          - qap-cp
+          - qap-cg
+          - qap-scheduler
+          - qap-env-runner-k8s
+          - qap-skills-content-service
+          - qap-sandbox
+          - qap-browser
+          - qap-memory-fuse
+          - qap-agent-claude-code
+          - qap-agent-codex
+          - qap-agent-goose
     steps:
       # Same gate as the build job, plus the final tag set.
       - name: Gate & tags
@@ -156,8 +156,8 @@ jobs:
             want="${{ github.event.inputs.service }}"
             if [ -z "$want" ] || [ "$want" = "$img" ]; then build=true; fi
           elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            ref="${GITHUB_REF_NAME}"     # e.g. nap-cp-v1.2.0
-            tagimg="${ref%-v*}"          # nap-cp
+            ref="${GITHUB_REF_NAME}"     # e.g. qap-cp-v1.2.0
+            tagimg="${ref%-v*}"          # qap-cp
             ver="v${ref##*-v}"           # v1.2.0
             if [ "$tagimg" = "$img" ]; then
               build=true

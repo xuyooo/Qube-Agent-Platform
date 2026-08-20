@@ -1,7 +1,7 @@
 # BatchSandbox pod template for OpenSandbox. Mounted into opensandbox-server at
 # /etc/opensandbox/sandbox-template.yaml (referenced by config.toml's
 # batchsandbox_template_file). Defines the base pod spec OpenSandbox uses when
-# spawning sandbox workloads for NAP. Add nodeSelector / tolerations / resources
+# spawning sandbox workloads for QAP. Add nodeSelector / tolerations / resources
 # here to pin or size sandbox pods. See README "Enabling Code Sandbox".
 metadata:
 spec:

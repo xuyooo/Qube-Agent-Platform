@@ -5,7 +5,7 @@ set -euo pipefail
 # Build the single-node-prep tarball.
 # ============================================================================
 # Output:
-#   ../../nap-self-host-single-node-prep-<arch>-<fp8>.tar.gz
+#   ../../qap-self-host-single-node-prep-<arch>-<fp8>.tar.gz
 #
 # The filename carries an 8-char content fingerprint, NOT the platform release.
 # The prep bundle changes far less often than the platform itself — it only
@@ -24,7 +24,7 @@ set -euo pipefail
 #   nfs-debs/                           (offline nfs-common for no-apt hosts)
 #
 # The in-cluster NFS server image is a public image already carried by the main
-# bundle (offline/nap-images.tar.gz), so it is NOT special-cased here.
+# bundle (offline/qap-images.tar.gz), so it is NOT special-cased here.
 #
 # Usage:
 #   ./package-prep.sh --arch amd64 [--version <label>]
@@ -113,7 +113,7 @@ curl -fsSL -o "$TMP_DL/k9s.tar.gz" \
 tar -xzf "$TMP_DL/k9s.tar.gz" -C "$TMP_DL" k9s
 install -m 0755 "$TMP_DL/k9s" "$DEST/k9s"
 
-# Host needs mount.nfs (nfs-common) to mount the in-cluster nap-nfs-server svc
+# Host needs mount.nfs (nfs-common) to mount the in-cluster qap-nfs-server svc
 # for nfs-subdir-external-provisioner. Cloud images / minimal Ubuntu installs
 # don't ship it. Fetch the deb + transitive deps from a clean Ubuntu container
 # so airgapped hosts can dpkg -i them in preinstall.sh.
@@ -171,7 +171,7 @@ EOF
 cp "$FP_MANIFEST" "$DEST/PREP_FINGERPRINT_INPUTS"
 rm -f "$FP_MANIFEST"
 
-OUT="$SCRIPT_DIR/../../nap-self-host-single-node-prep-${ARCH}-${FP8}.tar.gz"
+OUT="$SCRIPT_DIR/../../qap-self-host-single-node-prep-${ARCH}-${FP8}.tar.gz"
 echo "==> Packaging $OUT"
 tar -C "$STAGING" -czf "$OUT" single-node-prep
 ls -lh "$OUT"

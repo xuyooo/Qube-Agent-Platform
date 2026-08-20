@@ -1,6 +1,6 @@
 # Docs Site
 
-Bilingual (English + Simplified Chinese) documentation site for Neutree Agent
+Bilingual (English + Simplified Chinese) documentation site for Qube Agent
 Platform, built with [Astro](https://astro.build) + [Starlight](https://starlight.astro.build).
 
 ```bash

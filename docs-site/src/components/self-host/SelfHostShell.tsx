@@ -25,7 +25,7 @@ interface TabDef {
 
 const STR = {
   en: {
-    headEyebrow: 'Neutree Agent Platform — Self-Host',
+    headEyebrow: 'Qube Agent Platform — Self-Host',
     headTag: 'Install the platform on your own Kubernetes cluster — pulling images from a public registry, or fully air-gapped from your own',
     printTitle: 'Print all sections together or export to PDF',
     printBtn: 'Print / Export PDF',
@@ -39,7 +39,7 @@ const STR = {
     },
   },
   'zh-CN': {
-    headEyebrow: 'Neutree Agent Platform — 私有化部署',
+    headEyebrow: 'Qube Agent Platform — 私有化部署',
     headTag: '在你自己的 Kubernetes 集群上安装平台 —— 从公共镜像仓库拉取镜像，或从你自己的私有仓库完全离线部署',
     printTitle: '将所有章节一起打印或导出为 PDF',
     printBtn: '打印 / 导出 PDF',
@@ -312,7 +312,7 @@ const PANEL_STR = {
         <code>openssl rand -hex 32</code>). <strong>Once a machine-internal secret is set, do not change it on upgrade</strong> — otherwise issued session tokens and the existing database become unusable.
       </>
     ),
-    cfgPrintNote: <>The interactive configuration generator is online at <a href="https://docs.neutree.ai/nap/self-host/#configure">docs.neutree.ai/nap/self-host/#configure</a>. For full field documentation see <code>self-host/values.env.example</code>.</>,
+    cfgPrintNote: <>The interactive configuration generator is online at <a href="https://docs.neutree.ai/qap/self-host/#configure">docs.neutree.ai/qap/self-host/#configure</a>. For full field documentation see <code>self-host/values.env.example</code>.</>,
     // Install
     inToolsH2: 'Tools on the operator machine',
     inToolsIntro: 'The host running the installer (distinct from the cluster nodes) needs:',
@@ -325,14 +325,14 @@ const PANEL_STR = {
     inQuickH2: 'Quick start',
     inQuickAfter: <>When it finishes, open <code>http://&lt;NAP_HOST&gt;:&lt;NAP_NODE_PORT&gt;</code> and log in with the admin username / password from <code>values.env</code>.</>,
     inQuickAltP: <>Or skip the clone — the bootstrap script fetches the installer itself and targets your current kubeconfig. Two things can't be autodetected: the host users will reach the platform at, and RWX storage (an external NFS export, or an RWX-capable StorageClass that already exists in the cluster):</>,
-    inQuickAltNote: <>This installs the full profile with defaults; add <code>--prepare-only</code> to review <code>/opt/nap/values.env</code> first, then re-run without it.</>,
+    inQuickAltNote: <>This installs the full profile with defaults; add <code>--prepare-only</code> to review <code>/opt/qap/values.env</code> first, then re-run without it.</>,
     inStepsH2: 'Step by step',
     inStep1H3: 'Get the installer',
-    inStep1Note: <>For a connected install, all first-party images are pulled from the public registry (<code>${'{'}REGISTRY{'}'}</code>, default <code>ghcr.io/neutree-ai/agent-platform</code>). Override <code>REGISTRY</code> only if you mirror the images elsewhere.</>,
+    inStep1Note: <>For a connected install, all first-party images are pulled from the public registry (<code>${'{'}REGISTRY{'}'}</code>, default <code>ghcr.io/xuyooo/qap</code>). Override <code>REGISTRY</code> only if you mirror the images elsewhere.</>,
     agInstallSummary: 'build the image bundle and push it into your registry',
-    agInstall1: <>On a connected host, <code>./offline/save-images.sh</code> pulls every first-party and prerequisite image and writes <code>offline/nap-images.tar.gz</code> plus the prereq charts under <code>prereqs/</code>. Move it to the air-gapped side, then <code>./offline/load-images.sh --registry &lt;your-registry&gt;</code> (add <code>--insecure-registry</code> for a plain-HTTP registry) loads, retags, and pushes every image into your registry and prints the exact <code>REGISTRY=</code> / <code>*_IMAGE=</code> lines to paste into <code>values.env</code>. If a vendor delivered a prebuilt bundle, skip <code>save-images</code> and start at <code>load-images</code>.</>,
+    agInstall1: <>On a connected host, <code>./offline/save-images.sh</code> pulls every first-party and prerequisite image and writes <code>offline/qap-images.tar.gz</code> plus the prereq charts under <code>prereqs/</code>. Move it to the air-gapped side, then <code>./offline/load-images.sh --registry &lt;your-registry&gt;</code> (add <code>--insecure-registry</code> for a plain-HTTP registry) loads, retags, and pushes every image into your registry and prints the exact <code>REGISTRY=</code> / <code>*_IMAGE=</code> lines to paste into <code>values.env</code>. If a vendor delivered a prebuilt bundle, skip <code>save-images</code> and start at <code>load-images</code>.</>,
     agInstall2: <>With those set, the remaining steps run exactly as they do online — <code>./install.sh</code> auto-detects the offline prereq bundles and builds the pull secret from <code>REGISTRY_USERNAME</code> / <code>REGISTRY_PASSWORD</code>. For a single machine with no external registry, use the <a href={withBase('/self-host/single-node/')}>single-node profile</a> instead.</>,
-    agPrefix: <><strong>Naming.</strong> Every first-party image carries the <code>values.env</code> <code>APP_PREFIX</code> (default <code>nap</code>, as in <code>nap-cp</code>). It is for <strong>redistributors only</strong> — a non-default prefix requires every first-party image to be rebuilt under that prefix in your own registry; the public registry only hosts <code>nap-*</code>, and the installer refuses the combination. A redistribution that kept a different prefix builds the bundle with its own <code>values.env</code> and runs <code>load-images.sh --app-prefix &lt;prefix&gt;</code> so the loader finds the prefixed images. The installer also refuses to change the prefix of an existing install.</>,
+    agPrefix: <><strong>Naming.</strong> Every first-party image carries the <code>values.env</code> <code>APP_PREFIX</code> (default <code>qap</code>, as in <code>qap-cp</code>). It is for <strong>redistributors only</strong> — a non-default prefix requires every first-party image to be rebuilt under that prefix in your own registry; the public registry only hosts <code>qap-*</code>, and the installer refuses the combination. A redistribution that kept a different prefix builds the bundle with its own <code>values.env</code> and runs <code>load-images.sh --app-prefix &lt;prefix&gt;</code> so the loader finds the prefixed images. The installer also refuses to change the prefix of an existing install.</>,
     inRegAuthNote: <>If your registry needs a login, set <code>REGISTRY_USERNAME</code> / <code>REGISTRY_PASSWORD</code> in <code>values.env</code> — the installer builds a <code>regcred</code> imagePullSecret from them automatically and attaches it to the platform, CNPG, and the workspace pods.</>,
     inStep2H3: 'Prepare values.env',
     inStep2GenBtn: 'configuration generator',
@@ -341,7 +341,7 @@ const PANEL_STR = {
     inStep2P1End: ' directory.',
     inStep2Note: <>You can also edit it on the command line: <code>cp values.env.example values.env</code>, run <code>./gen-secrets.sh</code> to fill all machine-internal secrets, then <code>vi values.env</code> to set <code>NAP_HOST</code>, the admin password, and storage settings.</>,
     inStep3H3: 'Run the installer',
-    inStep3P: <>The same command serves first-time install and upgrade; it is idempotent and safe to re-run. It installs prerequisites (the CloudNativePG operator and the NFS subdir provisioner), renders the manifests with your <code>values.env</code> and applies them, then seeds the admin user, OAuth clients, and the MCP catalog via one-shot Jobs. <code>nap-cp</code> runs SQL migrations on startup.</>,
+    inStep3P: <>The same command serves first-time install and upgrade; it is idempotent and safe to re-run. It installs prerequisites (the CloudNativePG operator and the NFS subdir provisioner), renders the manifests with your <code>values.env</code> and applies them, then seeds the admin user, OAuth clients, and the MCP catalog via one-shot Jobs. <code>qap-cp</code> runs SQL migrations on startup.</>,
     inStep4H3: 'Log in',
     inStep4P: <>Open <code>http://&lt;NAP_HOST&gt;:&lt;NAP_NODE_PORT&gt;</code> in a browser and log in with <code>ADMIN_USERNAME</code> and the <code>ADMIN_PASSWORD</code> from{' '}<code>values.env</code>.</>,
     inSubH2: 'install.sh subcommands',
@@ -351,17 +351,17 @@ const PANEL_STR = {
     // Upgrade
     upPathH2: 'Upgrade',
     upPathP1: <>Upgrading is the same command as a first install. First refresh the installer itself to the new release (<code>git pull</code> in the cloned repo — the new manifests ship with it), pin <code>IMAGE_TAG</code> to the new release tag (or keep <code>latest</code>) in your existing <code>values.env</code>, then re-run:</>,
-    upPathP2: <><code>install.sh</code> is idempotent, so the upgrade path matches the first install. It re-renders and re-applies the manifests and refreshes the first-party deployments to pick up new image digests. SQL migrations run automatically when <code>nap-cp</code> starts.</>,
+    upPathP2: <><code>install.sh</code> is idempotent, so the upgrade path matches the first install. It re-renders and re-applies the manifests and refreshes the first-party deployments to pick up new image digests. SQL migrations run automatically when <code>qap-cp</code> starts.</>,
     upCallout: <><strong>Do not change secrets</strong> · Reuse the <code>values.env</code> from your first install. If a machine-internal secret (e.g. <code>JWT_SECRET</code>) changes, all issued session tokens are invalidated and the existing database can no longer be reached.</>,
     agUpgradeSummary: 'refresh the installer and the registry contents first',
     agUpgrade: <>Refresh both halves first: on the connected host re-run <code>offline/save-images.sh</code> to build a bundle with the new tags, copy the new <code>self-host/</code> directory together with the bundle to the air-gapped side, push with <code>offline/load-images.sh</code>, then run the same <code>./install.sh</code>.</>,
     // Troubleshoot
     tsErrH2: 'install.sh fails',
-    tsErrIntro: <>First find the deployment that isn't ready (replace <code>$NAMESPACE</code> with{' '}<code>NAMESPACE</code> from <code>values.env</code>, default <code>nap</code>):</>,
+    tsErrIntro: <>First find the deployment that isn't ready (replace <code>$NAMESPACE</code> with{' '}<code>NAMESPACE</code> from <code>values.env</code>, default <code>qap</code>):</>,
     tsErrCommon: 'Common causes:',
     tsErrPull: <><strong>Images won't pull</strong> → <strong>connected</strong>: confirm the nodes can reach{' '}<code>ghcr.io</code> / <code>docker.io</code> / <code>registry.k8s.io</code>. <strong>Air-gapped</strong>: confirm <code>load-images.sh</code> pushed the bundle into your <code>REGISTRY</code> and that <code>REGISTRY_USERNAME</code> / <code>REGISTRY_PASSWORD</code> are set — the installer builds the regcred pull secret from them. A plain-HTTP registry also needs the nodes' container runtime to trust it as insecure.</>,
     tsErrPvc: <><strong>PVCs stuck Pending</strong> → run{' '}<code>kubectl -n $NAMESPACE get pvc</code> and check the StorageClass exists and its provisioner is healthy</>,
-    tsErrPg: <><strong>PostgreSQL won't start</strong> →{' '}<code>kubectl -n $NAMESPACE describe cluster.postgresql.cnpg.io nap-pg</code>; the most common cause is the CSI behind <code>PG_STORAGE_CLASS</code> not being writable</>,
+    tsErrPg: <><strong>PostgreSQL won't start</strong> →{' '}<code>kubectl -n $NAMESPACE describe cluster.postgresql.cnpg.io qap-pg</code>; the most common cause is the CSI behind <code>PG_STORAGE_CLASS</code> not being writable</>,
     tsErrPort: <><strong>NodePort already in use</strong> → change <code>NAP_NODE_PORT</code> /{' '}<code>BROWSER_NODE_PORT</code> / <code>SANDBOX_NODE_PORT</code> and re-run{' '}<code>install.sh</code></>,
     tsBlankH2: 'Blank page after login / APIs return 401',
     tsBlankP: <>Usually because <code>JWT_SECRET</code> changed during an upgrade — all issued tokens are invalidated. Roll <code>JWT_SECRET</code> in{' '}<code>values.env</code> back to its first-install value and re-run{' '}<code>./install.sh</code>.</>,
@@ -378,7 +378,7 @@ const PANEL_STR = {
     tsEaccesConfirm: <><strong>Confirm the StorageClass backend first</strong>, then decide how to fix:</>,
     tsEaccesBullet1: <>Returns <code>cluster.local/nfs-subdir-external-provisioner</code> — this is the installer's own provisioner, which <code>mkdir 0777</code>s subdirectories, so this normally doesn't happen; if it still errors, check the actual NFS server permissions.</>,
     tsEaccesBullet2: <>Returns <code>nfs.csi.k8s.io</code> (or another CSI driver such as SFS) — apply the{' '}<code>mountPermissions: "0777"</code> fix above.</>,
-    tsEaccesPitfall: <><strong>Common pitfall</strong>: the installer's NFS provisioner step has a "<strong>skip if a StorageClass of the same name already exists</strong>" check (see <code>install_nfs_provisioner</code>). If a StorageClass named{' '}<code>NFS_STORAGE_CLASS</code> (default <code>nfs-nap</code>) already exists before install and is backed by <code>nfs.csi.k8s.io</code> / SFS,
+    tsEaccesPitfall: <><strong>Common pitfall</strong>: the installer's NFS provisioner step has a "<strong>skip if a StorageClass of the same name already exists</strong>" check (see <code>install_nfs_provisioner</code>). If a StorageClass named{' '}<code>NFS_STORAGE_CLASS</code> (default <code>nfs-qap</code>) already exists before install and is backed by <code>nfs.csi.k8s.io</code> / SFS,
           the installer <strong>silently skips</strong> and does not deploy the bundled nfs-subdir provisioner, so agent workspaces land on a 0755 backend and hit this error.
           In that case <code>kubectl get deploy -n $NAMESPACE nfs-subdir-external-provisioner</code> returns NotFound.
           Fix either way: add <code>mountPermissions: "0777"</code> to that SC (as above), or delete the pre-existing SC / use a different <code>NFS_STORAGE_CLASS</code> name and re-run the installer so nfs-subdir actually installs.</>,
@@ -458,7 +458,7 @@ const PANEL_STR = {
         <code>openssl rand -hex 32</code>）。<strong>机器内部密钥一旦设定，升级时不要改动</strong> — 否则已签发的会话 token 和现有数据库都会失效。
       </>
     ),
-    cfgPrintNote: <>交互式配置生成器在线地址为 <a href="https://docs.neutree.ai/nap/self-host/#configure">docs.neutree.ai/nap/self-host/#configure</a>。完整字段文档见 <code>self-host/values.env.example</code>。</>,
+    cfgPrintNote: <>交互式配置生成器在线地址为 <a href="https://docs.neutree.ai/qap/self-host/#configure">docs.neutree.ai/qap/self-host/#configure</a>。完整字段文档见 <code>self-host/values.env.example</code>。</>,
     // Install
     inToolsH2: '操作者机器上的工具',
     inToolsIntro: '运行安装器的主机（与集群节点不同）需要：',
@@ -471,14 +471,14 @@ const PANEL_STR = {
     inQuickH2: '快速开始',
     inQuickAfter: <>完成后打开 <code>http://&lt;NAP_HOST&gt;:&lt;NAP_NODE_PORT&gt;</code>，用 <code>values.env</code> 里的管理员用户名 / 密码登录。</>,
     inQuickAltP: <>也可以不 clone —— 引导脚本会自行下载安装器并作用于当前 kubeconfig。有两件事无法自动探测，需要显式指明：用户访问平台的主机名，以及 RWX 存储（外部 NFS 导出，或集群中已有的支持 RWX 的 StorageClass）：</>,
-    inQuickAltNote: <>这会按默认值安装完整 profile；加 <code>--prepare-only</code> 可先检查 <code>/opt/nap/values.env</code>，再去掉该参数重新执行。</>,
+    inQuickAltNote: <>这会按默认值安装完整 profile；加 <code>--prepare-only</code> 可先检查 <code>/opt/qap/values.env</code>，再去掉该参数重新执行。</>,
     inStepsH2: '分步操作',
     inStep1H3: '获取安装器',
-    inStep1Note: <>联网安装时，所有第一方镜像都从公共仓库拉取（<code>${'{'}REGISTRY{'}'}</code>，默认 <code>ghcr.io/neutree-ai/agent-platform</code>）。仅当你把镜像放到别处镜像源时才覆盖 <code>REGISTRY</code>。</>,
+    inStep1Note: <>联网安装时，所有第一方镜像都从公共仓库拉取（<code>${'{'}REGISTRY{'}'}</code>，默认 <code>ghcr.io/xuyooo/qap</code>）。仅当你把镜像放到别处镜像源时才覆盖 <code>REGISTRY</code>。</>,
     agInstallSummary: '构建镜像包并推入你的仓库',
-    agInstall1: <>在一台联网机器上，<code>./offline/save-images.sh</code> 会拉取全部第一方与前置镜像，产出 <code>offline/nap-images.tar.gz</code> 以及 <code>prereqs/</code> 下的前置 chart。把它拷到隔离侧，再用 <code>./offline/load-images.sh --registry &lt;你的仓库&gt;</code>（纯 HTTP 仓库加 <code>--insecure-registry</code>）加载、重打 tag 并把所有镜像推入你的仓库，同时打印出需要粘贴进 <code>values.env</code> 的 <code>REGISTRY=</code> / <code>*_IMAGE=</code> 各行。若厂商已交付预构建镜像包，跳过 <code>save-images</code>，直接从 <code>load-images</code> 开始。</>,
+    agInstall1: <>在一台联网机器上，<code>./offline/save-images.sh</code> 会拉取全部第一方与前置镜像，产出 <code>offline/qap-images.tar.gz</code> 以及 <code>prereqs/</code> 下的前置 chart。把它拷到隔离侧，再用 <code>./offline/load-images.sh --registry &lt;你的仓库&gt;</code>（纯 HTTP 仓库加 <code>--insecure-registry</code>）加载、重打 tag 并把所有镜像推入你的仓库，同时打印出需要粘贴进 <code>values.env</code> 的 <code>REGISTRY=</code> / <code>*_IMAGE=</code> 各行。若厂商已交付预构建镜像包，跳过 <code>save-images</code>，直接从 <code>load-images</code> 开始。</>,
     agInstall2: <>设好之后，后续步骤与联网时完全一致 —— <code>./install.sh</code> 会自动识别离线前置包，并据 <code>REGISTRY_USERNAME</code> / <code>REGISTRY_PASSWORD</code> 生成 pull secret。若是单台机器、没有外部仓库，改用 <a href={withBase('/zh-cn/self-host/single-node/')}>单节点 profile</a>。</>,
-    agPrefix: <><strong>命名</strong>：每个第一方镜像都带 <code>values.env</code> 里的 <code>APP_PREFIX</code>（默认 <code>nap</code>，即 <code>nap-cp</code>）。它<strong>仅供再分发者使用</strong> —— 非默认前缀要求所有第一方镜像都以该前缀重建在你自己的仓库里；公共仓库只发布 <code>nap-*</code>，安装器会直接拒绝这种组合。沿用其他前缀的再分发版本，用自己的 <code>values.env</code> 构建镜像包，并以 <code>load-images.sh --app-prefix &lt;前缀&gt;</code> 加载，脚本才能找到带前缀的镜像。安装器同样拒绝修改现有安装的前缀。</>,
+    agPrefix: <><strong>命名</strong>：每个第一方镜像都带 <code>values.env</code> 里的 <code>APP_PREFIX</code>（默认 <code>qap</code>，即 <code>qap-cp</code>）。它<strong>仅供再分发者使用</strong> —— 非默认前缀要求所有第一方镜像都以该前缀重建在你自己的仓库里；公共仓库只发布 <code>qap-*</code>，安装器会直接拒绝这种组合。沿用其他前缀的再分发版本，用自己的 <code>values.env</code> 构建镜像包，并以 <code>load-images.sh --app-prefix &lt;前缀&gt;</code> 加载，脚本才能找到带前缀的镜像。安装器同样拒绝修改现有安装的前缀。</>,
     inRegAuthNote: <>若你的仓库需要登录，在 <code>values.env</code> 里设置 <code>REGISTRY_USERNAME</code> / <code>REGISTRY_PASSWORD</code> —— 安装器会据此自动创建 <code>regcred</code> imagePullSecret，并挂到平台、CNPG 与 workspace pod 上。</>,
     inStep2H3: '准备 values.env',
     inStep2GenBtn: '配置生成器',
@@ -487,7 +487,7 @@ const PANEL_STR = {
     inStep2P1End: ' 目录下。',
     inStep2Note: <>你也可以在命令行编辑：<code>cp values.env.example values.env</code>，运行 <code>./gen-secrets.sh</code> 填好所有机器内部密钥，再用 <code>vi values.env</code> 设置 <code>NAP_HOST</code>、管理员密码和存储配置。</>,
     inStep3H3: '运行安装器',
-    inStep3P: <>首次安装和升级用的是同一条命令；它是幂等的，可以安全地重复运行。它会安装前置组件（CloudNativePG operator 和 NFS subdir provisioner），用你的 <code>values.env</code> 渲染 manifest 并 apply，然后通过一次性 Job 写入管理员用户、OAuth client 和 MCP catalog。<code>nap-cp</code> 在启动时运行 SQL 迁移。</>,
+    inStep3P: <>首次安装和升级用的是同一条命令；它是幂等的，可以安全地重复运行。它会安装前置组件（CloudNativePG operator 和 NFS subdir provisioner），用你的 <code>values.env</code> 渲染 manifest 并 apply，然后通过一次性 Job 写入管理员用户、OAuth client 和 MCP catalog。<code>qap-cp</code> 在启动时运行 SQL 迁移。</>,
     inStep4H3: '登录',
     inStep4P: <>在浏览器打开 <code>http://&lt;NAP_HOST&gt;:&lt;NAP_NODE_PORT&gt;</code>，用 <code>values.env</code> 里的 <code>ADMIN_USERNAME</code> 和{' '}<code>ADMIN_PASSWORD</code> 登录。</>,
     inSubH2: 'install.sh 子命令',
@@ -497,17 +497,17 @@ const PANEL_STR = {
     // Upgrade
     upPathH2: '升级',
     upPathP1: <>升级与首次安装用的是同一条命令。先把安装器本身更新到新版本（在 clone 的 repo 里 <code>git pull</code> —— 新的 manifest 随之而来），在现有 <code>values.env</code> 里把 <code>IMAGE_TAG</code> 固定到新的发布 tag（或保持 <code>latest</code>），然后重新运行：</>,
-    upPathP2: <><code>install.sh</code> 是幂等的，所以升级路径与首次安装一致。它会重新渲染并重新 apply manifest，并刷新第一方 deployment 以拉取新的镜像 digest。<code>nap-cp</code> 启动时会自动运行 SQL 迁移。</>,
+    upPathP2: <><code>install.sh</code> 是幂等的，所以升级路径与首次安装一致。它会重新渲染并重新 apply manifest，并刷新第一方 deployment 以拉取新的镜像 digest。<code>qap-cp</code> 启动时会自动运行 SQL 迁移。</>,
     upCallout: <><strong>不要修改密钥</strong> · 复用首次安装时的 <code>values.env</code>。如果机器内部密钥（例如 <code>JWT_SECRET</code>）发生变化，所有已签发的会话 token 都会失效，现有数据库也将无法访问。</>,
     agUpgradeSummary: '先更新安装器与仓库内容',
     agUpgrade: <>两样都要先更新：在联网机器上重新执行 <code>offline/save-images.sh</code> 构建含新 tag 的镜像包，把新的 <code>self-host/</code> 目录连同镜像包一起拷到隔离侧，用 <code>offline/load-images.sh</code> 推入仓库，再跑同一条 <code>./install.sh</code>。</>,
     // Troubleshoot
     tsErrH2: 'install.sh 失败',
-    tsErrIntro: <>先找出未就绪的 deployment（把 <code>$NAMESPACE</code> 替换为{' '}<code>values.env</code> 里的 <code>NAMESPACE</code>，默认 <code>nap</code>）：</>,
+    tsErrIntro: <>先找出未就绪的 deployment（把 <code>$NAMESPACE</code> 替换为{' '}<code>values.env</code> 里的 <code>NAMESPACE</code>，默认 <code>qap</code>）：</>,
     tsErrCommon: '常见原因：',
     tsErrPull: <><strong>镜像拉不下来</strong> → <strong>联网</strong>：确认节点能访问{' '}<code>ghcr.io</code> / <code>docker.io</code> / <code>registry.k8s.io</code>。<strong>隔离网络</strong>：确认 <code>load-images.sh</code> 已把镜像包推入你的 <code>REGISTRY</code>，且 <code>REGISTRY_USERNAME</code> / <code>REGISTRY_PASSWORD</code> 已设置 —— 安装器会据此生成 regcred pull secret。纯 HTTP 仓库还需让节点容器运行时将其信任为 insecure。</>,
     tsErrPvc: <><strong>PVC 卡在 Pending</strong> → 运行{' '}<code>kubectl -n $NAMESPACE get pvc</code>，检查 StorageClass 是否存在、其 provisioner 是否健康</>,
-    tsErrPg: <><strong>PostgreSQL 起不来</strong> →{' '}<code>kubectl -n $NAMESPACE describe cluster.postgresql.cnpg.io nap-pg</code>；最常见的原因是 <code>PG_STORAGE_CLASS</code> 背后的 CSI 不可写</>,
+    tsErrPg: <><strong>PostgreSQL 起不来</strong> →{' '}<code>kubectl -n $NAMESPACE describe cluster.postgresql.cnpg.io qap-pg</code>；最常见的原因是 <code>PG_STORAGE_CLASS</code> 背后的 CSI 不可写</>,
     tsErrPort: <><strong>NodePort 已被占用</strong> → 修改 <code>NAP_NODE_PORT</code> /{' '}<code>BROWSER_NODE_PORT</code> / <code>SANDBOX_NODE_PORT</code> 并重新运行{' '}<code>install.sh</code></>,
     tsBlankH2: '登录后白屏 / API 返回 401',
     tsBlankP: <>通常是因为升级时 <code>JWT_SECRET</code> 发生了变化 — 所有已签发 token 都失效了。把 <code>values.env</code> 里的 <code>JWT_SECRET</code>{' '}改回首次安装时的值，并重新运行{' '}<code>./install.sh</code>。</>,
@@ -524,7 +524,7 @@ const PANEL_STR = {
     tsEaccesConfirm: <><strong>先确认 StorageClass 的后端</strong>，再决定如何修复：</>,
     tsEaccesBullet1: <>返回 <code>cluster.local/nfs-subdir-external-provisioner</code> — 这是安装器自带的 provisioner，会对子目录 <code>mkdir 0777</code>，所以通常不会出现这个问题；如果仍报错，检查 NFS server 上的实际权限。</>,
     tsEaccesBullet2: <>返回 <code>nfs.csi.k8s.io</code>（或 SFS 等其他 CSI 驱动）— 应用上面的{' '}<code>mountPermissions: "0777"</code> 修复。</>,
-    tsEaccesPitfall: <><strong>常见坑</strong>：安装器的 NFS provisioner 步骤有一个"<strong>同名 StorageClass 已存在则跳过</strong>"的检查（见 <code>install_nfs_provisioner</code>）。如果安装前就已存在一个名为{' '}<code>NFS_STORAGE_CLASS</code>（默认 <code>nfs-nap</code>）且后端是 <code>nfs.csi.k8s.io</code> / SFS 的 StorageClass，
+    tsEaccesPitfall: <><strong>常见坑</strong>：安装器的 NFS provisioner 步骤有一个"<strong>同名 StorageClass 已存在则跳过</strong>"的检查（见 <code>install_nfs_provisioner</code>）。如果安装前就已存在一个名为{' '}<code>NFS_STORAGE_CLASS</code>（默认 <code>nfs-qap</code>）且后端是 <code>nfs.csi.k8s.io</code> / SFS 的 StorageClass，
           安装器会<strong>静默跳过</strong>，不部署自带的 nfs-subdir provisioner，于是 Agent Workspace 落到 0755 的后端上并触发该错误。
           此时 <code>kubectl get deploy -n $NAMESPACE nfs-subdir-external-provisioner</code> 返回 NotFound。
           两种修法皆可：给该 SC 加上 <code>mountPermissions: "0777"</code>（如上），或删除已存在的 SC / 改用一个不同的 <code>NFS_STORAGE_CLASS</code> 名称并重新运行安装器，让 nfs-subdir 真正装上。</>,
@@ -672,7 +672,7 @@ function Overview({ onGo, locale = 'en' }: { onGo: (id: TabId) => void; locale?:
           <CodeBlock lang="yaml" locale={locale}>{`apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: nap-installer
+  name: qap-installer
 rules:
   - apiGroups: [apiextensions.k8s.io]
     resources: [customresourcedefinitions]
@@ -761,11 +761,11 @@ vi values.env                   # set NAP_HOST, ADMIN_PASSWORD, storage, etc.
         <p>{t.inQuickAfter}</p>
         <p>{t.inQuickAltP}</p>
         <CodeBlock locale={locale}>{`# with an external NFS server
-curl -sfL https://docs.neutree.ai/nap/get.sh \\
+curl -sfL https://docs.neutree.ai/qap/get.sh \\
   | sh -s -- --k8s --host=<ip-or-hostname> --nfs-server=<ip> --nfs-path=</export/path>
 
 # with an existing RWX StorageClass
-curl -sfL https://docs.neutree.ai/nap/get.sh \\
+curl -sfL https://docs.neutree.ai/qap/get.sh \\
   | sh -s -- --k8s --host=<ip-or-hostname> --storage-class=<rwx-storageclass>`}</CodeBlock>
         <p class="sh-muted">{t.inQuickAltNote}</p>
       </section>

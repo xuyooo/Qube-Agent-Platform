@@ -15,7 +15,7 @@ import type { JobWithMetadata, PgBoss } from 'pg-boss'
 import { DEAD_LETTER_QUEUE } from './dead-letter'
 
 const QUEUE_NAME = 'skill-reload'
-const NAP_API_URL = process.env.NAP_API_URL || 'http://nap-cp:3000'
+const QAP_API_URL = process.env.QAP_API_URL || 'http://qap-cp:3000'
 // Shared with cp. The fan-out endpoint refuses the call without it, so a
 // missing value surfaces as a failing job rather than a silent no-op. Distinct
 // from sandbox-service's SERVICE_KEY, which is a different secret entirely.
@@ -47,7 +47,7 @@ export async function registerSkillReloadWorker(boss: PgBoss): Promise<void> {
     async (jobs: JobWithMetadata<SkillReloadJob>[]) => {
       for (const job of jobs) {
         const { skillId } = job.data
-        const res = await fetch(`${NAP_API_URL}/svc/v1/skills/${skillId}/reload-fanout`, {
+        const res = await fetch(`${QAP_API_URL}/svc/v1/skills/${skillId}/reload-fanout`, {
           method: 'POST',
           headers: { 'X-Platform-Service-Key': PLATFORM_SERVICE_KEY },
         })

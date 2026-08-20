@@ -23,29 +23,29 @@ import {
 // don't depend on process.env.
 
 const baseCfg: K8sConfig = {
-  namespace: 'nap',
-  namePrefix: 'nap',
-  agentImagePrefix: 'nap-agent',
+  namespace: 'qap',
+  namePrefix: 'qap',
+  agentImagePrefix: 'qap-agent',
   agentImageTag: 'latest',
   storageClass: 'nfs-csi',
   imagePullSecret: '',
   nodeSelector: undefined,
   workspaceStorageSize: '10Gi',
-  cpServiceUrl: 'http://nap-cp:3000',
+  cpServiceUrl: 'http://qap-cp:3000',
   memoryFuseImage: '',
   multiReplica: false,
   afs: {
     enabled: false,
     image: '',
-    controllerAddr: 'afs-controller.nap.svc:9100',
+    controllerAddr: 'afs-controller.qap.svc:9100',
     fuseServerAddr: '127.0.0.1:9101',
     storagePvc: 'afs-shared-storage',
     configMap: 'afs-fuse-config',
   },
 }
 
-const labels = { app: 'nap', component: 'workspace', 'workspace-id': 'ws1' }
-const args = ['nap-ws1', labels, 'ws1', 'claude-code', 'nap-ws1-workspace'] as const
+const labels = { app: 'qap', component: 'workspace', 'workspace-id': 'ws1' }
+const args = ['qap-ws1', labels, 'ws1', 'claude-code', 'qap-ws1-workspace'] as const
 
 describe('buildDeploymentSpec golden master', () => {
   it('minimal: afs off, memory off, no nodeselector/pullsecret/resources', () => {
@@ -55,13 +55,13 @@ describe('buildDeploymentSpec golden master', () => {
   it('afs enabled', () => {
     const cfg: K8sConfig = {
       ...baseCfg,
-      afs: { ...baseCfg.afs, enabled: true, image: 'nap-afs-fuse:latest' },
+      afs: { ...baseCfg.afs, enabled: true, image: 'qap-afs-fuse:latest' },
     }
     expect(buildDeploymentSpec(...args, undefined, cfg)).toMatchSnapshot()
   })
 
   it('memory-fuse enabled', () => {
-    const cfg: K8sConfig = { ...baseCfg, memoryFuseImage: 'nap-memory-fuse:latest' }
+    const cfg: K8sConfig = { ...baseCfg, memoryFuseImage: 'qap-memory-fuse:latest' }
     expect(buildDeploymentSpec(...args, undefined, cfg)).toMatchSnapshot()
   })
 
@@ -70,8 +70,8 @@ describe('buildDeploymentSpec golden master', () => {
       ...baseCfg,
       imagePullSecret: 'regcred',
       nodeSelector: { 'node-group': 'agent' },
-      memoryFuseImage: 'nap-memory-fuse:latest',
-      afs: { ...baseCfg.afs, enabled: true, image: 'nap-afs-fuse:latest' },
+      memoryFuseImage: 'qap-memory-fuse:latest',
+      afs: { ...baseCfg.afs, enabled: true, image: 'qap-afs-fuse:latest' },
     }
     const resources: ComputeResources = {
       cpu_request: '500m',
@@ -93,8 +93,8 @@ describe('buildWorkspacePodTemplate', () => {
       ...baseCfg,
       imagePullSecret: 'regcred',
       nodeSelector: { 'node-group': 'agent' },
-      memoryFuseImage: 'nap-memory-fuse:latest',
-      afs: { ...baseCfg.afs, enabled: true, image: 'nap-afs-fuse:latest' },
+      memoryFuseImage: 'qap-memory-fuse:latest',
+      afs: { ...baseCfg.afs, enabled: true, image: 'qap-afs-fuse:latest' },
     }
     const resources: ComputeResources = { cpu_request: '500m', memory_request: '1Gi' }
     const dep = buildDeploymentSpec(...args, resources, cfg)
@@ -102,7 +102,7 @@ describe('buildWorkspacePodTemplate', () => {
       labels,
       'ws1',
       'claude-code',
-      'nap-ws1-workspace',
+      'qap-ws1-workspace',
       resources,
       cfg,
     )
@@ -115,7 +115,7 @@ describe('buildWorkspacePodTemplate', () => {
       labels,
       'ws1',
       'claude-code',
-      'nap-ws1-workspace',
+      'qap-ws1-workspace',
       undefined,
       baseCfg,
     )
@@ -132,7 +132,7 @@ describe('buildWorkspacePodTemplate', () => {
       labels,
       'ws1',
       'claude-code',
-      'nap-ws1-workspace',
+      'qap-ws1-workspace',
       undefined,
       baseCfg,
     )
@@ -226,7 +226,7 @@ describe('buildStatefulSetSpec', () => {
       labels,
       'ws1',
       'claude-code',
-      'nap-ws1-workspace',
+      'qap-ws1-workspace',
       undefined,
       baseCfg,
     )
@@ -241,12 +241,12 @@ describe('buildStatefulSetSpec', () => {
     const sts = buildStatefulSetSpec(...args, 3, undefined, baseCfg)
     expect(sts.spec?.volumeClaimTemplates).toBeUndefined()
     const wsVolume = sts.spec?.template.spec?.volumes?.find((v) => v.name === 'workspace')
-    expect(wsVolume?.persistentVolumeClaim?.claimName).toBe('nap-ws1-workspace')
+    expect(wsVolume?.persistentVolumeClaim?.claimName).toBe('qap-ws1-workspace')
   })
 
   it('serviceName is the headless service; replicas + policy passed through', () => {
     const sts = buildStatefulSetSpec(...args, 4, undefined, baseCfg)
-    expect(sts.spec?.serviceName).toBe('nap-ws1-hl')
+    expect(sts.spec?.serviceName).toBe('qap-ws1-hl')
     expect(sts.spec?.podManagementPolicy).toBe('Parallel')
     expect(sts.spec?.replicas).toBe(4)
   })
@@ -254,8 +254,8 @@ describe('buildStatefulSetSpec', () => {
 
 describe('buildHeadlessServiceSpec', () => {
   it('is clusterIP:None, named <name>-hl, selects the workspace pods', () => {
-    const svc = buildHeadlessServiceSpec('nap-ws1', labels)
-    expect(svc.metadata?.name).toBe('nap-ws1-hl')
+    const svc = buildHeadlessServiceSpec('qap-ws1', labels)
+    expect(svc.metadata?.name).toBe('qap-ws1-hl')
     expect(svc.spec?.clusterIP).toBe('None')
     expect(svc.spec?.selector).toEqual(labels)
     expect(svc.spec?.ports?.map((p) => p.port)).toEqual([3001, 9101, 9102])
@@ -264,15 +264,15 @@ describe('buildHeadlessServiceSpec', () => {
 
 describe('builtinReplicaAddress', () => {
   it('no replica → the workspace Service DNS (static / single-replica path)', () => {
-    expect(builtinReplicaAddress(baseCfg, 'ws1')).toBe('http://nap-ws1.nap.svc.cluster.local:3001')
+    expect(builtinReplicaAddress(baseCfg, 'ws1')).toBe('http://qap-ws1.qap.svc.cluster.local:3001')
   })
 
   it("a replica id → that pod's per-ordinal headless DNS", () => {
     expect(builtinReplicaAddress(baseCfg, 'ws1', 0)).toBe(
-      'http://nap-ws1-0.nap-ws1-hl.nap.svc.cluster.local:3001',
+      'http://qap-ws1-0.qap-ws1-hl.qap.svc.cluster.local:3001',
     )
     expect(builtinReplicaAddress(baseCfg, 'ws1', 2)).toBe(
-      'http://nap-ws1-2.nap-ws1-hl.nap.svc.cluster.local:3001',
+      'http://qap-ws1-2.qap-ws1-hl.qap.svc.cluster.local:3001',
     )
   })
 })
@@ -280,7 +280,7 @@ describe('builtinReplicaAddress', () => {
 describe('builtinHeadlessAddress', () => {
   it('resolves to the headless Service (all ready pods), no ordinal', () => {
     expect(builtinHeadlessAddress(baseCfg, 'ws1')).toBe(
-      'http://nap-ws1-hl.nap.svc.cluster.local:3001',
+      'http://qap-ws1-hl.qap.svc.cluster.local:3001',
     )
   })
 })

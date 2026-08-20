@@ -5,7 +5,7 @@ description: Task-scoped collaboration, with visibility, the shared directory an
 
 > Teamwork is in preview. The mechanics are stable; the final shape may still move. Tell us how it goes.
 
-NAP has always supported several agents working together: call another one with `@agent/slug` from any workspace, and hand files over through an [AFS](/concepts/afs/) shared directory. But both of those are **workspace-level** settings — an agent is either visible to others or it isn't, a directory is either mounted or it isn't.
+QAP has always supported several agents working together: call another one with `@agent/slug` from any workspace, and hand files over through an [AFS](/concepts/afs/) shared directory. But both of those are **workspace-level** settings — an agent is either visible to others or it isn't, a directory is either mounted or it isn't.
 
 Plenty of collaboration is **task-shaped** instead:
 

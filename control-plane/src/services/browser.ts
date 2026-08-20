@@ -1,7 +1,7 @@
 // Browser-service HTTP client
-// Env: BROWSER_SERVICE_URL (default: http://nap-browser:3005)
+// Env: BROWSER_SERVICE_URL (default: http://qap-browser:3005)
 
-const BROWSER_SERVICE_URL = process.env.BROWSER_SERVICE_URL || 'http://nap-browser:3005'
+const BROWSER_SERVICE_URL = process.env.BROWSER_SERVICE_URL || 'http://qap-browser:3005'
 
 interface BrowserSession {
   id: string

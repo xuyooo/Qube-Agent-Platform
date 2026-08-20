@@ -9,7 +9,7 @@ interface UserIdentity {
   created_at: string
 }
 
-/** Create a binding between a NAP user and an external identity */
+/** Create a binding between a QAP user and an external identity */
 export async function createIdentity(
   userId: string,
   provider: string,
@@ -26,7 +26,7 @@ export async function createIdentity(
   return rows[0] as UserIdentity
 }
 
-/** Find a NAP user by external identity */
+/** Find a QAP user by external identity */
 export async function getIdentityByExternal(
   provider: string,
   externalId: string,

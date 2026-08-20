@@ -19,5 +19,5 @@
 
 | type | 说明 | 示例 |
 |------|------|------|
-| `http` | HTTP Streamable | `http://nap-cp:3000/mcp` |
+| `http` | HTTP Streamable | `http://qap-cp:3000/mcp` |
 | `stdio` | 本地进程 | 需要 `command` + `args` 字段 |

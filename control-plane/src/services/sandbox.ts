@@ -1,7 +1,7 @@
-// NAP Sandbox Service client — calls the sandbox service REST API
-// Env: SANDBOX_SERVICE_URL (default: http://nap-sandbox:3006)
+// QAP Sandbox Service client — calls the sandbox service REST API
+// Env: SANDBOX_SERVICE_URL (default: http://qap-sandbox:3006)
 
-const SANDBOX_SERVICE_URL = process.env.SANDBOX_SERVICE_URL || 'http://nap-sandbox:3006'
+const SANDBOX_SERVICE_URL = process.env.SANDBOX_SERVICE_URL || 'http://qap-sandbox:3006'
 
 function buildHeaders(token: string): Record<string, string> {
   return {

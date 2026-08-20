@@ -1,11 +1,11 @@
 ---
 title: Single-Node k3s Quick Deploy
-description: Bring up the full Neutree Agent Platform on one machine with k3s — the quickest install path, connected or fully air-gapped.
+description: Bring up the full Qube Agent Platform on one machine with k3s — the quickest install path, connected or fully air-gapped.
 ---
 
 import AirgapBlock from '../../../components/self-host/AirgapBlock.tsx'
 
-Install Neutree Agent Platform on a single-node k3s cluster — the quickest way to get the full platform running. The single-node profile matches the full one, just with a single PostgreSQL instance and an in-cluster NFS server for shared storage.
+Install Qube Agent Platform on a single-node k3s cluster — the quickest way to get the full platform running. The single-node profile matches the full one, just with a single PostgreSQL instance and an in-cluster NFS server for shared storage.
 
 The same flow serves two kinds of nodes. **Connected**, every image is pulled from the public registry (`ghcr.io` / `docker.io` / `registry.k8s.io`). For a node with **no internet access**, the extra steps sit inline in collapsible **Air-gapped** blocks — expand one and they all stay open; that path installs from an image bundle via an in-cluster registry, so nothing is pulled from the internet.
 

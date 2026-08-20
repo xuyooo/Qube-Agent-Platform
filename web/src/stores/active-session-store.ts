@@ -51,7 +51,7 @@ export const useActiveSession = create<ActiveSessionStore>()((set) => ({
  * themselves. The plugin only calls a generic capability; the host owns the
  * actual switch (sidebar highlight, provider load, URL sync).
  *
- * Returns a stable callback. `sessionId` is the raw nap session id; the plugin
+ * Returns a stable callback. `sessionId` is the raw qap session id; the plugin
  * passes its own `workspaceId` (the task always lives in the same workspace).
  */
 export function useSessionNavigation(): {

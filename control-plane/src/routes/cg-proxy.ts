@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 
-const CG_DEFAULT = 'http://nap-cg:3002'
+const CG_DEFAULT = 'http://qap-cg:3002'
 
 function getCgBaseUrl(): string {
   return (process.env.CG_URL || CG_DEFAULT).replace(/\/$/, '')

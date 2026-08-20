@@ -275,7 +275,7 @@ export interface SkillMeta {
 
 /**
  * A skill's iteration unit. `git` sources back monorepo imports (one source,
- * many skills — different subpaths); `native` sources back in-NAP authoring
+ * many skills — different subpaths); `native` sources back in-QAP authoring
  * (one source, one skill, with `draft_package` holding the work-in-progress).
  */
 export interface SkillSource {

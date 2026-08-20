@@ -374,14 +374,14 @@ app.route('/api/system-workspaces', systemWorkspacesRoutes)
 app.doc31('/api/docs/openapi.json', {
   openapi: '3.1.0',
   info: {
-    title: 'NAP Control Plane API',
+    title: 'QAP Control Plane API',
     version: '0.1.0',
     description: [
-      'REST API for the NAP control plane.',
+      'REST API for the QAP control plane.',
       '',
       '## Authentication',
       '',
-      'Requests are authenticated with a NAP Service Token. Create one at [NAP > Integration > Service Tokens](/integration/tokens).',
+      'Requests are authenticated with a QAP Service Token. Create one at [QAP > Integration > Service Tokens](/integration/tokens).',
       '',
       'Pass the token as `Authorization: Bearer tos_...` on every request.',
     ].join('\n'),
@@ -392,7 +392,7 @@ app.get(
   '/api/docs',
   Scalar({
     url: '/api/docs/openapi.json',
-    pageTitle: 'NAP Control Plane API',
+    pageTitle: 'QAP Control Plane API',
     favicon: '/favicon.svg',
     // Disable Scalar's hosted AI / MCP / API client integrations
     agent: { disabled: true },

@@ -1,12 +1,12 @@
 import crypto from 'node:crypto'
 import WebSocket from 'ws'
-import { NapClient } from '../../../internal/client/src/index'
+import { QapClient } from '../../../internal/client/src/index'
 import { cancelThreadTurn } from '../lib/cancel-command'
 import { resolveRouteClient } from '../lib/route-client'
 import * as db from '../services/db'
 import { handleRespondAck, wecomSend, wecomSendStream } from './wecom-sender'
 
-const NAP_API_URL = process.env.NAP_API_URL || 'http://localhost:3000'
+const QAP_API_URL = process.env.QAP_API_URL || 'http://localhost:3000'
 const WS_URL = 'wss://openws.work.weixin.qq.com'
 // App-level liveness: re-issue aibot_subscribe every minute and expect its
 // response within 10s. WeCom's WS path through our IDC egress drops control
@@ -73,8 +73,8 @@ export async function startOne(connectorId: string) {
     return
   }
 
-  const napClient = new NapClient({
-    baseUrl: NAP_API_URL,
+  const qapClient = new QapClient({
+    baseUrl: QAP_API_URL,
     serviceToken: platformToken,
   })
 
@@ -198,7 +198,7 @@ export async function startOne(connectorId: string) {
       }
 
       if (frame.cmd === 'aibot_msg_callback') {
-        handleMessage(connector, napClient, ws, frame).catch((e) =>
+        handleMessage(connector, qapClient, ws, frame).catch((e) =>
           console.error(`[WeCom] ${connector.name}: error handling message:`, e),
         )
       }
@@ -303,7 +303,7 @@ function sniffImageType(buf: Buffer): string | null {
 
 async function handleMessage(
   connector: db.Connector,
-  napClient: NapClient,
+  qapClient: QapClient,
   _ws: WebSocket,
   frame: any,
 ) {
@@ -353,7 +353,7 @@ async function handleMessage(
   > => {
     try {
       const buf = await downloadMedia(ref.url, ref.aesKey)
-      const result = await napClient.asr.transcribe(buf, { filename: 'voice.amr' })
+      const result = await qapClient.asr.transcribe(buf, { filename: 'voice.amr' })
       const text = result.text?.trim() ?? ''
       if (!text) {
         voiceError = 'Empty transcript.'
@@ -513,7 +513,7 @@ async function handleMessage(
       `[WeCom] ${connector.name}`,
       activeRoute,
       connector,
-      napClient,
+      qapClient,
       chatId,
     )
     if (ack === null) return
@@ -570,7 +570,7 @@ async function handleMessage(
     `[WeCom] ${connector.name}`,
     activeRoute,
     connector,
-    napClient,
+    qapClient,
   )
   if (!jobClient) return
 

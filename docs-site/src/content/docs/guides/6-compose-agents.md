@@ -9,7 +9,7 @@ Why bother? Because plenty of work is multi-role by nature. Code gets written, t
 
 ## How it works
 
-NAP lets one agent **call another like a tool**, inside a conversation. Making a workspace callable takes two things:
+QAP lets one agent **call another like a tool**, inside a conversation. Making a workspace callable takes two things:
 
 1. A recognizable **slug**
 2. A **visibility** setting

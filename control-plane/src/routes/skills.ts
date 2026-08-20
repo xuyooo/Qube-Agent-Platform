@@ -601,7 +601,7 @@ const createNativeSourceRoute = createRoute({
   method: 'post',
   path: '/sources/native',
   tags: ['skills'],
-  summary: 'Create a native (in-NAP authored) source + initial empty skill',
+  summary: 'Create a native (in-QAP authored) source + initial empty skill',
   security: [{ bearerAuth: [] }],
   request: { body: { content: { 'application/json': { schema: SkillCreateNativeBodySchema } } } },
   responses: {

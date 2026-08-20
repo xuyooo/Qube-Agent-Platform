@@ -1,7 +1,7 @@
 {
   "loginPage": {
     "tagline": "Log in to use the browser service",
-    "loginButton": "Log in with NAP"
+    "loginButton": "Log in with QAP"
   },
   "home": {
     "logout": "Log out",
@@ -39,8 +39,8 @@
     "title": "Usage Guide",
     "auth": {
       "heading": "Authentication",
-      "description": "CDP and Recording API require a NAP Service Token. Go to",
-      "linkLabel": "NAP Platform > Integration > Service Tokens",
+      "description": "CDP and Recording API require a QAP Service Token. Go to",
+      "linkLabel": "QAP Platform > Integration > Service Tokens",
       "descriptionSuffix": "to create one."
     },
     "agentBrowser": {
@@ -61,7 +61,7 @@
       "wssHint": "Click the WSS button in the top bar to copy"
     },
     "code": {
-      "serviceTokenComment": "Service Token created on NAP Platform"
+      "serviceTokenComment": "Service Token created on QAP Platform"
     }
   }
 }

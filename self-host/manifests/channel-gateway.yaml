@@ -37,7 +37,7 @@ spec:
                 secretKeyRef:
                   name: ${APP_PREFIX}-cp-secret
                   key: JWT_SECRET
-            - name: NAP_API_URL
+            - name: QAP_API_URL
               value: "http://${APP_PREFIX}-cp:3000"
           resources:
             requests:

@@ -1431,7 +1431,7 @@ app.openapi(versionPackageRoute, async (c) => {
 app.doc31('/api/docs/openapi.json', {
   openapi: '3.1.0',
   info: {
-    title: 'NAP skills-content-service',
+    title: 'QAP skills-content-service',
     version: '0.3.0',
     description:
       'Owner of skills / skill_sources / skill_versions writes (p3); read-side dufs proxy retained.',
@@ -1440,7 +1440,7 @@ app.doc31('/api/docs/openapi.json', {
 
 app.get(
   '/api/docs',
-  Scalar({ url: '/api/docs/openapi.json', pageTitle: 'NAP skills-content-service' } as any),
+  Scalar({ url: '/api/docs/openapi.json', pageTitle: 'QAP skills-content-service' } as any),
 )
 
 startDufs()

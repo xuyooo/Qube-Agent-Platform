@@ -1,11 +1,11 @@
 ---
-title: What is Neutree Agent Platform
+title: What is Qube Agent Platform
 description: A hosted, multi-user home for the agents you already run, on infrastructure you own
 ---
 
 Most people meet an Agent on their own machine: one terminal, one person, one session at a time. That works right up to the point where the Agent has to be there while the laptop is closed, or where someone on another team wants the same one.
 
-Neutree Agent Platform (NAP) is where that Agent goes next. **Close your laptop. Your agents keep working.** The core, the prompt and the skills stay the ones you already use — what changes is that they run as a hosted, multi-user service inside a Kubernetes cluster you control, online around the clock, waiting for you or an external system to hand over work.
+Qube Agent Platform (QAP) is where that Agent goes next. **Close your laptop. Your agents keep working.** The core, the prompt and the skills stay the ones you already use — what changes is that they run as a hosted, multi-user service inside a Kubernetes cluster you control, online around the clock, waiting for you or an external system to hand over work.
 
 ## What the platform takes care of
 
@@ -21,7 +21,7 @@ That half is the platform's. Yours is deciding what the Agent should do.
 
 ## The life of an Agent: Build → Distribute → Optimize
 
-Running an Agent on NAP means going around these three repeatedly, and the docs are organized along the same thread:
+Running an Agent on QAP means going around these three repeatedly, and the docs are organized along the same thread:
 
 - **Build** — a neutral, swappable core, shaped by a prompt, skills and MCP, on top of middleware the platform runs so no Agent has to ship its own. Start with [your first Agent](/guides/2-first-agent/).
 - **Distribute** — one Workspace, reachable five ways, served in whichever shape the workload needs. Nothing on the user's side: no install, no configuration, no key of their own. See [Triggering Agents](/guides/5-trigger-agents/).

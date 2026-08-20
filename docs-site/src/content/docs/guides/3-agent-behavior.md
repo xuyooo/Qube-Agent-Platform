@@ -109,7 +109,7 @@ The **MCP** area takes the connection details (a command or a URL). For deployin
 
 Sessions are independent by default — what came out of the last one isn't there in the next. Memory closes that gap.
 
-NAP handles it with a **memory store**: a resource of its own that attaches to one workspace or several. The [Memory Store](/concepts/memory-store/) page has the full design; this section is about using it.
+QAP handles it with a **memory store**: a resource of its own that attaches to one workspace or several. The [Memory Store](/concepts/memory-store/) page has the full design; this section is about using it.
 
 ### Where to find it
 

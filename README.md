@@ -1,4 +1,4 @@
-<h1 align="center">Neutree Agent Platform</h1>
+<h1 align="center">Qube Agent Platform</h1>
 
 <p align="center">
   <strong>Close your laptop. Your agents keep working.</strong><br/>
@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.neutree.ai/nap/">Docs</a> ·
-  <a href="https://neutree.ai/nap">Website</a> ·
-  <a href="https://docs.neutree.ai/nap/self-host/">Self-host guide</a> ·
+  <a href="https://docs.neutree.ai/qap/">Docs</a> ·
+  <a href="https://neutree.ai/qap">Website</a> ·
+  <a href="https://docs.neutree.ai/qap/self-host/">Self-host guide</a> ·
   <a href="https://discord.gg/MnsQ73d8dq">Discord</a>
 </p>
 
@@ -20,7 +20,7 @@
 
 ---
 
-Neutree Agent Platform (NAP) turns AI agents into a hosted, multi-user service. Instead of every developer running an agent on their own laptop, a team gets one platform to **build** agents, **distribute** them through whatever channel users already live in, and **optimize** them as they run.
+Qube Agent Platform (QAP) turns AI agents into a hosted, multi-user service. Instead of every developer running an agent on their own laptop, a team gets one platform to **build** agents, **distribute** them through whatever channel users already live in, and **optimize** them as they run.
 
 ## What it does
 
@@ -39,18 +39,18 @@ Neutree Agent Platform (NAP) turns AI agents into a hosted, multi-user service. 
 
 Two things are honest to say up front: auto-scaling is configured through the API at workspace creation, not yet in the web UI; and building an evaluation set out of session history — to check a change, or to see whether a cheaper model holds up — is still being built. The tuning loop above ships today.
 
-The [website](https://neutree.ai/nap) walks through all three with diagrams; the [docs](https://docs.neutree.ai/nap/) are the reference.
+The [website](https://neutree.ai/qap) walks through all three with diagrams; the [docs](https://docs.neutree.ai/qap/) are the reference.
 
 ## Local and managed, one setup
 
-A local agent and a managed agent are the same craft at two scales. NAP invents no new core, and no new way to shape one: the prompt, the skills and the MCP servers are the ones your local agent already uses. A setup carries over without a rewrite, your local agent can create and manage hosted ones through the API, and what you publish here can be installed back into a local agent.
+A local agent and a managed agent are the same craft at two scales. QAP invents no new core, and no new way to shape one: the prompt, the skills and the MCP servers are the ones your local agent already uses. A setup carries over without a rewrite, your local agent can create and manage hosted ones through the API, and what you publish here can be installed back into a local agent.
 
 ## Quick start
 
 One Linux machine, one command:
 
 ```bash
-curl -sfL https://docs.neutree.ai/nap/get.sh | sudo sh -
+curl -sfL https://docs.neutree.ai/qap/get.sh | sudo sh -
 ```
 
 It installs a single-node k3s cluster and the whole platform on it, then prints the URL and the admin credentials. 8 vCPU / 32 GB / 200 GB is enough for around ten workspaces.
@@ -69,7 +69,7 @@ Code Sandbox and Remote Browser are optional and can be turned on later without 
 
 ## Architecture
 
-NAP is a set of services that share a PostgreSQL control plane. One control plane serves as many clusters as you need: workspaces run beside it, or in a remote cluster whose runner dials the control plane and keeps the line open — their network, your workspaces.
+QAP is a set of services that share a PostgreSQL control plane. One control plane serves as many clusters as you need: workspaces run beside it, or in a remote cluster whose runner dials the control plane and keeps the line open — their network, your workspaces.
 
 <p align="center">
   <img src="docs/architecture.svg" alt="Entry points reach the control plane, which places workspaces — each running one pluggable agent core — onto Kubernetes clusters, with platform middleware brokered to them as MCP tools and mounts" width="880">
@@ -89,7 +89,7 @@ NAP is a set of services that share a PostgreSQL control plane. One control plan
 | **agents/** | — | Agent runtime adapters (`claude-code`, `codex`, `goose`). |
 | **internal/** | `@neutree-ai/*` | Shared libraries — client, types, ACP adapter, agent skills, OAuth, theme, platform prompt, and the published [`ui-sdk`](internal/ui-sdk). |
 | **packages/sandbox** | `@neutree-ai/sandbox` | Published SDK for driving sandboxes from your own code. |
-| **docs-site** | `@neutree-ai/docs-site` | The documentation at [docs.neutree.ai/nap](https://docs.neutree.ai/nap/) (Astro + Starlight, en / zh-CN). |
+| **docs-site** | `@neutree-ai/docs-site` | The documentation at [docs.neutree.ai/qap](https://docs.neutree.ai/qap/) (Astro + Starlight, en / zh-CN). |
 
 ### Where to start reading
 
@@ -101,12 +101,12 @@ NAP is a set of services that share a PostgreSQL control plane. One control plan
 
 ## Container images
 
-First-party images are published to GitHub Container Registry under `ghcr.io/neutree-ai/agent-platform/` (e.g. `nap-cp`, `nap-cg`, `nap-scheduler`, `nap-browser`, `nap-sandbox`). Builds are driven by [`.github/workflows/build-images.yml`](.github/workflows/build-images.yml): images are built on demand (`workflow_dispatch`) or when a per-service release tag `<image>-v<x.y.z>` is pushed — services version independently.
+First-party images are published to GitHub Container Registry under `ghcr.io/neutree-ai/agent-platform/` (e.g. `qap-cp`, `qap-cg`, `qap-scheduler`, `qap-browser`, `qap-sandbox`). Builds are driven by [`.github/workflows/build-images.yml`](.github/workflows/build-images.yml): images are built on demand (`workflow_dispatch`) or when a per-service release tag `<image>-v<x.y.z>` is pushed — services version independently.
 
 ## Community
 
 [**Discord**](https://discord.gg/MnsQ73d8dq) is where the projects live day to day — questions,
-support, and the people who work on them. It covers everything Neutree builds, not just this
+support, and the people who work on them. It covers everything Qube builds, not just this
 repository, so tag your `#help` post with the product it's about.
 
 Bugs and feature requests belong in [Issues](https://github.com/neutree-ai/agent-platform/issues),

@@ -1,11 +1,11 @@
 ---
 title: Agent Skills
-description: nap-api skill —— 让本地 agent 学会用 NAP 自己的 API 驱动它
+description: qap-api skill —— 让本地 agent 学会用 QAP 自己的 API 驱动它
 ---
 
 本地 agent 和托管 agent 是同一件手艺的两个尺度，API 就是这两者之间的接缝：你本地的 agent 可以创建托管 agent、把活交给它、再把结果读回来。前提是它得知道这套 API 怎么调。
 
-`nap-api` 就是干这个的。它在仓库的 [`skills/`](https://github.com/neutree-ai/agent-platform/tree/main/skills) 下，是一个普通的 [Agent Skill](https://docs.claude.com/en/docs/agent-skills)——一个目录，里面一份 `SKILL.md`，agent 启动时读它。
+`qap-api` 就是干这个的。它在仓库的 [`skills/`](https://github.com/neutree-ai/agent-platform/tree/main/skills) 下，是一个普通的 [Agent Skill](https://docs.claude.com/en/docs/agent-skills)——一个目录，里面一份 `SKILL.md`，agent 启动时读它。
 
 ## 里面是什么
 
@@ -19,28 +19,28 @@ description: nap-api skill —— 让本地 agent 学会用 NAP 自己的 API �
 
 ```bash
 git clone https://github.com/neutree-ai/agent-platform.git
-cp -r agent-platform/skills/nap-api ~/.claude/skills/
+cp -r agent-platform/skills/qap-api ~/.claude/skills/
 ```
 
 再把认证信息给它：
 
 ```bash
-export NAP_BASE_URL=https://<你的 NAP 域名>
-export NAP_TOKEN=<service-token>      # ⌘K → Service Tokens
+export QAP_BASE_URL=https://<你的 QAP 域名>
+export QAP_TOKEN=<service-token>      # ⌘K → Service Tokens
 ```
 
 之后直接用大白话说就行——"建一个跑 Codex 的 workspace，provider 用我那个 openai 的"、"列一下 workspace X 里 /work 下面的 agent 文件"。这个操作对应哪个 API，skill 会告诉它。
 
-也可以把它传进 NAP 自己的 **Library**，让托管 agent 也有——一个 agent 能管别的 agent，就是这么来的。
+也可以把它传进 QAP 自己的 **Library**，让托管 agent 也有——一个 agent 能管别的 agent，就是这么来的。
 
 ### 把长任务交给云端 agent
 
 skill 里带了一个驱动脚本，专治那个手写起来最烦的流程：发任务、轮询到这一轮结束、打印回复。
 
 ```bash
-export NAP_TOKEN=<service-token>
-export NAP_BASE_URL=https://<你的 NAP 域名>
-export NAP_WS=<workspace-id>
+export QAP_TOKEN=<service-token>
+export QAP_BASE_URL=https://<你的 QAP 域名>
+export QAP_WS=<workspace-id>
 
 ./scripts/handoff.sh "把 TASK.md 里描述的东西实现掉"
 ./scripts/handoff.sh -s <session_id> "再补一下测试"      # 接着同一个 session
@@ -58,4 +58,4 @@ cd skills
 CP_SPEC_URL=http://localhost:3000/api/docs/openapi.json npm run cp
 ```
 
-重新生成会清空 skill 目录再重建，然后把 `assets/nap-api/` 里手写的文件覆盖回去——`handoff.sh` 放在那儿而不是 skill 目录里，就是这个原因。
+重新生成会清空 skill 目录再重建，然后把 `assets/qap-api/` 里手写的文件覆盖回去——`handoff.sh` 放在那儿而不是 skill 目录里，就是这个原因。

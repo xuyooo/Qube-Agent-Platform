@@ -1,4 +1,4 @@
-// Package cpclient is a thin HTTP client for the NAP control-plane memory
+// Package cpclient is a thin HTTP client for the QAP control-plane memory
 // store API. It speaks the /workspace/v1/* surface — list memories, fetch a
 // memory by path, write a memory at a path, and delete one.
 //

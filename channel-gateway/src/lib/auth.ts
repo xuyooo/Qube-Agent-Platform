@@ -1,7 +1,7 @@
 import { verify } from 'hono/jwt'
 import type { JwtPayload } from './types'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'nap-jwt-secret-change-me'
+const JWT_SECRET = process.env.JWT_SECRET || 'qap-jwt-secret-change-me'
 
 export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {

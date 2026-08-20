@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { afterEach, describe } from 'vitest'
-import { NapClient } from '../../internal/client/src'
+import { QapClient } from '../../internal/client/src'
 import { loadProfile } from './config'
 
 // Runs in every test worker. The harness itself lives in the Vitest main
@@ -18,10 +18,10 @@ if (!baseUrl || !serviceToken) {
 }
 
 /** Authenticated as the throwaway user this run provisioned. */
-export const client = new NapClient({ baseUrl, serviceToken })
+export const client = new QapClient({ baseUrl, serviceToken })
 
 /**
- * The same token as a bare string, for the few surfaces NapClient does not
+ * The same token as a bare string, for the few surfaces QapClient does not
  * cover — the sandbox specs call the sandbox service directly.
  */
 export const runToken = serviceToken

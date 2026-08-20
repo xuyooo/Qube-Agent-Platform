@@ -5,7 +5,7 @@ description: 任务级的多 Agent 协作场景，自动管理可见性、共享
 
 > Teamwork 当前是预览版（preview）。基本机制已稳定，最终形态可能调整，欢迎在使用中给我们反馈。
 
-Neutree Agent Platform（NAP）上的多 Agent 协作能力一直都有：在任意 Workspace 里 `@agent/slug` 就能调另一个 Agent；要传文件就用 [AFS](/zh-cn/concepts/afs/) 建一个共享目录。但这两件事都是 **Workspace 级** 的配置——一个 Agent 要么对别人可见、要么不可见，共享目录要么挂着、要么不挂。
+Qube Agent Platform（QAP）上的多 Agent 协作能力一直都有：在任意 Workspace 里 `@agent/slug` 就能调另一个 Agent；要传文件就用 [AFS](/zh-cn/concepts/afs/) 建一个共享目录。但这两件事都是 **Workspace 级** 的配置——一个 Agent 要么对别人可见、要么不可见，共享目录要么挂着、要么不挂。
 
 而很多协作其实是**任务级**的：
 

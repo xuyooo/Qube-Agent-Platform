@@ -1,11 +1,11 @@
 ---
 title: 单节点 k3s 快速部署
-description: 在一台机器上用 k3s 拉起完整的 Neutree Agent Platform —— 最快的安装路径，联网与隔离网络皆可。
+description: 在一台机器上用 k3s 拉起完整的 Qube Agent Platform —— 最快的安装路径，联网与隔离网络皆可。
 ---
 
 import AirgapBlock from '../../../../components/self-host/AirgapBlock.tsx'
 
-在单节点 k3s 集群上安装 Neutree Agent Platform —— 让完整平台跑起来的最快方式。单节点 profile 与完整 profile 一致，只是 PostgreSQL 为单实例、共享存储由集群内 NFS server 提供。
+在单节点 k3s 集群上安装 Qube Agent Platform —— 让完整平台跑起来的最快方式。单节点 profile 与完整 profile 一致，只是 PostgreSQL 为单实例、共享存储由集群内 NFS server 提供。
 
 同一条流程覆盖两类节点。**联网**时，所有镜像都从公共 registry（`ghcr.io` / `docker.io` / `registry.k8s.io`）拉取。若节点**完全无法访问互联网**，额外步骤以可折叠的 **隔离网络** 块内嵌在流程中 —— 展开一个即全部保持展开；该路径通过集群内仓库从镜像包安装，全程不从互联网拉取任何镜像。
 

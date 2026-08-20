@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================================
-# Neutree Agent Platform — Self-Hosted Installer
+# Qube Agent Platform — Self-Hosted Installer
 # ============================================================================
 # Connected (default): images are pulled directly from a public registry and
 # prereq charts/manifests are fetched from their public sources.
@@ -26,7 +26,7 @@ set -euo pipefail
 #   --profile=single-node CLI flag):
 #   A 1-node k3s — like the full profile, just PG_INSTANCES=1 and an in-cluster
 #   NFS server for RWX (no external NFS on a single node). Connected: pulls from
-#   the public registry. Air-gapped: when offline/nap-images.tar.gz is present it
+#   the public registry. Air-gapped: when offline/qap-images.tar.gz is present it
 #   brings up an in-cluster registry and seeds it from the bundle, so no external
 #   registry is needed at all. Must run ON the k3s node (uses crane / k3s ctr).
 #
@@ -57,11 +57,11 @@ set +a
 
 # --- Image registry --------------------------------------------------------
 # Every first-party service image lives as a sub-path under one public registry
-# path, e.g. ghcr.io/neutree-ai/agent-platform/${APP_PREFIX}-cp:<tag>. Third-party
+# path, e.g. ghcr.io/xuyooo/qap/${APP_PREFIX}-cp:<tag>. Third-party
 # images (coturn, gotenberg, language runtimes, …) default to their public
 # upstreams (see "Third-party images" below) — an offline/mirrored install
 # overrides each to a path under ${REGISTRY}.
-export REGISTRY="${REGISTRY:-ghcr.io/neutree-ai/agent-platform}"
+export REGISTRY="${REGISTRY:-ghcr.io/xuyooo}"
 # Tag applied to every first-party image. Default :latest; pin to a release tag
 # for reproducible installs.
 export IMAGE_TAG="${IMAGE_TAG:-latest}"
@@ -71,17 +71,17 @@ export IMAGE_TAG="${IMAGE_TAG:-latest}"
 # …) and on the first-party image sub-paths (${REGISTRY}/${APP_PREFIX}-cp).
 # For REDISTRIBUTORS ONLY: a non-default prefix requires every first-party
 # image to exist under that prefix in your own registry — the public registry
-# only hosts nap-* images, so a connected install must keep the default.
+# only hosts qap-* images, so a connected install must keep the default.
 # check_app_prefix enforces both this and never changing the prefix of an
 # existing install. DB_NAME is the application database created in postgres.
-export APP_PREFIX="${APP_PREFIX:-nap}"
-export DB_NAME="${DB_NAME:-nap}"
+export APP_PREFIX="${APP_PREFIX:-qap}"
+export DB_NAME="${DB_NAME:-qap}"
 
 # First-party image prefix, decoupled from the k8s object prefix. Defaults to
 # ${REGISTRY}/${APP_PREFIX} (image names match object names). Override when an
 # existing install keeps its historical APP_PREFIX for object names but pulls
-# the public nap-* images, e.g.:
-#   PLATFORM_IMAGE_PREFIX=ghcr.io/neutree-ai/agent-platform/nap
+# the public qap-* images, e.g.:
+#   PLATFORM_IMAGE_PREFIX=ghcr.io/xuyooo/qap/qap
 export PLATFORM_IMAGE_PREFIX="${PLATFORM_IMAGE_PREFIX:-${REGISTRY}/${APP_PREFIX}}"
 
 # --- Third-party images -----------------------------------------------------
@@ -100,7 +100,7 @@ export PAUSE_IMAGE="${PAUSE_IMAGE:-registry.k8s.io/pause:3.9}"
 # AFS (AgentFS) ships from its own repo (github.com/neutree-ai/afs) and versions
 # independently of the platform, so it lives outside ${REGISTRY}/${IMAGE_TAG}.
 # Default to its public image; an offline/mirrored install overrides this.
-export AFS_IMAGE="${AFS_IMAGE:-ghcr.io/neutree-ai/afs:latest}"
+export AFS_IMAGE="${AFS_IMAGE:-ghcr.io/xuyooo/afs:latest}"
 
 # Resolve AGENT_IMAGE_PREFIX if it references REGISTRY
 AGENT_IMAGE_PREFIX="${AGENT_IMAGE_PREFIX:-${PLATFORM_IMAGE_PREFIX}-agent}"
@@ -157,7 +157,7 @@ export LDAP_ENABLED="${LDAP_ENABLED:-false}"
 export COTURN_ENABLED="$BROWSER_ENABLED"
 
 # --- Ingress mode --------------------------------------------------------
-# INGRESS_MODE controls how nap-cp / nap-browser / nap-sandbox are exposed:
+# INGRESS_MODE controls how qap-cp / qap-browser / qap-sandbox are exposed:
 #   nodeport  (default) — Service type NodePort, *_NODE_PORT applied
 #   external             — Service type ClusterIP, customer's own ingress
 #                          fronts these services. nodePort lines are stripped
@@ -201,10 +201,10 @@ export COTURN_NODE_SELECTOR="${COTURN_NODE_SELECTOR:-}"
 # The callback each service computes MUST equal the redirect_uri registered in
 # oauth_clients, or cp returns 400 invalid_client — so both derive from the
 # same value and can't drift.
-export WEB_PUBLIC_URL="${WEB_PUBLIC_URL:-http://${NAP_HOST}:${NAP_NODE_PORT}}"
+export WEB_PUBLIC_URL="${WEB_PUBLIC_URL:-http://${QAP_HOST}:${QAP_NODE_PORT}}"
 export FILES_PUBLIC_URL="${FILES_PUBLIC_URL:-$WEB_PUBLIC_URL}"
-export SANDBOX_PUBLIC_URL="${SANDBOX_PUBLIC_URL:-http://${NAP_HOST}:${SANDBOX_NODE_PORT}}"
-export BROWSER_PUBLIC_URL="${BROWSER_PUBLIC_URL:-http://${NAP_HOST}:${BROWSER_NODE_PORT}}"
+export SANDBOX_PUBLIC_URL="${SANDBOX_PUBLIC_URL:-http://${QAP_HOST}:${SANDBOX_NODE_PORT}}"
+export BROWSER_PUBLIC_URL="${BROWSER_PUBLIC_URL:-http://${QAP_HOST}:${BROWSER_NODE_PORT}}"
 
 export SANDBOX_SERVICE_URL_RESOLVED="$SANDBOX_PUBLIC_URL"
 export BROWSER_SERVICE_URL_RESOLVED="$BROWSER_PUBLIC_URL"
@@ -277,14 +277,14 @@ check_prereqs() {
 check_app_prefix() {
   # A non-default prefix whose image prefix still resolves against the default
   # public registry references images that cannot exist there (it only hosts
-  # nap-*). Refuse before applying. Setting PLATFORM_IMAGE_PREFIX explicitly
-  # (e.g. to .../nap while keeping historical object names) sidesteps this.
-  if [ "$APP_PREFIX" != "nap" ] \
-    && [ "$PLATFORM_IMAGE_PREFIX" = "ghcr.io/neutree-ai/agent-platform/${APP_PREFIX}" ]; then
+  # qap-*). Refuse before applying. Setting PLATFORM_IMAGE_PREFIX explicitly
+  # (e.g. to .../qap while keeping historical object names) sidesteps this.
+  if [ "$APP_PREFIX" != "qap" ] \
+    && [ "$PLATFORM_IMAGE_PREFIX" = "ghcr.io/xuyooo/qap/${APP_PREFIX}" ]; then
     die "APP_PREFIX=${APP_PREFIX} resolves PLATFORM_IMAGE_PREFIX to the default public REGISTRY,
-       which only hosts nap-* images. Either rebuild every first-party image under that prefix
+       which only hosts qap-* images. Either rebuild every first-party image under that prefix
        in your own registry (redistributors), or set
-       PLATFORM_IMAGE_PREFIX=ghcr.io/neutree-ai/agent-platform/nap to keep your object names
+       PLATFORM_IMAGE_PREFIX=ghcr.io/xuyooo/qap/qap to keep your object names
        while pulling the public images."
   fi
   # Never change the prefix of an existing install: the render would come up as
@@ -314,7 +314,7 @@ render_manifests() {
 
   # Explicit variable list — prevents envsubst from replacing k8s $(VAR)
   # references like $(POSTGRES_PASSWORD)
-  local VARS='${NAMESPACE}${REGISTRY}${IMAGE_TAG}${APP_PREFIX}${PLATFORM_IMAGE_PREFIX}${DB_NAME}${NAP_HOST}${NAP_NODE_PORT}'
+  local VARS='${NAMESPACE}${REGISTRY}${IMAGE_TAG}${APP_PREFIX}${PLATFORM_IMAGE_PREFIX}${DB_NAME}${QAP_HOST}${QAP_NODE_PORT}'
   VARS+='${IMAGE_PULL_SECRET}'
   VARS+='${POSTGRES_IMAGE}${GOTENBERG_IMAGE}${COTURN_IMAGE}${NFS_SERVER_IMAGE}'
   VARS+='${RUNTIME_NODE_IMAGE}${RUNTIME_PYTHON_IMAGE}${RUNTIME_GOLANG_IMAGE}${PAUSE_IMAGE}'
@@ -534,22 +534,22 @@ install_nfs_provisioner() {
   # Single-node profile: bring up the in-cluster NFS server first; the
   # provisioner pod will CrashLoopBackOff if it can't mount on first start.
   if [ "$DEPLOY_PROFILE" = "single-node" ]; then
-    log "Deploying in-cluster NFS server (nap-nfs-server) ..."
+    log "Deploying in-cluster NFS server (qap-nfs-server) ..."
     render_manifests
     kapply -f "$RENDERED_DIR/namespace.yaml"
     kapply -f "$RENDERED_DIR/nfs-server.yaml"
-    kubectl -n "${NAMESPACE}" rollout status deployment/nap-nfs-server --timeout=180s || {
-      die "nap-nfs-server not ready; check: kubectl -n ${NAMESPACE} describe deploy nap-nfs-server"
+    kubectl -n "${NAMESPACE}" rollout status deployment/qap-nfs-server --timeout=180s || {
+      die "qap-nfs-server not ready; check: kubectl -n ${NAMESPACE} describe deploy qap-nfs-server"
     }
 
     # Resolve the svc clusterIP and feed it to NFS_SERVER. We can't use the
-    # DNS name (nap-nfs-server.<ns>.svc.cluster.local) because the actual
+    # DNS name (qap-nfs-server.<ns>.svc.cluster.local) because the actual
     # `mount -t nfs` is issued by kubelet on the host, whose /etc/resolv.conf
     # doesn't point at coredns — the lookup fails and the mount times out
     # with EAGAIN. ClusterIP is stable for the lifetime of the svc.
     local nfs_svc_ip
-    nfs_svc_ip=$(kubectl -n "${NAMESPACE}" get svc nap-nfs-server -o jsonpath='{.spec.clusterIP}')
-    [ -n "$nfs_svc_ip" ] || die "nap-nfs-server svc has no clusterIP"
+    nfs_svc_ip=$(kubectl -n "${NAMESPACE}" get svc qap-nfs-server -o jsonpath='{.spec.clusterIP}')
+    [ -n "$nfs_svc_ip" ] || die "qap-nfs-server svc has no clusterIP"
     export NFS_SERVER="$nfs_svc_ip"
     export NFS_PATH="/"
     log "Resolved in-cluster NFS server at ${NFS_SERVER}:${NFS_PATH}"
@@ -608,7 +608,7 @@ install_prereqs() {
   # yourself via its official Helm charts. See README "Enabling Code Sandbox".
   if [ "$SANDBOX_ENABLED" = "true" ]; then
     log "SANDBOX_ENABLED=true — assuming OpenSandbox is already installed and reachable"
-    log "  at OPENSANDBOX_URL (see README 'Enabling Code Sandbox'). Deploying nap-sandbox only."
+    log "  at OPENSANDBOX_URL (see README 'Enabling Code Sandbox'). Deploying qap-sandbox only."
   fi
 }
 
@@ -621,7 +621,7 @@ install_prereqs() {
 # install pulls from the public registry and skips this entirely. Must execute
 # on the k3s node itself (uses crane against the in-cluster registry over HTTP).
 single_node_load_registry() {
-  local archive="${IMAGES_ARCHIVE:-$SCRIPT_DIR/offline/nap-images.tar.gz}"
+  local archive="${IMAGES_ARCHIVE:-$SCRIPT_DIR/offline/qap-images.tar.gz}"
   if [ ! -f "$archive" ]; then
     log "single-node: no offline bundle at $archive — assuming a connected registry, skipping in-cluster registry."
     return 0
@@ -633,16 +633,16 @@ single_node_load_registry() {
   # Preflight: containerd must know the in-cluster registry NodePort speaks
   # plain HTTP, or pod-side pulls fail with "server gave HTTP response to HTTPS
   # client". single-node-prep/preinstall.sh writes both files, but only once
-  # NAP_HOST is set in values.env — if preinstall ran before values.env was
-  # filled (or NAP_HOST changed since), they're missing/stale and the failure
+  # QAP_HOST is set in values.env — if preinstall ran before values.env was
+  # filled (or QAP_HOST changed since), they're missing/stale and the failure
   # only surfaces much later (CNPG / app pods stuck ImagePullBackOff). Fail fast
   # here with the exact remedy instead.
-  local endpoint="${NAP_HOST}:${REGISTRY_NODE_PORT}"
+  local endpoint="${QAP_HOST}:${REGISTRY_NODE_PORT}"
   local hosts_toml="/var/lib/rancher/k3s/agent/etc/containerd/certs.d/${endpoint}/hosts.toml"
   if ! grep -qF "$endpoint" /etc/rancher/k3s/registries.yaml 2>/dev/null || [ ! -f "$hosts_toml" ]; then
     die "containerd has no plain-HTTP mirror for ${endpoint} (registries.yaml / hosts.toml missing or stale).
-       This is written by single-node-prep/preinstall.sh AFTER NAP_HOST is set in values.env.
-       Set NAP_HOST=${NAP_HOST:-<this-host-ip>} in values.env, then re-run preinstall:
+       This is written by single-node-prep/preinstall.sh AFTER QAP_HOST is set in values.env.
+       Set QAP_HOST=${QAP_HOST:-<this-host-ip>} in values.env, then re-run preinstall:
          sudo IMAGES_ARCHIVE=${archive} <prep-dir>/preinstall.sh
        (preinstall rewrites registries.yaml + hosts.toml and restarts k3s.)"
   fi
@@ -651,11 +651,11 @@ single_node_load_registry() {
   render_manifests
   kapply -f "$RENDERED_DIR/namespace.yaml"
   kapply -f "$RENDERED_DIR/registry.yaml"
-  kubectl -n "${NAMESPACE}" rollout status deployment/nap-registry --timeout=120s || {
-    die "nap-registry not ready; check kubectl -n ${NAMESPACE} describe deploy nap-registry"
+  kubectl -n "${NAMESPACE}" rollout status deployment/qap-registry --timeout=120s || {
+    die "qap-registry not ready; check kubectl -n ${NAMESPACE} describe deploy qap-registry"
   }
 
-  local push_endpoint="${NAP_HOST}:${REGISTRY_NODE_PORT}"
+  local push_endpoint="${QAP_HOST}:${REGISTRY_NODE_PORT}"
 
   # docker-archive is read sequentially. Reading from .tar.gz forces a full
   # decompression per image (gzip has no random access). Decompress once to a
@@ -718,7 +718,7 @@ for entry in json.load(sys.stdin):
       log "  [$i/$total] skipping registry:2"
       continue
     fi
-    local dst="${push_endpoint}/nap/${short}"
+    local dst="${push_endpoint}/qap/${short}"
     log "  [$i/$total] $src → $dst"
 
     local per_image_tar="$stage/img.tar"
@@ -787,12 +787,12 @@ apply_manifests() {
   # Use the fully-qualified resource name: the bare `cluster` short name is
   # ambiguous if the target cluster also has Cluster API CRDs installed
   # (clusters.cluster.x-k8s.io), in which case kubectl resolves to the wrong group.
-  kubectl -n "${NAMESPACE}" wait cluster.postgresql.cnpg.io/nap-pg --for=condition=Ready --timeout=300s || {
-    warn "PostgreSQL cluster not ready within 300s — check: kubectl -n ${NAMESPACE} describe cluster.postgresql.cnpg.io nap-pg"
+  kubectl -n "${NAMESPACE}" wait cluster.postgresql.cnpg.io/qap-pg --for=condition=Ready --timeout=300s || {
+    warn "PostgreSQL cluster not ready within 300s — check: kubectl -n ${NAMESPACE} describe cluster.postgresql.cnpg.io qap-pg"
     warn "Continuing anyway; services will retry DB connections."
   }
 
-  # coturn needs the nap-browser-secret (TURN_AUTH_SECRET) but must be applied
+  # coturn needs the qap-browser-secret (TURN_AUTH_SECRET) but must be applied
   # before browser-service so we can resolve TURN_HOST from its hostIP.
   apply_coturn
   # Re-render so browser-service picks up the resolved TURN_HOST.
@@ -812,7 +812,7 @@ apply_manifests() {
     kapply -f "$RENDERED_DIR/sandbox-image-warmer.yaml"
   else
     log "SANDBOX_ENABLED=false — skipping sandbox-service."
-    kubectl -n "${NAMESPACE}" delete deployment/nap-sandbox service/nap-sandbox \
+    kubectl -n "${NAMESPACE}" delete deployment/qap-sandbox service/qap-sandbox \
       --ignore-not-found=true
     kubectl -n "${NAMESPACE}" delete daemonset/sandbox-image-warmer \
       --ignore-not-found=true
@@ -822,7 +822,7 @@ apply_manifests() {
   else
     log "BROWSER_ENABLED=false — skipping browser-service."
     # Remove a browser-service left over from a previous install/run.
-    kubectl -n "${NAMESPACE}" delete deployment/nap-browser service/nap-browser \
+    kubectl -n "${NAMESPACE}" delete deployment/qap-browser service/qap-browser \
       --ignore-not-found=true
   fi
   ensure_recreate_strategy afs-controller
@@ -848,12 +848,12 @@ apply_manifests() {
   # Optional deployments only exist when their toggle is on; gather actual
   # set so the rollout loops below don't warn on missing deployments.
   local sandbox_dep=""
-  [ "$SANDBOX_ENABLED" = "true" ] && sandbox_dep="nap-sandbox"
+  [ "$SANDBOX_ENABLED" = "true" ] && sandbox_dep="qap-sandbox"
   local browser_dep=""
-  [ "$BROWSER_ENABLED" = true ] && browser_dep="nap-browser"
+  [ "$BROWSER_ENABLED" = true ] && browser_dep="qap-browser"
 
   log "Waiting for deployments to be ready ..."
-  for dep in nap-cp nap-cg nap-scheduler nap-skills nap-env-runner-k8s $sandbox_dep $browser_dep afs-controller nap-office-converter; do
+  for dep in qap-cp qap-cg qap-scheduler qap-skills qap-env-runner-k8s $sandbox_dep $browser_dep afs-controller qap-office-converter; do
     kubectl -n "${NAMESPACE}" rollout status "deployment/$dep" --timeout=180s || {
       warn "$dep not ready within 180s"
     }
@@ -862,16 +862,16 @@ apply_manifests() {
   # Force a rollout for every first-party deployment so :latest-tag image digest
   # changes are picked up even when the PodSpec is byte-identical (server-side
   # apply alone won't replace pods in that case). Restart is idempotent + cheap
-  # on fresh installs (pods were just created). Excluded: nap-pg (operator-
+  # on fresh installs (pods were just created). Excluded: qap-pg (operator-
   # managed via CNPG).
   log "Refreshing :latest-tag deployments to pick up new image digests ..."
-  for dep in nap-cp nap-cg nap-scheduler nap-skills nap-env-runner-k8s afs-controller $sandbox_dep $browser_dep nap-office-converter; do
+  for dep in qap-cp qap-cg qap-scheduler qap-skills qap-env-runner-k8s afs-controller $sandbox_dep $browser_dep qap-office-converter; do
     kubectl -n "${NAMESPACE}" rollout restart "deployment/$dep" >/dev/null 2>&1 || true
   done
   if [ "$SANDBOX_ENABLED" = "true" ]; then
     kubectl -n "${NAMESPACE}" rollout restart daemonset/sandbox-image-warmer >/dev/null 2>&1 || true
   fi
-  for dep in nap-cp nap-cg nap-scheduler nap-skills nap-env-runner-k8s afs-controller $sandbox_dep $browser_dep nap-office-converter; do
+  for dep in qap-cp qap-cg qap-scheduler qap-skills qap-env-runner-k8s afs-controller $sandbox_dep $browser_dep qap-office-converter; do
     kubectl -n "${NAMESPACE}" rollout status "deployment/$dep" --timeout=180s || {
       warn "$dep restart not ready within 180s"
     }
@@ -888,19 +888,19 @@ seed_admin() {
   render_manifests
 
   # Delete previous seed job if exists
-  kubectl -n "${NAMESPACE}" delete job nap-seed-admin --ignore-not-found=true
+  kubectl -n "${NAMESPACE}" delete job qap-seed-admin --ignore-not-found=true
 
   kapply -f "$RENDERED_DIR/seed-admin-job.yaml"
 
   log "Waiting for seed job to complete ..."
-  kubectl -n "${NAMESPACE}" wait job/nap-seed-admin --for=condition=Complete --timeout=120s || {
+  kubectl -n "${NAMESPACE}" wait job/qap-seed-admin --for=condition=Complete --timeout=120s || {
     warn "Seed job did not complete within 120s."
-    log "Check logs: kubectl -n ${NAMESPACE} logs job/nap-seed-admin"
+    log "Check logs: kubectl -n ${NAMESPACE} logs job/qap-seed-admin"
     return 1
   }
 
   # Show logs
-  kubectl -n "${NAMESPACE}" logs job/nap-seed-admin
+  kubectl -n "${NAMESPACE}" logs job/qap-seed-admin
 
   log "Admin user seeded."
 }
@@ -918,18 +918,18 @@ seed_oauth_clients() {
 
   render_manifests
 
-  kubectl -n "${NAMESPACE}" delete job nap-seed-oauth-clients --ignore-not-found=true
+  kubectl -n "${NAMESPACE}" delete job qap-seed-oauth-clients --ignore-not-found=true
 
   kapply -f "$RENDERED_DIR/seed-oauth-clients-job.yaml"
 
   log "Waiting for OAuth client seed job to complete ..."
-  kubectl -n "${NAMESPACE}" wait job/nap-seed-oauth-clients --for=condition=Complete --timeout=120s || {
+  kubectl -n "${NAMESPACE}" wait job/qap-seed-oauth-clients --for=condition=Complete --timeout=120s || {
     warn "OAuth client seed job did not complete within 120s."
-    log "Check logs: kubectl -n ${NAMESPACE} logs job/nap-seed-oauth-clients"
+    log "Check logs: kubectl -n ${NAMESPACE} logs job/qap-seed-oauth-clients"
     return 1
   }
 
-  kubectl -n "${NAMESPACE}" logs job/nap-seed-oauth-clients
+  kubectl -n "${NAMESPACE}" logs job/qap-seed-oauth-clients
   log "OAuth clients seeded."
 }
 
@@ -938,18 +938,18 @@ seed_mcp() {
 
   render_manifests
 
-  kubectl -n "${NAMESPACE}" delete job nap-seed-mcp --ignore-not-found=true
+  kubectl -n "${NAMESPACE}" delete job qap-seed-mcp --ignore-not-found=true
 
   kapply -f "$RENDERED_DIR/seed-mcp-job.yaml"
 
   log "Waiting for MCP seed job to complete ..."
-  kubectl -n "${NAMESPACE}" wait job/nap-seed-mcp --for=condition=Complete --timeout=120s || {
+  kubectl -n "${NAMESPACE}" wait job/qap-seed-mcp --for=condition=Complete --timeout=120s || {
     warn "MCP seed job did not complete within 120s."
-    log "Check logs: kubectl -n ${NAMESPACE} logs job/nap-seed-mcp"
+    log "Check logs: kubectl -n ${NAMESPACE} logs job/qap-seed-mcp"
     return 1
   }
 
-  kubectl -n "${NAMESPACE}" logs job/nap-seed-mcp
+  kubectl -n "${NAMESPACE}" logs job/qap-seed-mcp
   log "MCP catalog seeded."
 }
 
@@ -975,7 +975,7 @@ check_app_prefix
 if [ "$DEPLOY_PROFILE" = "single-node" ]; then
   log "DEPLOY_PROFILE=single-node — 1-node k3s. Connected: pulls from the public"
   log "  registry. Air-gapped: seeds an in-cluster registry from the offline bundle"
-  log "  (offline/nap-images.tar.gz) when present."
+  log "  (offline/qap-images.tar.gz) when present."
 fi
 
 case "$MODE" in
@@ -1004,10 +1004,10 @@ case "$MODE" in
     seed_mcp
     log ""
     log "============================================"
-    log " Neutree Agent Platform installed successfully!"
-    log " Access: http://${NAP_HOST}:${NAP_NODE_PORT}"
-    [ "$BROWSER_ENABLED" = true ] && log " Browser: http://${NAP_HOST}:${BROWSER_NODE_PORT}"
-    [ "$SANDBOX_ENABLED" = "true" ] && log " Sandbox: http://${NAP_HOST}:${SANDBOX_NODE_PORT}"
+    log " Qube Agent Platform installed successfully!"
+    log " Access: http://${QAP_HOST}:${QAP_NODE_PORT}"
+    [ "$BROWSER_ENABLED" = true ] && log " Browser: http://${QAP_HOST}:${BROWSER_NODE_PORT}"
+    [ "$SANDBOX_ENABLED" = "true" ] && log " Sandbox: http://${QAP_HOST}:${SANDBOX_NODE_PORT}"
     log " Login:  ${ADMIN_USERNAME} / (password from values.env)"
     log "============================================"
     ;;

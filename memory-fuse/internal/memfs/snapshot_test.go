@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/cpclient"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/cpclient"
 )
 
 func lite(path, sha string, size int64) cpclient.MemoryLite {

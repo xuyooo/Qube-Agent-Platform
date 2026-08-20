@@ -1,4 +1,4 @@
-import type { NapClient } from '../../../internal/client/src/index'
+import type { QapClient } from '../../../internal/client/src/index'
 import * as db from '../services/db'
 import { resolveRouteClient } from './route-client'
 
@@ -21,7 +21,7 @@ export async function cancelThreadTurn(
   label: string,
   route: db.Route,
   connector: db.Connector,
-  connectorClient: NapClient,
+  connectorClient: QapClient,
   threadId: string,
 ): Promise<string | null> {
   const sessionTtlHours =

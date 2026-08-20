@@ -5,7 +5,7 @@ description: 一套带权限的共享文件系统，让 Workspace 之间能安�
 
 每个 Workspace 都有自己独立的文件系统——这是 Workspace 隔离性的基础，但也意味着 A 写下的文件 B 默认看不到。当多个 Agent 需要协作交付一份产物时（比如 planner 拆任务、worker 各做一段、最后归档），就需要一个可控的方式把文件在 Workspace 之间共享。
 
-**AFS（Agent File System）** 是 Neutree Agent Platform 为此提供的能力：一套带权限的共享文件系统，对 Agent 来说就是容器里的一个目录，对用户来说是 **文件** app 里的「网盘」标签。
+**AFS（Agent File System）** 是 Qube Agent Platform 为此提供的能力：一套带权限的共享文件系统，对 Agent 来说就是容器里的一个目录，对用户来说是 **文件** app 里的「网盘」标签。
 
 ## 它解决什么问题
 
@@ -68,7 +68,7 @@ AFS 是一套独立的组件（Rust 实现），由两类进程组成：
 
 每个共享目录在创建时由 controller 分配一个不可变的 `access_key`，访问凭据和挂载时的只读/读写由 gRPC 调用强制——任何主机要挂载这个目录都必须出示正确的 key，撤销时 controller 通知所有挂载方的 afs-fuse 强制 unmount，业务容器里那个路径瞬间消失。
 
-在 Neutree Agent Platform 里，这套组件的形态是：集群里跑一份 afs-controller，每个 Workspace pod 注入一个 afs-fuse sidecar；控制面把上面那一层"用户/Workspace/分享关系"的语义映射到 controller 的"目录/挂载/access_key"模型——所以用户和 Agent 看到的是「网盘」和 MCP 工具，不直接和 access_key、目录 ID 这些底层概念打交道。
+在 Qube Agent Platform 里，这套组件的形态是：集群里跑一份 afs-controller，每个 Workspace pod 注入一个 afs-fuse sidecar；控制面把上面那一层"用户/Workspace/分享关系"的语义映射到 controller 的"目录/挂载/access_key"模型——所以用户和 Agent 看到的是「网盘」和 MCP 工具，不直接和 access_key、目录 ID 这些底层概念打交道。
 
 对 Agent 和用户来说，这些都是透明的——看到的就是一个目录。
 

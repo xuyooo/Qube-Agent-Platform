@@ -4,7 +4,7 @@ description: Connect a model API provider — the one thing to set up before you
 ---
 
 :::note[Don't have a running platform yet?]
-These guides assume a Neutree Agent Platform instance you can sign in to. Don't have one? [Install it in one line](/self-host/single-node/).
+These guides assume a Qube Agent Platform instance you can sign in to. Don't have one? [Install it in one line](/self-host/single-node/).
 :::
 
 One thing has to exist before your first agent: a working **API provider**, the model API its calls go through. Each workspace picks one provider and one model on it, and every session's model calls take that route.

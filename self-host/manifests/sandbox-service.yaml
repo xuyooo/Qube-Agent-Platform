@@ -42,9 +42,9 @@ spec:
                 secretKeyRef:
                   name: ${APP_PREFIX}-sandbox-secret
                   key: SERVICE_KEY
-            - name: NAP_OAUTH_URL
+            - name: QAP_OAUTH_URL
               value: "${WEB_PUBLIC_URL}"
-            - name: NAP_URL
+            - name: QAP_URL
               value: "http://${APP_PREFIX}-cp:3000"
             - name: OAUTH_CLIENT_ID
               value: "sandbox-service"

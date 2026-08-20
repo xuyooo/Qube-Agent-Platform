@@ -1,7 +1,7 @@
 # POST /api/skills/sources/native
 
 **Resource:** [skills](../resources/skills.md)
-**Create a native (in-NAP authored) source + initial empty skill**
+**Create a native (in-QAP authored) source + initial empty skill**
 **Operation ID:** `post--api-skills-sources-native`
 
 ## Request Body

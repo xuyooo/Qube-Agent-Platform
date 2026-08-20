@@ -1,13 +1,13 @@
 ---
-name: nap-design-system
-description: NAP web design system — semantic OKLCH tokens, the shadcn-based UI component library, and the visual conventions that keep generated UI on-brand. Trigger when building or editing NAP web UI (React + Tailwind + shadcn/ui), styling a new page/panel/dialog, picking colors or components, or reviewing a frontend diff for design-token compliance.
+name: qap-design-system
+description: QAP web design system — semantic OKLCH tokens, the shadcn-based UI component library, and the visual conventions that keep generated UI on-brand. Trigger when building or editing QAP web UI (React + Tailwind + shadcn/ui), styling a new page/panel/dialog, picking colors or components, or reviewing a frontend diff for design-token compliance.
 metadata:
   source: agent-platform/web + @neutree-ai/theme
 ---
 
-# NAP Design System
+# QAP Design System
 
-NAP's web UI is **React + Vite + TailwindCSS (v3) + shadcn/ui**, themed by the
+QAP's web UI is **React + Vite + TailwindCSS (v3) + shadcn/ui**, themed by the
 shared `@neutree-ai/theme` package. Every color is a **semantic OKLCH token**, not
 a raw Tailwind palette color. Follow this skill to produce UI that matches the
 existing app instead of generic AI-looking output.

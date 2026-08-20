@@ -10,8 +10,8 @@ import { rehypeBaseLinks } from './src/plugins/rehype-base-links.mjs'
 // distribution serving them at another host — or at that host's root — sets
 // these at build time. Everything else derives from them: Astro rewrites its
 // own links and assets, and rehypeBaseLinks rewrites the ones in the content.
-const site = process.env.DOCS_SITE || 'https://docs.neutree.ai'
-const base = process.env.DOCS_BASE || '/nap'
+const site = process.env.DOCS_SITE || 'https://xuyooo.github.io'
+const base = process.env.DOCS_BASE || '/Qube-Agent-Platform'
 
 // "Use Cases" is an extension point: this repo ships none. A downstream
 // distribution adds deployment-specific scenarios by dropping .md/.mdx files
@@ -29,7 +29,7 @@ export default defineConfig({
   integrations: [
     preact(),
     starlight({
-      title: 'Neutree Agent Platform Docs',
+      title: 'Qube Agent Platform Docs',
       favicon: '/favicon.svg',
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/neutree-ai/agent-platform' },

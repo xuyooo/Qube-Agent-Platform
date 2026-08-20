@@ -21,7 +21,7 @@ spec:
             - name: DATABASE_URL
               value: "postgresql://${PG_USERNAME}:$(POSTGRES_PASSWORD)@${APP_PREFIX}-pg-rw:5432/${DB_NAME}"
             # Prefix-aware host for the platform MCP catalog URL. Without it the
-            # seed writes http://nap-cp:3000/mcp, which only resolves when
-            # APP_PREFIX is "nap". Keep in sync with control-plane.yaml.
+            # seed writes http://qap-cp:3000/mcp, which only resolves when
+            # APP_PREFIX is "qap". Keep in sync with control-plane.yaml.
             - name: CP_SERVICE_URL
               value: "http://${APP_PREFIX}-cp:3000"

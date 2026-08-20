@@ -1,9 +1,9 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Hono } from 'hono'
-import { NapClient } from '../../../internal/client/src/index'
+import { QapClient } from '../../../internal/client/src/index'
 import * as db from '../services/db'
 
-const NAP_API_URL = process.env.NAP_API_URL || 'http://localhost:3000'
+const QAP_API_URL = process.env.QAP_API_URL || 'http://localhost:3000'
 
 /**
  * Resolve a nested field from an object using dot notation.
@@ -221,10 +221,10 @@ export async function handleWebhookPayload(opts: {
     return { ok: false, error: 'connector not configured (missing platform token)' }
   }
 
-  const napClient = new NapClient({ baseUrl: NAP_API_URL, serviceToken: platformToken })
+  const qapClient = new QapClient({ baseUrl: QAP_API_URL, serviceToken: platformToken })
 
   try {
-    const result = await napClient.jobs.create(route.workspace_id, {
+    const result = await qapClient.jobs.create(route.workspace_id, {
       prompt: finalPrompt,
       trigger: {
         type: 'webhook',

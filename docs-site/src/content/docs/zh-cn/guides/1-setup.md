@@ -4,7 +4,7 @@ description: 接入大模型 API 供应商 —— 创建第一个 Agent 前唯�
 ---
 
 :::note[还没有可登录的平台实例？]
-指南默认你已经有一个可以登录的 Neutree Agent Platform 实例。如果还没有，[一行命令装一个](/zh-cn/self-host/single-node/)。
+指南默认你已经有一个可以登录的 Qube Agent Platform 实例。如果还没有，[一行命令装一个](/zh-cn/self-host/single-node/)。
 :::
 
 创建第一个 Agent 之前，你只需要准备一样东西：一个可用的 **API 供应商** —— Agent 调用大模型走的通道。每个 Workspace 选一个供应商加一个具体模型，所有 Session 的模型调用都走这条通道。

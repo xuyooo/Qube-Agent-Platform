@@ -1,4 +1,4 @@
-// memory-fuse runs as a sidecar in each NAP workspace pod that has at least
+// memory-fuse runs as a sidecar in each QAP workspace pod that has at least
 // one memory_store attachment. It owns N FUSE mounts under /mnt/memory/<slug>/,
 // one per attachment, and exposes a gRPC service at :9102 so cp can push
 // live Mount/Unmount/relabel as the user attaches and detaches stores.
@@ -20,10 +20,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/cache"
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/cpclient"
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/grpcserver"
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/mountmgr"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/cache"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/cpclient"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/grpcserver"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/mountmgr"
 )
 
 func main() {

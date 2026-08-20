@@ -1,6 +1,6 @@
 # skills-content-service
 
-Data-plane service for the NAP skills bounded context. Owns every read and
+Data-plane service for the QAP skills bounded context. Owns every read and
 write of the `skills.package` BYTEA column; control-plane keeps the metadata
 columns and the user-facing ACL.
 

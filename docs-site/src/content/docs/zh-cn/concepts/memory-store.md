@@ -3,7 +3,7 @@ title: 记忆库（Memory Store）
 description: 跨 Workspace 复用的结构化记忆系统，对 Agent 以文件形式暴露
 ---
 
-每个 Agent 的 session 默认是相互独立的——上一次对话学到的东西，下一次不会自动记得。Neutree Agent Platform（NAP）用**记忆库（Memory Store）** 解决这个问题：你或 Agent 写进去的内容，会随后续每一次 session 进入 Agent 的工作上下文。
+每个 Agent 的 session 默认是相互独立的——上一次对话学到的东西，下一次不会自动记得。Qube Agent Platform（QAP）用**记忆库（Memory Store）** 解决这个问题：你或 Agent 写进去的内容，会随后续每一次 session 进入 Agent 的工作上下文。
 
 记忆库是新版本（替代了早期"每个 Workspace 一份单一 Markdown"的简单 Memory），它带来了几个能力：
 
@@ -89,7 +89,7 @@ echo "新的偏好" >> /mnt/memory/user-prefs/notes.md
 
 ## 平台 Prompt 层
 
-为了让记忆库这种机制生效，NAP 在你写的 system prompt 之外还会**注入一层「平台 prompt」**。这层 prompt 是平台自动维护的，会动态拼接：
+为了让记忆库这种机制生效，QAP 在你写的 system prompt 之外还会**注入一层「平台 prompt」**。这层 prompt 是平台自动维护的，会动态拼接：
 
 - Agent 类型、注册的内置 skills（比如 `platform` skill）的引用说明
 - **当前挂载的所有记忆库的名字 + 每个库的 `MEMORY.md` 索引内容**

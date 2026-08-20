@@ -1,6 +1,6 @@
 # Memory
 
-Memory stores are persistent text directories mounted into the workspace at `/mnt/memory/<store_id>/`. They survive across sessions, restarts, and pod rebuilds — anything written here is durable. Stores must be attached to the workspace via the NAP UI; an unattached workspace sees no `/mnt/memory/` entries and this capability is unavailable.
+Memory stores are persistent text directories mounted into the workspace at `/mnt/memory/<store_id>/`. They survive across sessions, restarts, and pod rebuilds — anything written here is durable. Stores must be attached to the workspace via the QAP UI; an unattached workspace sees no `/mnt/memory/` entries and this capability is unavailable.
 
 The platform reminder lists each attached store with its `(access)` and any workspace-specific instructions. `read_only` mounts reject writes at the filesystem level; do not retry on `EROFS` — surface the error to the user.
 

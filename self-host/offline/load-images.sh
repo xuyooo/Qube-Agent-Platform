@@ -5,7 +5,7 @@ set -euo pipefail
 # Load the offline image bundle and push every image to a target registry
 # ============================================================================
 # Usage:
-#   ./load-images.sh --registry registry.example.com/nap --archive nap-images.tar.gz
+#   ./load-images.sh --registry registry.example.com/qap --archive qap-images.tar.gz
 #
 # Retags every image in the bundle to ${TARGET_REGISTRY}/<short> and pushes it,
 # then prints the exact values.env overrides to paste. <short> collapses each
@@ -35,7 +35,7 @@ INSECURE=false
 # APP_PREFIX). Only used to locate the first-party source registry in the loaded
 # images; a deployment built with a non-default prefix passes --app-prefix
 # <prefix> to match.
-APP_PREFIX="${APP_PREFIX:-nap}"
+APP_PREFIX="${APP_PREFIX:-qap}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -50,13 +50,13 @@ done
 if [ -z "$TARGET_REGISTRY" ] || [ -z "$ARCHIVE" ]; then
   echo "Usage: $0 --registry <target-registry> --archive <tar-file> [--app-prefix <prefix>] [--insecure-registry]"
   echo ""
-  echo "  --app-prefix <prefix>  first-party image prefix (default: nap). Set this"
+  echo "  --app-prefix <prefix>  first-party image prefix (default: qap). Set this"
   echo "                         to the values.env APP_PREFIX the bundle was built"
   echo "                         with, if it was not the default."
   echo "  --insecure-registry    push over plain HTTP (registry without TLS)"
   echo ""
   echo "Example:"
-  echo "  $0 --registry registry.example.com/nap --archive nap-images.tar.gz"
+  echo "  $0 --registry registry.example.com/qap --archive qap-images.tar.gz"
   exit 1
 fi
 
@@ -150,7 +150,7 @@ echo "==> Source registry: $SOURCE_REGISTRY  (app-prefix: $APP_PREFIX)"
 # and any future first-party image — to ${TARGET_REGISTRY}/<basename>. Deriving
 # the set from the loaded images (rather than a hard-coded list) keeps it correct
 # across app-prefix changes and as first-party images are added. afs ships from
-# its own repo (ghcr.io/neutree-ai/afs), so it's a third-party entry below.
+# its own repo (ghcr.io/xuyooo/afs), so it's a third-party entry below.
 echo "==> Retagging and pushing first-party images to ${TARGET_REGISTRY} ..."
 while IFS= read -r local_ref; do
   [ -n "$local_ref" ] || continue
@@ -175,7 +175,7 @@ THIRD_PARTY_SRCS=(
   "docker.io/library/python:3.12-bookworm"
   "docker.io/library/golang:1.23"
   "registry.k8s.io/pause:3.9"
-  "ghcr.io/neutree-ai/afs:latest"
+  "ghcr.io/xuyooo/afs:latest"
 )
 
 echo "==> Retagging and pushing third-party images ..."
@@ -190,7 +190,7 @@ echo "==========================================================================
 echo "Paste these into your values.env (uncomment the third-party block):"
 echo "============================================================================"
 echo "REGISTRY=${TARGET_REGISTRY}"
-[ "$APP_PREFIX" != "nap" ] && echo "APP_PREFIX=${APP_PREFIX}"
+[ "$APP_PREFIX" != "qap" ] && echo "APP_PREFIX=${APP_PREFIX}"
 echo "POSTGRES_IMAGE=${TARGET_REGISTRY}/cloudnative-pg-postgresql:16"
 echo "GOTENBERG_IMAGE=${TARGET_REGISTRY}/gotenberg:8"
 echo "COTURN_IMAGE=${TARGET_REGISTRY}/coturn:4.6"

@@ -1,5 +1,5 @@
-export { NapClient, NapApiError } from './client'
-export type { NapClientOptions } from './client'
+export { QapClient, QapApiError } from './client'
+export type { QapClientOptions } from './client'
 export { ForumClient } from './forum'
 export type { ForumThread, ForumReply, ForumThreadDetail, ForumUser } from './forum'
 export type { AgentActions } from './sse'

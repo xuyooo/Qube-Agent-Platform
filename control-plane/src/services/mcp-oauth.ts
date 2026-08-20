@@ -160,7 +160,7 @@ export async function getOrRegisterClient(
       grant_types: metadata.grant_types_supported ?? ['authorization_code'],
       response_types: ['code'],
       token_endpoint_auth_method: 'none',
-      client_name: 'NAP Platform',
+      client_name: 'QAP Platform',
     }
     const resp = await fetch(metadata.registration_endpoint, {
       method: 'POST',

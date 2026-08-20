@@ -1,10 +1,10 @@
-// Auth: verify NAP bearer tokens via control-plane, with service key bypass for internal calls.
+// Auth: verify QAP bearer tokens via control-plane, with service key bypass for internal calls.
 
 import type { Context } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { COOKIE_NAME, verifySessionToken } from './session'
 
-const NAP_URL = process.env.NAP_URL || 'http://nap-cp:3000'
+const QAP_URL = process.env.QAP_URL || 'http://qap-cp:3000'
 const SERVICE_KEY = process.env.SERVICE_KEY || ''
 
 export interface AuthUser {
@@ -22,7 +22,7 @@ async function verifyBearerToken(token: string): Promise<AuthUser | null> {
   if (cached && cached.expiresAt > Date.now()) return cached.user
 
   try {
-    const res = await fetch(`${NAP_URL}/api/auth/me`, {
+    const res = await fetch(`${QAP_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(5000),
     })

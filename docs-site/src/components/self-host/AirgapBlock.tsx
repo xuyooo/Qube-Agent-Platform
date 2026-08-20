@@ -5,8 +5,8 @@ import './airgap-block.css'
 // All AirgapBlock instances share one expand/collapse state, remembered across
 // pages via localStorage: an air-gapped reader opens one block and every block
 // on every self-host page stays open for them.
-const STORE_KEY = 'nap-airgap-open'
-const SYNC_EVENT = 'nap-airgap-toggle'
+const STORE_KEY = 'qap-airgap-open'
+const SYNC_EVENT = 'qap-airgap-toggle'
 
 const STR = {
   en: { label: 'Air-gapped', hint: 'extra steps for nodes with no internet access' },

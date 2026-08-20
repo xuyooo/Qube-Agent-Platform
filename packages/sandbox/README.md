@@ -1,6 +1,6 @@
 # @neutree-ai/sandbox
 
-TypeScript/JavaScript SDK for NAP Sandbox — create and manage isolated container environments for AI agents, code execution, and development.
+TypeScript/JavaScript SDK for QAP Sandbox — create and manage isolated container environments for AI agents, code execution, and development.
 
 ## Install
 
@@ -15,7 +15,7 @@ import { SandboxClient } from '@neutree-ai/sandbox'
 
 const client = new SandboxClient({
   baseUrl: 'https://sandbox.example.com', // your sandbox service URL
-  token: 'tos_...',                        // NAP Service Token
+  token: 'tos_...',                        // QAP Service Token
 })
 
 // Create a sandbox
@@ -50,7 +50,7 @@ await client.delete(sbx.id)
 | Option | Type | Description |
 |--------|------|-------------|
 | `baseUrl` | `string` | Sandbox service base URL. Required. |
-| `token` | `string` | NAP Service Token. Required. |
+| `token` | `string` | QAP Service Token. Required. |
 
 ### Methods
 

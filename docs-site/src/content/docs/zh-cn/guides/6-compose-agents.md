@@ -9,7 +9,7 @@ description: 让一个 Agent 调用另一个 Agent，组合出复杂能力
 
 ## 基本原理
 
-Neutree Agent Platform（NAP）支持一个 Agent 在对话里**像调用工具一样调用另一个 Agent**。要让一个 Workspace 能被别人调用，需要做两件事：
+Qube Agent Platform（QAP）支持一个 Agent 在对话里**像调用工具一样调用另一个 Agent**。要让一个 Workspace 能被别人调用，需要做两件事：
 
 1. 给它一个**可识别的 Slug**
 2. 设置**可见性**
@@ -89,7 +89,7 @@ Slug 是 Workspace 的唯一标识符，其他 Agent 通过它来引用。比如
 >
 > "把我的私有 Agent 临时加进来用一次，不想把它永久升到 user/public 可见。"
 
-这种场景 NAP 提供了 **Teamwork**（preview 阶段）。在首页按 `⌘K` 打开 **Teamwork**，创建一个 team task：
+这种场景 QAP 提供了 **Teamwork**（preview 阶段）。在首页按 `⌘K` 打开 **Teamwork**，创建一个 team task：
 
 1. **指定一个协调员（coordinator）Agent**——它是主 Agent，sub-agent 都由它发起调用
 2. **添加成员**——候选列表包含所有 public / user 可见的 Agent，**还包含你自己的 private Agent**（如果还没配 slug 可以在这里现配）。private Agent 加进 task 后只在这个 task 里可见，不影响其他场景

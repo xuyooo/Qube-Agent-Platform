@@ -27,7 +27,7 @@ spec:
                   key: password
             - name: DATABASE_URL
               value: "postgresql://${PG_USERNAME}:$(POSTGRES_PASSWORD)@${APP_PREFIX}-pg-rw:5432/${DB_NAME}"
-            - name: NAP_API_URL
+            - name: QAP_API_URL
               value: "http://${APP_PREFIX}-cp:3000"
             - name: CG_API_URL
               value: "http://${APP_PREFIX}-cg:3002"

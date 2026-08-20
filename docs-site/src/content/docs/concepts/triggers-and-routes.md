@@ -3,7 +3,7 @@ title: Where an Agent receives tasks
 description: The four ways work reaches an agent — web UI, Schedule, Connector + Route, and the HTTP API
 ---
 
-A workspace exists. How does the agent start working? NAP has four ways in, covering everything from a person typing to nobody being there at all.
+A workspace exists. How does the agent start working? QAP has four ways in, covering everything from a person typing to nobody being there at all.
 
 ## The ways in
 
@@ -36,7 +36,7 @@ The most capable of the three, and the one that needs the most explaining. It an
 
 Getting an event in means answering three questions:
 
-- **Where does it arrive** — NAP has to expose something listening
+- **Where does it arrive** — QAP has to expose something listening
 - **Who handles it** — which workspace this particular event belongs to
 - **How does it become something the agent can act on** — how an HTTP request or a Slack message turns into a prompt
 
@@ -60,7 +60,7 @@ One Connector can carry many Routes. Each Route says:
 - **Which workspace it triggers**
 - **How the event becomes a prompt** — a template that can pull in `{body}`, `{message}`, `{user}`
 
-Concretely: GitLab has a webhook on a repo pointing at NAP; the Route on the NAP side sets `path = /ci-doctor`, filter `build_status = failed`, workspace `ci-doctor`, and a prompt template of `Here is this CI job event data: {body}`. A job fails, GitLab sends the event, NAP matches the path, the filter passes, and a new session opens in that workspace to start the diagnosis.
+Concretely: GitLab has a webhook on a repo pointing at QAP; the Route on the QAP side sets `path = /ci-doctor`, filter `build_status = failed`, workspace `ci-doctor`, and a prompt template of `Here is this CI job event data: {body}`. A job fails, GitLab sends the event, QAP matches the path, the filter passes, and a new session opens in that workspace to start the diagnosis.
 
 ### Why the filter matters
 

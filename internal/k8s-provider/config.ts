@@ -4,7 +4,7 @@
 // can share one config seam.
 
 const NAMESPACE = process.env.K8S_NAMESPACE || 'default'
-const AGENT_IMAGE_PREFIX = process.env.AGENT_IMAGE_PREFIX || 'nap-agent'
+const AGENT_IMAGE_PREFIX = process.env.AGENT_IMAGE_PREFIX || 'qap-agent'
 const AGENT_IMAGE_TAG = process.env.AGENT_IMAGE_TAG || 'latest'
 const AGENT_STORAGE_CLASS = process.env.AGENT_STORAGE_CLASS || 'nfs-csi'
 const IMAGE_PULL_SECRET = process.env.IMAGE_PULL_SECRET || ''
@@ -85,7 +85,7 @@ function defaultK8sConfig(): K8sConfig {
     imagePullSecret: IMAGE_PULL_SECRET,
     nodeSelector: AGENT_NODE_SELECTOR,
     workspaceStorageSize: WORKSPACE_STORAGE_SIZE,
-    cpServiceUrl: process.env.CP_SERVICE_URL || 'http://nap-cp:3000',
+    cpServiceUrl: process.env.CP_SERVICE_URL || 'http://qap-cp:3000',
     memoryFuseImage: MEMORY_FUSE_IMAGE,
     multiReplica: WORKSPACE_MULTI_REPLICA,
     afs: {

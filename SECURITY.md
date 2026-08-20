@@ -1,6 +1,6 @@
 # Security Policy
 
-We take the security of Neutree Agent Platform seriously. Thank you for helping keep the project and its users safe.
+We take the security of Qube Agent Platform seriously. Thank you for helping keep the project and its users safe.
 
 ## Reporting a vulnerability
 
@@ -23,4 +23,4 @@ Please include, as far as you can:
 
 ## Scope
 
-Security issues in any first-party component of this repository are in scope. Vulnerabilities in third-party dependencies or external components (e.g. OpenSandbox) should be reported to their respective projects; if a NAP default or integration makes such an issue materially worse, we still want to hear about it.
+Security issues in any first-party component of this repository are in scope. Vulnerabilities in third-party dependencies or external components (e.g. OpenSandbox) should be reported to their respective projects; if a QAP default or integration makes such an issue materially worse, we still want to hear about it.

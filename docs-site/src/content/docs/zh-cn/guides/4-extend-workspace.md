@@ -144,7 +144,7 @@ Workspace 的 app（**文件 / 终端** 等）是可以扩展的 —— 你可�
 - **MCP 服务** ——供 Agent 调用的工具接口
 - **UI 标签** ——嵌入 Workspace 的自定义面板
 
-如果你的业务场景需要这种深度集成，建议联系 Neutree Agent Platform 团队沟通方案。
+如果你的业务场景需要这种深度集成，建议联系 Qube Agent Platform 团队沟通方案。
 
 ## 接下来
 

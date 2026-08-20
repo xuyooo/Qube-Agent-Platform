@@ -2,7 +2,7 @@
  * Neutral SSE line reader.
  *
  * Reads an SSE `Response` body and yields parsed events according to the
- * WHATWG EventSource spec subset that NAP actually uses: `event:` and `data:`
+ * WHATWG EventSource spec subset that QAP actually uses: `event:` and `data:`
  * fields, blank-line event boundaries, CR/LF/CRLF line endings, and
  * multi-line `data:` concatenation with `\n`.
  *
@@ -12,7 +12,7 @@
  *   - Comment lines (starting with `:`)
  *
  * This layer is domain-neutral. It does not parse JSON, does not care about
- * any NAP event shape, and does not reconnect on errors. Upper layers add
+ * any QAP event shape, and does not reconnect on errors. Upper layers add
  * JSON parsing, UniversalEvent typing, reconnect, and persistence.
  */
 

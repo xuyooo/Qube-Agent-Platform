@@ -11,7 +11,7 @@ Reusable agent Skills — import (git or upload), version, share by visibility /
 | POST | `/api/skills/scan-git` | List skill candidates in a git repo without persisting | [View](../operations/post-api-skills-scan-git.md) |
 | POST | `/api/skills/scan-tarball` | List skill candidates inside an uploaded tarball without persisting | [View](../operations/post-api-skills-scan-tarball.md) |
 | POST | `/api/skills/from-git` | Import a single subpath from a git repo as a new skill | [View](../operations/post-api-skills-from-git.md) |
-| POST | `/api/skills/sources/native` | Create a native (in-NAP authored) source + initial empty skill | [View](../operations/post-api-skills-sources-native.md) |
+| POST | `/api/skills/sources/native` | Create a native (in-QAP authored) source + initial empty skill | [View](../operations/post-api-skills-sources-native.md) |
 | GET | `/api/skills/sources` | List sources owned by the caller | [View](../operations/get-api-skills-sources.md) |
 | GET | `/api/skills/sources/{id}` | Read one source by id | [View](../operations/get-api-skills-sources-id.md) |
 | DELETE | `/api/skills/sources/{id}` | Delete a source (owner only); fails if any skill still under it | [View](../operations/delete-api-skills-sources-id.md) |

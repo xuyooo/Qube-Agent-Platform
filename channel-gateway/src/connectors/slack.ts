@@ -1,12 +1,12 @@
 import { SocketModeClient } from '@slack/socket-mode'
 import { WebClient } from '@slack/web-api'
 import pMap from 'p-map'
-import { NapClient } from '../../../internal/client/src/index'
+import { QapClient } from '../../../internal/client/src/index'
 import { cancelThreadTurn } from '../lib/cancel-command'
 import { resolveRouteClient } from '../lib/route-client'
 import * as db from '../services/db'
 
-const NAP_API_URL = process.env.NAP_API_URL || 'http://localhost:3000'
+const QAP_API_URL = process.env.QAP_API_URL || 'http://localhost:3000'
 
 /** Extract plain text from a Slack event/message, falling back to attachments then blocks
  *  when the top-level text field is empty (rich-text / Block Kit messages). */
@@ -91,8 +91,8 @@ export async function startOne(connectorId: string) {
     return
   }
 
-  const napClient = new NapClient({
-    baseUrl: NAP_API_URL,
+  const qapClient = new QapClient({
+    baseUrl: QAP_API_URL,
     serviceToken: platformToken,
   })
 
@@ -308,7 +308,7 @@ Indexes are 1-based and match the attached images order.
       })
       if (!res.ok) return { text: null, error: `download failed: ${res.status}` }
       const buf = Buffer.from(await res.arrayBuffer())
-      const result = await napClient.asr.transcribe(buf, {
+      const result = await qapClient.asr.transcribe(buf, {
         filename: file.name || 'voice.m4a',
         contentType: file.mimetype || 'audio/mp4',
       })
@@ -383,7 +383,7 @@ Indexes are 1-based and match the attached images order.
         `[Slack] ${connector.name}`,
         route,
         connector,
-        napClient,
+        qapClient,
         threadTs,
       )
       if (ack === null) return
@@ -461,7 +461,7 @@ Indexes are 1-based and match the attached images order.
       `[Slack] ${connector.name}`,
       route,
       connector,
-      napClient,
+      qapClient,
     )
     if (!jobClient) return
 
