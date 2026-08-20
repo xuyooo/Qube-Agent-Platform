@@ -9,17 +9,17 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
       "agent-platform/workspace-version": "8",
     },
     "labels": {
-      "app": "nap",
+      "app": "qap",
       "component": "workspace",
       "workspace-id": "ws1",
     },
-    "name": "nap-ws1",
+    "name": "qap-ws1",
   },
   "spec": {
     "replicas": 1,
     "selector": {
       "matchLabels": {
-        "app": "nap",
+        "app": "qap",
         "component": "workspace",
         "workspace-id": "ws1",
       },
@@ -30,7 +30,7 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
     "template": {
       "metadata": {
         "labels": {
-          "app": "nap",
+          "app": "qap",
           "component": "workspace",
           "workspace-id": "ws1",
         },
@@ -45,7 +45,7 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
               },
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -56,21 +56,21 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
               {
                 "name": "AFS_CONTROLLER",
-                "value": "afs-controller.nap.svc:9100",
+                "value": "afs-controller.qap.svc:9100",
               },
               {
                 "name": "AFS_FUSE_SERVER",
                 "value": "127.0.0.1:9101",
               },
             ],
-            "image": "nap-agent-claude-code:latest",
+            "image": "qap-agent-claude-code:latest",
             "livenessProbe": {
               "failureThreshold": 6,
               "httpGet": {
@@ -140,14 +140,14 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
             "env": [
               {
                 "name": "AFS_BOOTSTRAP_URL",
-                "value": "http://nap-cp:3000/workspace/v1/workspaces/ws1/afs-mounts",
+                "value": "http://qap-cp:3000/workspace/v1/workspaces/ws1/afs-mounts",
               },
               {
                 "name": "WORKSPACE_TOKEN",
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
@@ -157,13 +157,13 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
             ],
-            "image": "nap-afs-fuse:latest",
+            "image": "qap-afs-fuse:latest",
             "name": "afs-fuse",
             "securityContext": {
               "privileged": true,
@@ -199,7 +199,7 @@ exports[`buildDeploymentSpec golden master > afs enabled 1`] = `
           {
             "name": "workspace",
             "persistentVolumeClaim": {
-              "claimName": "nap-ws1-workspace",
+              "claimName": "qap-ws1-workspace",
             },
           },
           {
@@ -240,17 +240,17 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
       "agent-platform/workspace-version": "8",
     },
     "labels": {
-      "app": "nap",
+      "app": "qap",
       "component": "workspace",
       "workspace-id": "ws1",
     },
-    "name": "nap-ws1",
+    "name": "qap-ws1",
   },
   "spec": {
     "replicas": 1,
     "selector": {
       "matchLabels": {
-        "app": "nap",
+        "app": "qap",
         "component": "workspace",
         "workspace-id": "ws1",
       },
@@ -261,7 +261,7 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
     "template": {
       "metadata": {
         "labels": {
-          "app": "nap",
+          "app": "qap",
           "component": "workspace",
           "workspace-id": "ws1",
         },
@@ -276,7 +276,7 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
               },
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -287,21 +287,21 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
               {
                 "name": "AFS_CONTROLLER",
-                "value": "afs-controller.nap.svc:9100",
+                "value": "afs-controller.qap.svc:9100",
               },
               {
                 "name": "AFS_FUSE_SERVER",
                 "value": "127.0.0.1:9101",
               },
             ],
-            "image": "nap-agent-claude-code:latest",
+            "image": "qap-agent-claude-code:latest",
             "livenessProbe": {
               "failureThreshold": 6,
               "httpGet": {
@@ -376,14 +376,14 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
             "env": [
               {
                 "name": "AFS_BOOTSTRAP_URL",
-                "value": "http://nap-cp:3000/workspace/v1/workspaces/ws1/afs-mounts",
+                "value": "http://qap-cp:3000/workspace/v1/workspaces/ws1/afs-mounts",
               },
               {
                 "name": "WORKSPACE_TOKEN",
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
@@ -393,13 +393,13 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
             ],
-            "image": "nap-afs-fuse:latest",
+            "image": "qap-afs-fuse:latest",
             "name": "afs-fuse",
             "securityContext": {
               "privileged": true,
@@ -428,7 +428,7 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
             "env": [
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -439,7 +439,7 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
@@ -449,7 +449,7 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
                 "value": "0.0.0.0:9102",
               },
             ],
-            "image": "nap-memory-fuse:latest",
+            "image": "qap-memory-fuse:latest",
             "name": "memory-fuse",
             "ports": [
               {
@@ -494,7 +494,7 @@ exports[`buildDeploymentSpec golden master > full: afs + memory + resources + no
           {
             "name": "workspace",
             "persistentVolumeClaim": {
-              "claimName": "nap-ws1-workspace",
+              "claimName": "qap-ws1-workspace",
             },
           },
           {
@@ -543,17 +543,17 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
       "agent-platform/workspace-version": "8",
     },
     "labels": {
-      "app": "nap",
+      "app": "qap",
       "component": "workspace",
       "workspace-id": "ws1",
     },
-    "name": "nap-ws1",
+    "name": "qap-ws1",
   },
   "spec": {
     "replicas": 1,
     "selector": {
       "matchLabels": {
-        "app": "nap",
+        "app": "qap",
         "component": "workspace",
         "workspace-id": "ws1",
       },
@@ -564,7 +564,7 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
     "template": {
       "metadata": {
         "labels": {
-          "app": "nap",
+          "app": "qap",
           "component": "workspace",
           "workspace-id": "ws1",
         },
@@ -579,7 +579,7 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
               },
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -590,13 +590,13 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
             ],
-            "image": "nap-agent-claude-code:latest",
+            "image": "qap-agent-claude-code:latest",
             "livenessProbe": {
               "failureThreshold": 6,
               "httpGet": {
@@ -660,7 +660,7 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
             "env": [
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -671,7 +671,7 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
@@ -681,7 +681,7 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
                 "value": "0.0.0.0:9102",
               },
             ],
-            "image": "nap-memory-fuse:latest",
+            "image": "qap-memory-fuse:latest",
             "name": "memory-fuse",
             "ports": [
               {
@@ -719,7 +719,7 @@ exports[`buildDeploymentSpec golden master > memory-fuse enabled 1`] = `
           {
             "name": "workspace",
             "persistentVolumeClaim": {
-              "claimName": "nap-ws1-workspace",
+              "claimName": "qap-ws1-workspace",
             },
           },
           {
@@ -752,17 +752,17 @@ exports[`buildDeploymentSpec golden master > minimal: afs off, memory off, no no
       "agent-platform/workspace-version": "8",
     },
     "labels": {
-      "app": "nap",
+      "app": "qap",
       "component": "workspace",
       "workspace-id": "ws1",
     },
-    "name": "nap-ws1",
+    "name": "qap-ws1",
   },
   "spec": {
     "replicas": 1,
     "selector": {
       "matchLabels": {
-        "app": "nap",
+        "app": "qap",
         "component": "workspace",
         "workspace-id": "ws1",
       },
@@ -773,7 +773,7 @@ exports[`buildDeploymentSpec golden master > minimal: afs off, memory off, no no
     "template": {
       "metadata": {
         "labels": {
-          "app": "nap",
+          "app": "qap",
           "component": "workspace",
           "workspace-id": "ws1",
         },
@@ -788,7 +788,7 @@ exports[`buildDeploymentSpec golden master > minimal: afs off, memory off, no no
               },
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -799,13 +799,13 @@ exports[`buildDeploymentSpec golden master > minimal: afs off, memory off, no no
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
             ],
-            "image": "nap-agent-claude-code:latest",
+            "image": "qap-agent-claude-code:latest",
             "livenessProbe": {
               "failureThreshold": 6,
               "httpGet": {
@@ -871,7 +871,7 @@ exports[`buildDeploymentSpec golden master > minimal: afs off, memory off, no no
           {
             "name": "workspace",
             "persistentVolumeClaim": {
-              "claimName": "nap-ws1-workspace",
+              "claimName": "qap-ws1-workspace",
             },
           },
         ],
@@ -890,27 +890,27 @@ exports[`buildStatefulSetSpec > golden master: shared RWX PVC, headless serviceN
       "agent-platform/workspace-version": "8",
     },
     "labels": {
-      "app": "nap",
+      "app": "qap",
       "component": "workspace",
       "workspace-id": "ws1",
     },
-    "name": "nap-ws1",
+    "name": "qap-ws1",
   },
   "spec": {
     "podManagementPolicy": "Parallel",
     "replicas": 3,
     "selector": {
       "matchLabels": {
-        "app": "nap",
+        "app": "qap",
         "component": "workspace",
         "workspace-id": "ws1",
       },
     },
-    "serviceName": "nap-ws1-hl",
+    "serviceName": "qap-ws1-hl",
     "template": {
       "metadata": {
         "labels": {
-          "app": "nap",
+          "app": "qap",
           "component": "workspace",
           "workspace-id": "ws1",
         },
@@ -925,7 +925,7 @@ exports[`buildStatefulSetSpec > golden master: shared RWX PVC, headless serviceN
               },
               {
                 "name": "CP_URL",
-                "value": "http://nap-cp:3000",
+                "value": "http://qap-cp:3000",
               },
               {
                 "name": "WORKSPACE_ID",
@@ -936,13 +936,13 @@ exports[`buildStatefulSetSpec > golden master: shared RWX PVC, headless serviceN
                 "valueFrom": {
                   "secretKeyRef": {
                     "key": "WORKSPACE_TOKEN",
-                    "name": "nap-ws1-token",
+                    "name": "qap-ws1-token",
                     "optional": true,
                   },
                 },
               },
             ],
-            "image": "nap-agent-claude-code:latest",
+            "image": "qap-agent-claude-code:latest",
             "livenessProbe": {
               "failureThreshold": 6,
               "httpGet": {
@@ -1008,7 +1008,7 @@ exports[`buildStatefulSetSpec > golden master: shared RWX PVC, headless serviceN
           {
             "name": "workspace",
             "persistentVolumeClaim": {
-              "claimName": "nap-ws1-workspace",
+              "claimName": "qap-ws1-workspace",
             },
           },
         ],
