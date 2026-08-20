@@ -312,7 +312,7 @@ const PANEL_STR = {
         <code>openssl rand -hex 32</code>). <strong>Once a machine-internal secret is set, do not change it on upgrade</strong> — otherwise issued session tokens and the existing database become unusable.
       </>
     ),
-    cfgPrintNote: <>The interactive configuration generator is online at <a href="https://docs.neutree.ai/qap/self-host/#configure">docs.neutree.ai/qap/self-host/#configure</a>. For full field documentation see <code>self-host/values.env.example</code>.</>,
+    cfgPrintNote: <>The interactive configuration generator is online at <a href="https://xuyooo.github.io/Qube-Agent-Platform/self-host/#configure">xuyooo.github.io/Qube-Agent-Platform/self-host/#configure</a>. For full field documentation see <code>self-host/values.env.example</code>.</>,
     // Install
     inToolsH2: 'Tools on the operator machine',
     inToolsIntro: 'The host running the installer (distinct from the cluster nodes) needs:',
@@ -458,7 +458,7 @@ const PANEL_STR = {
         <code>openssl rand -hex 32</code>）。<strong>机器内部密钥一旦设定，升级时不要改动</strong> — 否则已签发的会话 token 和现有数据库都会失效。
       </>
     ),
-    cfgPrintNote: <>交互式配置生成器在线地址为 <a href="https://docs.neutree.ai/qap/self-host/#configure">docs.neutree.ai/qap/self-host/#configure</a>。完整字段文档见 <code>self-host/values.env.example</code>。</>,
+    cfgPrintNote: <>交互式配置生成器在线地址为 <a href="https://xuyooo.github.io/Qube-Agent-Platform/self-host/#configure">xuyooo.github.io/Qube-Agent-Platform/self-host/#configure</a>。完整字段文档见 <code>self-host/values.env.example</code>。</>,
     // Install
     inToolsH2: '操作者机器上的工具',
     inToolsIntro: '运行安装器的主机（与集群节点不同）需要：',
@@ -752,7 +752,7 @@ function Install({ onGo, locale = 'en' }: { onGo: (id: TabId) => void; locale?: 
 
       <section>
         <h2 id="quick-start">{t.inQuickH2}</h2>
-        <CodeBlock locale={locale}>{`git clone https://github.com/neutree-ai/agent-platform
+        <CodeBlock locale={locale}>{`git clone https://github.com/xuyooo/Qube-Agent-Platform
 cd agent-platform/self-host
 cp values.env.example values.env
 ./gen-secrets.sh                # fills random machine secrets
@@ -761,11 +761,11 @@ vi values.env                   # set NAP_HOST, ADMIN_PASSWORD, storage, etc.
         <p>{t.inQuickAfter}</p>
         <p>{t.inQuickAltP}</p>
         <CodeBlock locale={locale}>{`# with an external NFS server
-curl -sfL https://docs.neutree.ai/qap/get.sh \\
+curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh \\
   | sh -s -- --k8s --host=<ip-or-hostname> --nfs-server=<ip> --nfs-path=</export/path>
 
 # with an existing RWX StorageClass
-curl -sfL https://docs.neutree.ai/qap/get.sh \\
+curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh \\
   | sh -s -- --k8s --host=<ip-or-hostname> --storage-class=<rwx-storageclass>`}</CodeBlock>
         <p class="sh-muted">{t.inQuickAltNote}</p>
       </section>
@@ -775,7 +775,7 @@ curl -sfL https://docs.neutree.ai/qap/get.sh \\
         <ol class="sh-steps">
           <li>
             <h3>{t.inStep1H3}</h3>
-            <CodeBlock locale={locale}>{`git clone https://github.com/neutree-ai/agent-platform
+            <CodeBlock locale={locale}>{`git clone https://github.com/xuyooo/Qube-Agent-Platform
 cd agent-platform/self-host`}</CodeBlock>
             <p class="sh-muted">{t.inStep1Note}</p>
             <AirgapBlock locale={locale} summary={t.agInstallSummary}>

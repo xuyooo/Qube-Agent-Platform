@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.neutree.ai/qap/">Docs</a> ·
-  <a href="https://neutree.ai/qap">Website</a> ·
-  <a href="https://docs.neutree.ai/qap/self-host/">Self-host guide</a> ·
+  <a href="https://xuyooo.github.io/Qube-Agent-Platform/">Docs</a> ·
+  <a href="https://xuyooo.github.io/Qube-Agent-Platform">Website</a> ·
+  <a href="https://xuyooo.github.io/Qube-Agent-Platform/self-host/">Self-host guide</a> ·
   <a href="https://discord.gg/MnsQ73d8dq">Discord</a>
 </p>
 
@@ -39,7 +39,7 @@ Qube Agent Platform (QAP) turns AI agents into a hosted, multi-user service. Ins
 
 Two things are honest to say up front: auto-scaling is configured through the API at workspace creation, not yet in the web UI; and building an evaluation set out of session history — to check a change, or to see whether a cheaper model holds up — is still being built. The tuning loop above ships today.
 
-The [website](https://neutree.ai/qap) walks through all three with diagrams; the [docs](https://docs.neutree.ai/qap/) are the reference.
+The [website](https://xuyooo.github.io/Qube-Agent-Platform) walks through all three with diagrams; the [docs](https://xuyooo.github.io/Qube-Agent-Platform/) are the reference.
 
 ## Local and managed, one setup
 
@@ -50,7 +50,7 @@ A local agent and a managed agent are the same craft at two scales. QAP invents 
 One Linux machine, one command:
 
 ```bash
-curl -sfL https://docs.neutree.ai/qap/get.sh | sudo sh -
+curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh | sudo sh -
 ```
 
 It installs a single-node k3s cluster and the whole platform on it, then prints the URL and the admin credentials. 8 vCPU / 32 GB / 200 GB is enough for around ten workspaces.
@@ -77,19 +77,19 @@ QAP is a set of services that share a PostgreSQL control plane. One control plan
 
 | Component | Package | Role |
 | --- | --- | --- |
-| **control-plane** | `@neutree-ai/control-plane` | Core API + orchestrator: workspaces, sessions, agents, prompts, templates, skills, providers, credentials, teams. PostgreSQL-backed. |
-| **web** | `@neutree-ai/web` | React front-end (Vite + Tailwind + shadcn/ui). |
-| **channel-gateway** | `@neutree-ai/channel-gateway` | Bridges external channels into the platform. |
-| **scheduler** | `@neutree-ai/scheduler` | Runs scheduled / recurring agent tasks. |
-| **browser-service** | `@neutree-ai/browser-service` | Remote browsers agents drive, streamed to users over WebRTC. |
-| **sandbox-service** | `@neutree-ai/sandbox-service` | Code sandbox control, backed by [OpenSandbox](https://github.com/alibaba/OpenSandbox). |
-| **skills-content-service** | `@neutree-ai/skills-content-service` | Serves agent skill content. |
-| **env-runner-k8s** | `@neutree-ai/env-runner-k8s` | Places and supervises workspace containers on Kubernetes. |
+| **control-plane** | `@xuyooo/control-plane` | Core API + orchestrator: workspaces, sessions, agents, prompts, templates, skills, providers, credentials, teams. PostgreSQL-backed. |
+| **web** | `@xuyooo/web` | React front-end (Vite + Tailwind + shadcn/ui). |
+| **channel-gateway** | `@xuyooo/channel-gateway` | Bridges external channels into the platform. |
+| **scheduler** | `@xuyooo/scheduler` | Runs scheduled / recurring agent tasks. |
+| **browser-service** | `@xuyooo/browser-service` | Remote browsers agents drive, streamed to users over WebRTC. |
+| **sandbox-service** | `@xuyooo/sandbox-service` | Code sandbox control, backed by [OpenSandbox](https://github.com/alibaba/OpenSandbox). |
+| **skills-content-service** | `@xuyooo/skills-content-service` | Serves agent skill content. |
+| **env-runner-k8s** | `@xuyooo/env-runner-k8s` | Places and supervises workspace containers on Kubernetes. |
 | **memory-fuse** | — | FUSE layer exposing agent memory as a filesystem. |
 | **agents/** | — | Agent runtime adapters (`claude-code`, `codex`, `goose`). |
-| **internal/** | `@neutree-ai/*` | Shared libraries — client, types, ACP adapter, agent skills, OAuth, theme, platform prompt, and the published [`ui-sdk`](internal/ui-sdk). |
-| **packages/sandbox** | `@neutree-ai/sandbox` | Published SDK for driving sandboxes from your own code. |
-| **docs-site** | `@neutree-ai/docs-site` | The documentation at [docs.neutree.ai/qap](https://docs.neutree.ai/qap/) (Astro + Starlight, en / zh-CN). |
+| **internal/** | `@xuyooo/*` | Shared libraries — client, types, ACP adapter, agent skills, OAuth, theme, platform prompt, and the published [`ui-sdk`](internal/ui-sdk). |
+| **packages/sandbox** | `@xuyooo/sandbox` | Published SDK for driving sandboxes from your own code. |
+| **docs-site** | `@xuyooo/docs-site` | The documentation at [xuyooo.github.io/Qube-Agent-Platform](https://xuyooo.github.io/Qube-Agent-Platform/) (Astro + Starlight, en / zh-CN). |
 
 ### Where to start reading
 
@@ -101,7 +101,7 @@ QAP is a set of services that share a PostgreSQL control plane. One control plan
 
 ## Container images
 
-First-party images are published to GitHub Container Registry under `ghcr.io/neutree-ai/agent-platform/` (e.g. `qap-cp`, `qap-cg`, `qap-scheduler`, `qap-browser`, `qap-sandbox`). Builds are driven by [`.github/workflows/build-images.yml`](.github/workflows/build-images.yml): images are built on demand (`workflow_dispatch`) or when a per-service release tag `<image>-v<x.y.z>` is pushed — services version independently.
+First-party images are published to GitHub Container Registry under `ghcr.io/xuyooo/qap/` (e.g. `qap-cp`, `qap-cg`, `qap-scheduler`, `qap-browser`, `qap-sandbox`). Builds are driven by [`.github/workflows/build-images.yml`](.github/workflows/build-images.yml): images are built on demand (`workflow_dispatch`) or when a per-service release tag `<image>-v<x.y.z>` is pushed — services version independently.
 
 ## Community
 
@@ -109,9 +109,9 @@ First-party images are published to GitHub Container Registry under `ghcr.io/neu
 support, and the people who work on them. It covers everything Qube builds, not just this
 repository, so tag your `#help` post with the product it's about.
 
-Bugs and feature requests belong in [Issues](https://github.com/neutree-ai/agent-platform/issues),
+Bugs and feature requests belong in [Issues](https://github.com/xuyooo/Qube-Agent-Platform/issues),
 where they don't scroll away. Design proposals that need to outlive a conversation go in
-[Discussions](https://github.com/orgs/neutree-ai/discussions).
+[Discussions](https://github.com/xuyooo/Qube-Agent-Platform/discussions).
 
 Most install problems are answered in one round when the question says **which install path**
 (connected or air-gapped), quotes **the error verbatim**, and says **what you already tried**.

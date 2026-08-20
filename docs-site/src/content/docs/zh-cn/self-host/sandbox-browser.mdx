@@ -49,7 +49,7 @@ helm install opensandbox ./opensandbox \
   -f <path-to>/optional/sandbox/opensandbox-values.yaml
 ```
 
-把 OpenSandbox 装在 `nap` namespace 里，平台默认的 `OPENSANDBOX_URL` 才能解析。如果你把 OpenSandbox 装到独立 namespace，需显式设置 `OPENSANDBOX_URL`（例如 `http://opensandbox-server.opensandbox-system.svc:80`）。完整参考（包括挂载平台的 sandbox pod 模板）见 [self-host README 的 "Enabling Code Sandbox"](https://github.com/neutree-ai/agent-platform/blob/main/self-host/README.md)。
+把 OpenSandbox 装在 `qap` namespace 里，平台默认的 `OPENSANDBOX_URL` 才能解析。如果你把 OpenSandbox 装到独立 namespace，需显式设置 `OPENSANDBOX_URL`（例如 `http://opensandbox-server.opensandbox-system.svc:80`）。完整参考（包括挂载平台的 sandbox pod 模板）见 [self-host README 的 "Enabling Code Sandbox"](https://github.com/xuyooo/Qube-Agent-Platform/blob/main/self-host/README.md)。
 
 ## OAuth client 自动注册
 

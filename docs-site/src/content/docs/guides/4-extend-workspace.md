@@ -144,7 +144,7 @@ This shape is called **Mini SaaS** — an independently deployed service integra
 - **MCP service** — the tool interface the agent calls
 - **UI tab** — a panel embedded in the workspace
 
-If your scenario needs integration this deep, come and talk it through in [Discord](https://discord.gg/MnsQ73d8dq) or [Discussions](https://github.com/orgs/neutree-ai/discussions) before you build.
+If your scenario needs integration this deep, come and talk it through in [Discord](https://discord.gg/MnsQ73d8dq) or [Discussions](https://github.com/xuyooo/Qube-Agent-Platform/discussions) before you build.
 
 ## Next
 

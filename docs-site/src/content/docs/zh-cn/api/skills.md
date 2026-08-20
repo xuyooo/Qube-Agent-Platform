@@ -5,7 +5,7 @@ description: qap-api skill —— 让本地 agent 学会用 QAP 自己的 API �
 
 本地 agent 和托管 agent 是同一件手艺的两个尺度，API 就是这两者之间的接缝：你本地的 agent 可以创建托管 agent、把活交给它、再把结果读回来。前提是它得知道这套 API 怎么调。
 
-`qap-api` 就是干这个的。它在仓库的 [`skills/`](https://github.com/neutree-ai/agent-platform/tree/main/skills) 下，是一个普通的 [Agent Skill](https://docs.claude.com/en/docs/agent-skills)——一个目录，里面一份 `SKILL.md`，agent 启动时读它。
+`qap-api` 就是干这个的。它在仓库的 [`skills/`](https://github.com/xuyooo/Qube-Agent-Platform/tree/main/skills) 下，是一个普通的 [Agent Skill](https://docs.claude.com/en/docs/agent-skills)——一个目录，里面一份 `SKILL.md`，agent 启动时读它。
 
 ## 里面是什么
 
@@ -18,7 +18,7 @@ description: qap-api skill —— 让本地 agent 学会用 QAP 自己的 API �
 把目录拷进 agent 的 skills 目录——Claude Code 的话，自己用是 `~/.claude/skills/`，项目内是 `.claude/skills/`：
 
 ```bash
-git clone https://github.com/neutree-ai/agent-platform.git
+git clone https://github.com/xuyooo/Qube-Agent-Platform.git
 cp -r agent-platform/skills/qap-api ~/.claude/skills/
 ```
 

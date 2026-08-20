@@ -5,7 +5,7 @@ description: The qap-api skill — what teaches a local agent to drive QAP throu
 
 A local agent and a hosted one are the same craft at two scales, and the API is the seam between them: your local agent can create hosted agents, hand them work, and read back what they did. It just has to know the API.
 
-That's what `qap-api` is for. It ships in the repository under [`skills/`](https://github.com/neutree-ai/agent-platform/tree/main/skills) and is an ordinary [Agent Skill](https://docs.claude.com/en/docs/agent-skills) — a directory with a `SKILL.md` the agent reads at startup.
+That's what `qap-api` is for. It ships in the repository under [`skills/`](https://github.com/xuyooo/Qube-Agent-Platform/tree/main/skills) and is an ordinary [Agent Skill](https://docs.claude.com/en/docs/agent-skills) — a directory with a `SKILL.md` the agent reads at startup.
 
 ## What's in it
 
@@ -18,7 +18,7 @@ It covers workspaces, prompts, templates, skills, credentials, service tokens, a
 Copy the directory into the agent's skills folder — for Claude Code, `~/.claude/skills/` for yourself or `.claude/skills/` inside a project:
 
 ```bash
-git clone https://github.com/neutree-ai/agent-platform.git
+git clone https://github.com/xuyooo/Qube-Agent-Platform.git
 cp -r agent-platform/skills/qap-api ~/.claude/skills/
 ```
 
