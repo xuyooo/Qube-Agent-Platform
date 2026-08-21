@@ -32,7 +32,7 @@ export default defineConfig({
       title: 'Qube Agent Platform Docs',
       favicon: '/favicon.svg',
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/neutree-ai/agent-platform' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/xuyooo/Qube-Agent-Platform' },
       ],
       customCss: ['./src/styles/print.css', './src/styles/landing.css'],
       components: {
