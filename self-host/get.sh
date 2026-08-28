@@ -6,7 +6,7 @@
 # POSIX sh — this script is meant to be piped from curl:
 #
 #   Single node, no Kubernetes (installs k3s for you; run as root):
-#     curl -sfL https://docs.neutree.ai/qap/get.sh | sh -
+#     curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh | sh -
 #
 #   Existing Kubernetes cluster (uses your current kubeconfig):
 #     curl -sfL .../get.sh | sh -s -- --k8s --host=<ip-or-hostname> \
@@ -45,7 +45,7 @@
 
 set -eu
 
-REPO="${QAP_REPO:-neutree-ai/agent-platform}"
+REPO="${QAP_REPO:-xuyooo/Qube-Agent-Platform}"
 VERSION="${QAP_VERSION:-main}"
 INSTALL_DIR="${QAP_INSTALL_DIR:-/opt/qap}"
 MODE="single-node"
@@ -330,7 +330,7 @@ log "   URL:      http://$(get_kv QAP_HOST):$(get_kv QAP_NODE_PORT)"
 log "   Login:    $(get_kv ADMIN_USERNAME) / $(get_kv ADMIN_PASSWORD)"
 log ""
 log " Next:    set up an API provider and run your first agent —"
-log "          https://docs.neutree.ai/qap/guides/1-setup/"
+log "          https://xuyooo.github.io/Qube-Agent-Platform/guides/1-setup/"
 log ""
 log " Config:  $VALUES_FILE  (credentials live here — keep it safe)"
 log " Upgrade: re-run the same one-line command."

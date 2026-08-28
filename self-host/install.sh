@@ -97,7 +97,7 @@ export RUNTIME_PYTHON_IMAGE="${RUNTIME_PYTHON_IMAGE:-docker.io/library/python:3.
 export RUNTIME_GOLANG_IMAGE="${RUNTIME_GOLANG_IMAGE:-docker.io/library/golang:1.23}"
 export PAUSE_IMAGE="${PAUSE_IMAGE:-registry.k8s.io/pause:3.9}"
 
-# AFS (AgentFS) ships from its own repo (github.com/neutree-ai/afs) and versions
+# AFS (AgentFS) ships from its own repo (github.com/xuyooo/afs (TODO: update when repo is ready)) and versions
 # independently of the platform, so it lives outside ${REGISTRY}/${IMAGE_TAG}.
 # Default to its public image; an offline/mirrored install overrides this.
 export AFS_IMAGE="${AFS_IMAGE:-ghcr.io/xuyooo/afs:latest}"

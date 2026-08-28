@@ -17,7 +17,7 @@ offline CNPG/NFS bundles and wires an imagePullSecret from `REGISTRY_USERNAME` /
 in-cluster registry in [`offline/registry.yaml`](offline/registry.yaml), so a
 lone machine needs no registry of its own.
 
-The [single-node guide](https://docs.neutree.ai/qap/self-host/single-node/)
+The [single-node guide](https://xuyooo.github.io/Qube-Agent-Platform/self-host/single-node/)
 walks both paths step by step, with the air-gapped extras inline.
 
 The **minimal install** brings up the core platform only. The Code Sandbox and
@@ -35,7 +35,7 @@ if missing), autodetects the node IP, generates the admin password and prints
 the login URL + credentials at the end:
 
 ```bash
-curl -sfL https://docs.neutree.ai/qap/get.sh | sudo sh -
+curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh | sudo sh -
 ```
 
 **Existing Kubernetes cluster** — uses your current kubeconfig; you must name
@@ -43,7 +43,7 @@ the host users reach the platform at and an RWX storage backend (external NFS,
 or a pre-existing RWX StorageClass):
 
 ```bash
-curl -sfL https://docs.neutree.ai/qap/get.sh \
+curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh \
   | sh -s -- --k8s --host=<ip-or-hostname> --nfs-server=<ip> --nfs-path=</export/path>
 # or with an existing RWX StorageClass:
 #   ... | sh -s -- --k8s --host=<ip-or-hostname> --storage-class=<rwx-storageclass>
@@ -200,8 +200,8 @@ charts, then point QAP at it.
 
 ## Documentation
 
-The [self-host guide](https://docs.neutree.ai/qap/self-host/) covers deployment,
-upgrade and operations, and the [single-node page](https://docs.neutree.ai/qap/self-host/single-node/)
+The [self-host guide](https://xuyooo.github.io/Qube-Agent-Platform/self-host/) covers deployment,
+upgrade and operations, and the [single-node page](https://xuyooo.github.io/Qube-Agent-Platform/self-host/single-node/)
 is the quickest path for one machine. This README plus the inline comments in
 `values.env.example` are the reference for configuration and the optional
 capabilities.
