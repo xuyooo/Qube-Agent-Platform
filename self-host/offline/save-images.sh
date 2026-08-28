@@ -37,7 +37,7 @@ OUTPUT="${OUTPUT:-$SCRIPT_DIR/qap-images.tar.gz}"
 # First-party image coordinates. Defaults match install.sh; the render below is
 # the source of truth for first-party service images, so these only feed the
 # agent-image supplement (agents are spawned dynamically, never in a manifest).
-REGISTRY="${REGISTRY:-ghcr.io/xuyooo/qap}"
+REGISTRY="${REGISTRY:-ghcr.io/xuyooo}"
 APP_PREFIX="${APP_PREFIX:-qap}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 AGENT_IMAGE_TAG="${AGENT_IMAGE_TAG:-latest}"

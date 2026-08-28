@@ -57,7 +57,7 @@ set +a
 
 # --- Image registry --------------------------------------------------------
 # Every first-party service image lives as a sub-path under one public registry
-# path, e.g. ghcr.io/xuyooo/qap/${APP_PREFIX}-cp:<tag>. Third-party
+# path, e.g. ghcr.io/xuyooo/${APP_PREFIX}-cp:<tag>. Third-party
 # images (coturn, gotenberg, language runtimes, …) default to their public
 # upstreams (see "Third-party images" below) — an offline/mirrored install
 # overrides each to a path under ${REGISTRY}.
@@ -81,7 +81,7 @@ export DB_NAME="${DB_NAME:-qap}"
 # ${REGISTRY}/${APP_PREFIX} (image names match object names). Override when an
 # existing install keeps its historical APP_PREFIX for object names but pulls
 # the public qap-* images, e.g.:
-#   PLATFORM_IMAGE_PREFIX=ghcr.io/xuyooo/qap/qap
+#   PLATFORM_IMAGE_PREFIX=ghcr.io/xuyooo/qap
 export PLATFORM_IMAGE_PREFIX="${PLATFORM_IMAGE_PREFIX:-${REGISTRY}/${APP_PREFIX}}"
 
 # --- Third-party images -----------------------------------------------------
@@ -280,11 +280,11 @@ check_app_prefix() {
   # qap-*). Refuse before applying. Setting PLATFORM_IMAGE_PREFIX explicitly
   # (e.g. to .../qap while keeping historical object names) sidesteps this.
   if [ "$APP_PREFIX" != "qap" ] \
-    && [ "$PLATFORM_IMAGE_PREFIX" = "ghcr.io/xuyooo/qap/${APP_PREFIX}" ]; then
+    && [ "$PLATFORM_IMAGE_PREFIX" = "ghcr.io/xuyooo/${APP_PREFIX}" ]; then
     die "APP_PREFIX=${APP_PREFIX} resolves PLATFORM_IMAGE_PREFIX to the default public REGISTRY,
        which only hosts qap-* images. Either rebuild every first-party image under that prefix
        in your own registry (redistributors), or set
-       PLATFORM_IMAGE_PREFIX=ghcr.io/xuyooo/qap/qap to keep your object names
+       PLATFORM_IMAGE_PREFIX=ghcr.io/xuyooo/qap to keep your object names
        while pulling the public images."
   fi
   # Never change the prefix of an existing install: the render would come up as
