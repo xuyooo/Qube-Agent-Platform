@@ -44,6 +44,10 @@ RENDERED_DIR="$SCRIPT_DIR/rendered"
 
 VALUES_FILE="${VALUES_FILE:-$SCRIPT_DIR/values.env}"
 
+if [ ! -f "$VALUES_FILE" ] && [ -f "$SCRIPT_DIR/../values.env" ]; then
+  VALUES_FILE="$SCRIPT_DIR/../values.env"
+fi
+
 if [ ! -f "$VALUES_FILE" ]; then
   echo "ERROR: $VALUES_FILE not found."
   echo "Copy values.env.example to values.env and fill in your configuration."

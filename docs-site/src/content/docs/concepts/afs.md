@@ -59,7 +59,7 @@ A common shape: a parent agent prepares material and hands the next step to a ch
 AFS is a separate set of components, written in Rust, in two kinds of process:
 
 - **afs-controller** — the metadata and authorization service, gRPC, metadata in SQLite. It registers storage backends, creates and destroys shared directories, and records which host has mounted what
-- **afs-fuse** — a FUSE daemon, one per agent host, also gRPC. Told to mount, it exposes the shared directory at the given path through [FUSE](https://www.kernel.org/doc/html/latest/filesystems/fuse.html) and proxies reads and writes to the storage backend
+- **afs-fuse** — a FUSE daemon, one per agent host, also gRPC. Told to mount, it exposes the shared directory at the given path through [FUSE](https://www.kernel.org/doc/html/latest/filesystems/fuse/fuse.html) and proxies reads and writes to the storage backend
 
 **Storage backends**, two of them today:
 

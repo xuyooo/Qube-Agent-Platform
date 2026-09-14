@@ -53,13 +53,13 @@ cd agent-platform/self-host
 在任意联网机器上，进入 `self-host/` 目录：
 
 ```bash
-./offline/save-images.sh                         # → offline/nap-images.tar.gz + 前置 chart
+./offline/save-images.sh                         # → offline/qap-images.tar.gz + 前置 chart
 ./single-node-prep/package-prep.sh --arch amd64  # → k3s + helm/envsubst/crane + airgap 镜像
 ```
 
-`save-images.sh` 产出 `offline/nap-images.tar.gz`（全部第一方、第三方镜像及 `registry:2`）以及 `prereqs/` 下的 CNPG / NFS provisioner chart。`package-prep.sh` 打包 k3s 二进制、其 airgap 镜像和 `install.sh` 依赖的 CLI 工具 —— 按目标节点架构选择 `--arch`（`amd64` / `arm64`）。若厂商已交付这些物料包，可跳过此步。
+`save-images.sh` 产出 `offline/qap-images.tar.gz`（全部第一方、第三方镜像及 `registry:2`）以及 `prereqs/` 下的 CNPG / NFS provisioner chart。`package-prep.sh` 打包 k3s 二进制、其 airgap 镜像和 `install.sh` 依赖的 CLI 工具 —— 按目标节点架构选择 `--arch`（`amd64` / `arm64`）。若厂商已交付这些物料包，可跳过此步。
 
-把 `self-host/` 目录（内含 `offline/nap-images.tar.gz`）和 prep 包一起拷到隔离节点，并把 prep 包解压到 **`self-host/` 内部**，使其落在 `self-host/single-node-prep/` —— `preinstall.sh` 会按 `../offline/nap-images.tar.gz` 查找镜像包（解压成 `self-host/` 的同级目录也可以，脚本两种布局都会检查）。
+把 `self-host/` 目录（内含 `offline/qap-images.tar.gz`）和 prep 包一起拷到隔离节点，并把 prep 包解压到 **`self-host/` 内部**，使其落在 `self-host/single-node-prep/` —— `preinstall.sh` 会按 `../offline/qap-images.tar.gz` 查找镜像包（解压成 `self-host/` 的同级目录也可以，脚本两种布局都会检查）。
 
 </AirgapBlock>
 
@@ -102,7 +102,7 @@ sudo ./preinstall.sh
 cd ..
 ```
 
-它会从物料包安装 k3s，放入 `helm` / `envsubst` / `crane`，把 `nap-images.tar.gz` 导入 k3s containerd（预置 `registry:2` 和第三方镜像），并配置 containerd 将集群内仓库视为纯 HTTP。修改 `values.env` 后可随时重跑。
+它会从物料包安装 k3s，放入 `helm` / `envsubst` / `crane`，把 `qap-images.tar.gz` 导入 k3s containerd（预置 `registry:2` 和第三方镜像），并配置 containerd 将集群内仓库视为纯 HTTP。修改 `values.env` 后可随时重跑。
 
 </AirgapBlock>
 
@@ -116,7 +116,7 @@ cd ..
 
 <AirgapBlock client:load locale="zh-CN" summary="镜像包的存在会让 install.sh 切换到集群内仓库">
 
-由于 `offline/nap-images.tar.gz` 存在，`install.sh` 会启动集群内 `nap-registry`、用镜像包填充，并把所有工作负载指向它 —— 无需外部仓库、不碰互联网。其余流程与联网时完全一致。
+由于 `offline/qap-images.tar.gz` 存在，`install.sh` 会启动集群内 `nap-registry`、用镜像包填充，并把所有工作负载指向它 —— 无需外部仓库、不碰互联网。其余流程与联网时完全一致。
 
 </AirgapBlock>
 

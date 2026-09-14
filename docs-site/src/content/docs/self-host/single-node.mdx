@@ -53,13 +53,13 @@ If you already ran the one-liner (even with `--prepare-only`), the same director
 On any internet-connected machine, from the `self-host/` directory:
 
 ```bash
-./offline/save-images.sh                         # → offline/nap-images.tar.gz + prereq charts
+./offline/save-images.sh                         # → offline/qap-images.tar.gz + prereq charts
 ./single-node-prep/package-prep.sh --arch amd64  # → k3s + helm/envsubst/crane + airgap images
 ```
 
-`save-images.sh` writes `offline/nap-images.tar.gz` (every first-party and third-party image, plus `registry:2`) and the CNPG / NFS-provisioner charts under `prereqs/`. `package-prep.sh` bundles the k3s binary, its airgap images, and the CLI tools `install.sh` depends on — pick the `--arch` (`amd64` / `arm64`) that matches the target node. If a vendor delivered these bundles, skip this step.
+`save-images.sh` writes `offline/qap-images.tar.gz` (every first-party and third-party image, plus `registry:2`) and the CNPG / NFS-provisioner charts under `prereqs/`. `package-prep.sh` bundles the k3s binary, its airgap images, and the CLI tools `install.sh` depends on — pick the `--arch` (`amd64` / `arm64`) that matches the target node. If a vendor delivered these bundles, skip this step.
 
-Copy the `self-host/` directory (with `offline/nap-images.tar.gz` inside) and the prep tarball to the air-gapped node, and extract the prep tarball **inside `self-host/`**, so it lands at `self-host/single-node-prep/` — that's where `preinstall.sh` expects to find `../offline/nap-images.tar.gz` (extracting it as a sibling of `self-host/` also works; the script checks both layouts).
+Copy the `self-host/` directory (with `offline/qap-images.tar.gz` inside) and the prep tarball to the air-gapped node, and extract the prep tarball **inside `self-host/`**, so it lands at `self-host/single-node-prep/` — that's where `preinstall.sh` expects to find `../offline/qap-images.tar.gz` (extracting it as a sibling of `self-host/` also works; the script checks both layouts).
 
 </AirgapBlock>
 
@@ -102,7 +102,7 @@ sudo ./preinstall.sh
 cd ..
 ```
 
-This installs k3s from the bundle, drops in `helm` / `envsubst` / `crane`, imports `nap-images.tar.gz` into k3s containerd (priming `registry:2` and the third-party images), and configures containerd to treat the in-cluster registry as plain HTTP. Re-run it any time after editing `values.env`.
+This installs k3s from the bundle, drops in `helm` / `envsubst` / `crane`, imports `qap-images.tar.gz` into k3s containerd (priming `registry:2` and the third-party images), and configures containerd to treat the in-cluster registry as plain HTTP. Re-run it any time after editing `values.env`.
 
 </AirgapBlock>
 
@@ -116,7 +116,7 @@ This installs k3s from the bundle, drops in `helm` / `envsubst` / `crane`, impor
 
 <AirgapBlock client:load locale="en" summary="the image bundle switches install.sh to the in-cluster registry">
 
-Because `offline/nap-images.tar.gz` is present, `install.sh` brings up the in-cluster `nap-registry`, seeds it from the bundle, and points every workload at it — no external registry, no internet. Everything else matches the connected flow.
+Because `offline/qap-images.tar.gz` is present, `install.sh` brings up the in-cluster `nap-registry`, seeds it from the bundle, and points every workload at it — no external registry, no internet. Everything else matches the connected flow.
 
 </AirgapBlock>
 

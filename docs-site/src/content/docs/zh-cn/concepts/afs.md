@@ -59,7 +59,7 @@ Agent 不直接看 web 界面，它通过平台内置的 MCP 工具来管理共�
 AFS 是一套独立的组件（Rust 实现），由两类进程组成：
 
 - **afs-controller**——中心化的元数据 + 鉴权服务，gRPC 接口，元数据存在 SQLite。负责注册存储后端、创建/销毁共享目录、记录哪些主机挂载了哪些目录
-- **afs-fuse**——每台 agent 主机上跑一份的 FUSE 守护进程，gRPC 接口。收到挂载指令后基于 [FUSE](https://www.kernel.org/doc/html/latest/filesystems/fuse.html) 在指定路径暴露共享目录，文件读写代理到对应的存储后端
+- **afs-fuse**——每台 agent 主机上跑一份的 FUSE 守护进程，gRPC 接口。收到挂载指令后基于 [FUSE](https://www.kernel.org/doc/html/latest/filesystems/fuse/fuse.html) 在指定路径暴露共享目录，文件读写代理到对应的存储后端
 
 **存储后端**目前支持两类：
 
