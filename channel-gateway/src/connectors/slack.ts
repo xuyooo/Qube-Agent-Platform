@@ -44,6 +44,104 @@ export function extractSlackText(msg: Record<string, unknown>): string {
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
 type SlackImage = { data: string; media_type: string; filename?: string }
+type SlackFile = { id?: string; mimetype?: string; url_private?: string; name?: string }
+
+export function genericSlackFiles(files: SlackFile[] | undefined): SlackFile[] {
+  return (files || []).filter(
+    (file) =>
+      !SUPPORTED_IMAGE_TYPES.has(file.mimetype || '') && !file.mimetype?.startsWith('audio/'),
+  )
+}
+
+export function slackAttachmentPath(file: SlackFile): string | null {
+  if (!file.id) return null
+  const segment = (value: string, fallback: string) =>
+    value.replace(/[\/\\]|\p{Cc}/gu, '_').replace(/^\.+/, '') || fallback
+  return `.attachments/slack/${segment(file.id, 'file')}/${segment(file.name || 'attachment', 'attachment')}`
+}
+
+export function appendAttachmentPaths(text: string, paths: string[], failures: string[]): string {
+  if (!paths.length && !failures.length) return text
+  return [
+    text.trim(),
+    '<attachments>',
+    ...paths.map((path) => `- /workspace/${path}`),
+    ...failures.map((failure) => `- [failed] ${failure}`),
+    '</attachments>',
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
+export async function stageGenericFiles(
+  files: SlackFile[],
+  client: QapClient,
+  workspaceId: string,
+  botToken: string,
+): Promise<{ paths: string[]; failures: string[] }> {
+  const paths: string[] = []
+  const failures: string[] = []
+  for (const file of files) {
+    const name = file.name || file.id || 'attachment'
+    const path = slackAttachmentPath(file)
+    if (!path || !file.url_private) {
+      failures.push(`${name} — attachment download failed: missing file id or URL`)
+      continue
+    }
+    let fileUrl: URL
+    try {
+      fileUrl = new URL(file.url_private)
+    } catch {
+      failures.push(`${name} — attachment download failed: invalid file URL`)
+      continue
+    }
+    if (
+      fileUrl.protocol !== 'https:' ||
+      (fileUrl.hostname !== 'slack.com' && !fileUrl.hostname.endsWith('.slack.com'))
+    ) {
+      failures.push(`${name} — attachment download failed: untrusted file URL`)
+      continue
+    }
+    let response: Response
+    try {
+      response = await fetch(fileUrl, {
+        headers: { Authorization: `Bearer ${botToken}` },
+      })
+    } catch (e) {
+      failures.push(
+        `${name} — attachment download failed: ${e instanceof Error ? e.message : String(e)}`,
+      )
+      continue
+    }
+    if (!response.ok || !response.body) {
+      failures.push(
+        `${name} — attachment download failed: ${response.ok ? 'empty response' : response.status}`,
+      )
+      continue
+    }
+    if (
+      response.headers.get('content-type')?.toLowerCase().startsWith('text/html') &&
+      !file.mimetype?.toLowerCase().startsWith('text/html')
+    ) {
+      failures.push(
+        `${name} — attachment download failed: Slack returned an HTML login page; add the files:read bot scope and reinstall the app`,
+      )
+      continue
+    }
+    try {
+      await client.workspaces.writeFile(
+        workspaceId,
+        path,
+        response.body,
+        file.mimetype || 'application/octet-stream',
+      )
+    } catch (e) {
+      throw new Error(`${name}: ${e instanceof Error ? e.message : String(e)}`)
+    }
+    paths.push(path)
+  }
+  return { paths, failures }
+}
 
 /** Active socket connections keyed by connector ID */
 const activeConnectors = new Map<string, SocketModeClient>()
@@ -82,6 +180,7 @@ export async function startOne(connectorId: string) {
     console.log(`[Slack] Skipped connector ${connector.name}: missing app_token or bot_token`)
     return
   }
+  const botToken = creds.bot_token
 
   const platformToken = await db.getPlatformToken(connector.user_id)
   if (!platformToken) {
@@ -138,11 +237,7 @@ export async function startOne(connectorId: string) {
     }
   }
 
-  async function downloadSlackImage(file: {
-    mimetype?: string
-    url_private?: string
-    name?: string
-  }): Promise<SlackImage | null> {
+  async function downloadSlackImage(file: SlackFile): Promise<SlackImage | null> {
     if (!file.url_private || !file.mimetype || !SUPPORTED_IMAGE_TYPES.has(file.mimetype)) {
       return null
     }
@@ -275,19 +370,14 @@ Indexes are 1-based and match the attached images order.
    *  Slack `files[].url_private` requires the bot token to download. Anthropic supports
    *  jpeg/png/gif/webp; other types (PDF, etc.) are skipped here. */
   async function fetchImageAttachments(event: Record<string, unknown>): Promise<SlackImage[]> {
-    const files = event.files as
-      | Array<{ mimetype?: string; url_private?: string; name?: string }>
-      | undefined
+    const files = event.files as SlackFile[] | undefined
     if (!files?.length) return []
     return (await pMap(files, downloadSlackImage, { concurrency: 8 })).filter(
       (img): img is SlackImage => img !== null,
     )
   }
 
-  interface SlackAudioFile {
-    url_private?: string
-    mimetype?: string
-    name?: string
+  interface SlackAudioFile extends SlackFile {
     transcription?: { status?: string; preview?: { content?: string } }
   }
 
@@ -337,6 +427,21 @@ Indexes are 1-based and match the attached images order.
       if (r.text) texts.push(r.text)
     }
     return { texts, error: null }
+  }
+
+  /** Set the assistant thread status indicator. An empty status clears it.
+   *  The indicator is otherwise only cleared once a job reports back, so any
+   *  path that sets it and then bails without creating a job has to clear it. */
+  async function setThreadStatus(channel: string, threadTs: string, status: string) {
+    try {
+      await web.apiCall('assistant.threads.setStatus', {
+        channel_id: channel,
+        thread_ts: threadTs,
+        status,
+      })
+    } catch (e) {
+      console.warn(`[Slack] ${connector.name}: failed to set thread status:`, e)
+    }
   }
 
   /** Resolve route for a channel, falling back to wildcard. */
@@ -418,6 +523,52 @@ Indexes are 1-based and match the attached images order.
       cleanText = [cleanText, ...voice.texts].filter(Boolean).join('\n')
     }
 
+    const jobClient = await resolveRouteClient(
+      `[Slack] ${connector.name}`,
+      route,
+      connector,
+      qapClient,
+    )
+    if (!jobClient) return
+
+    // Show progress before attachment staging, which may wait for a workspace cold start.
+    await setThreadStatus(channel, threadTs, 'is processing your request...')
+
+    let attachmentPaths: string[] = []
+    let attachmentFailures: string[] = []
+    try {
+      const staged = await stageGenericFiles(
+        genericSlackFiles(event.files as SlackFile[] | undefined),
+        jobClient,
+        route.workspace_id,
+        botToken,
+      )
+      attachmentPaths = staged.paths
+      attachmentFailures = staged.failures
+    } catch (e) {
+      const error = e instanceof Error ? e.message : String(e)
+      await setThreadStatus(channel, threadTs, '')
+      await web.chat
+        .postMessage({
+          channel,
+          thread_ts: threadTs,
+          text: `Attachment staging failed: ${error}\nThe job was not started. Please retry.`,
+        })
+        .catch((replyError) =>
+          console.warn(
+            `[Slack] ${connector.name}: failed to send staging-error reply:`,
+            replyError,
+          ),
+        )
+      await db
+        .updateEvent(eventId, { status: 'error', error })
+        .catch((updateError) =>
+          console.warn(`[Slack] ${connector.name}: failed to record staging error:`, updateError),
+        )
+      return
+    }
+    cleanText = appendAttachmentPaths(cleanText, attachmentPaths, attachmentFailures)
+
     // Chat API requires non-empty message; substitute a placeholder when the user sent only images.
     if (!cleanText && images.length) cleanText = '[image]'
 
@@ -440,30 +591,11 @@ Indexes are 1-based and match the attached images order.
       `[Slack] ${connector.name}: triggering job: channel=${channel} user=${user} workspace=${route.workspace_id}`,
     )
 
-    // Set assistant thread status immediately
-    try {
-      await web.apiCall('assistant.threads.setStatus', {
-        channel_id: channel,
-        thread_ts: threadTs,
-        status: 'is processing your request...',
-      })
-    } catch (e) {
-      console.warn(`[Slack] ${connector.name}: failed to set thread status:`, e)
-    }
-
     cleanText = appendImageMarkers(cleanText, images, threadImages.length + 1)
     const allImages = [...threadImages, ...images]
     if (threadContext) threadContext += imageReminder(allImages.length)
     // Chat API requires non-empty message; substitute a placeholder when the user sent only images.
     if (!cleanText && allImages.length) cleanText = '[image]'
-
-    const jobClient = await resolveRouteClient(
-      `[Slack] ${connector.name}`,
-      route,
-      connector,
-      qapClient,
-    )
-    if (!jobClient) return
 
     try {
       const result = await jobClient.jobs.create(route.workspace_id, {
