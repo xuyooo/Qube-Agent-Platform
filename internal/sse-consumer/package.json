@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/sse-consumer",
+  "name": "@qap/sse-consumer",
   "version": "0.1.0",
   "private": true,
   "type": "module",

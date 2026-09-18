@@ -8,7 +8,7 @@ export interface User {
   auto_evolution: boolean
 }
 
-export type { ApiWorkspace as Workspace } from '@neutree-ai/types'
+export type { ApiWorkspace as Workspace } from '@qap/types'
 
 export interface CallableAgent {
   id: string
@@ -20,13 +20,13 @@ export interface CallableAgent {
   status: string
 }
 
-export type { ApiTag as Tag } from '@neutree-ai/types'
+export type { ApiTag as Tag } from '@qap/types'
 
-export type { ApiSession as Session, ApiK8sStatus as K8sResourceStatus } from '@neutree-ai/types'
+export type { ApiSession as Session, ApiK8sStatus as K8sResourceStatus } from '@qap/types'
 
-export type { ApiSessionFacets as SessionFacets } from '@neutree-ai/types'
+export type { ApiSessionFacets as SessionFacets } from '@qap/types'
 
-export type { ApiMessage } from '@neutree-ai/types'
+export type { ApiMessage } from '@qap/types'
 
 export interface ChatImageAttachment {
   data: string // base64 encoded
@@ -43,7 +43,7 @@ export interface PendingMessage {
   images: ChatImageAttachment[]
 }
 
-export type { ComputeResources, ApiWorkspaceConfig, AutoScaling } from '@neutree-ai/types'
+export type { ComputeResources, ApiWorkspaceConfig, AutoScaling } from '@qap/types'
 
 export type {
   ApiTemplate,
@@ -53,9 +53,9 @@ export type {
   TemplatePermission,
   TemplateVisibility,
   TemplateLinkMissingItem,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
-export type { ApiWorkspaceLayout, LayoutSkeleton } from '@neutree-ai/types'
+export type { ApiWorkspaceLayout, LayoutSkeleton } from '@qap/types'
 
 export type {
   ApiModelProvider,
@@ -63,7 +63,7 @@ export type {
   ModelProfile,
   ProviderGrant,
   ProviderVisibility,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 /** Provider probe outcome: connection and profile answered separately. */
 export interface ProviderTestResult {
@@ -80,7 +80,7 @@ export type {
   CreatedEnvironmentToken,
   EnvironmentGrant,
   EnvironmentVisibility,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 export type {
   ApiPrompt,
@@ -89,7 +89,7 @@ export type {
   PromptGrant,
   PromptPermission,
   PromptVisibility,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 export type {
   ApiSkill,
@@ -102,18 +102,18 @@ export type {
   SkillPermission,
   SkillSourceKind,
   SkillVisibility,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
-export type { ApiCredentialMeta } from '@neutree-ai/types'
+export type { ApiCredentialMeta } from '@qap/types'
 
-export type { ApiShare, ApiShareConfig, ApiShareTrigger } from '@neutree-ai/types'
+export type { ApiShare, ApiShareConfig, ApiShareTrigger } from '@qap/types'
 export type {
   ApiSchedule as Schedule,
   ApiWorkspaceCommand as WorkspaceCommand,
-} from '@neutree-ai/types'
-export type { ApiAgentRequest } from '@neutree-ai/types'
+} from '@qap/types'
+export type { ApiAgentRequest } from '@qap/types'
 
-export type { ApiApplication, ApiApplicationSecret } from '@neutree-ai/types'
+export type { ApiApplication, ApiApplicationSecret } from '@qap/types'
 
 export type {
   ApiTeam,
@@ -121,7 +121,7 @@ export type {
   ApiTeamInvitePreview,
   ApiTeamMember,
   TeamRole,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 export type {
   ApiTeamworkParticipant,
@@ -129,7 +129,7 @@ export type {
   ApiTeamworkSession,
   ApiTeamworkTask,
   TeamworkSessionRole,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 export type {
   ApiMemory,
@@ -140,7 +140,7 @@ export type {
   ApiMemoryVersionDetail,
   ApiWorkspaceMemoryAttachment,
   MemoryAccess,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 export interface ApiServiceToken {
   id: string
@@ -151,7 +151,7 @@ export interface ApiServiceToken {
   is_platform: boolean
 }
 
-export type { ApiShareData } from '@neutree-ai/types'
+export type { ApiShareData } from '@qap/types'
 
 export interface AdminTotals {
   total_users: number
@@ -404,16 +404,16 @@ export interface AgentInfo {
 
 // ── TurnStats ──
 
-import type { ContextGauge, TurnStats } from '@neutree-ai/types'
+import type { ContextGauge, TurnStats } from '@qap/types'
 export type { ContextGauge, TurnStats }
 
 // ── Workspace profile ──
 
-export type { WorkspaceProfilePayload } from '@neutree-ai/types'
+export type { WorkspaceProfilePayload } from '@qap/types'
 
 // ── User profile ──
 
-export type { UserProfilePayload } from '@neutree-ai/types'
+export type { UserProfilePayload } from '@qap/types'
 
 export type {
   ApiRecentSessionItem,
@@ -424,7 +424,7 @@ export type {
   ApiSessionToolActivity,
   ApiSessionUsage,
   ApiSessionUsageList,
-} from '@neutree-ai/types'
+} from '@qap/types'
 
 // ── AskUserQuestion types ──
 

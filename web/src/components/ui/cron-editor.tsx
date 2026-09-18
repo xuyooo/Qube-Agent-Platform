@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { describeCron } from "@/lib/cron-describe";
-import { hasOutOfRangeCronStep } from "@neutree-ai/types";
+import { hasOutOfRangeCronStep } from "@qap/types";
 import { CronExpressionParser } from "cron-parser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

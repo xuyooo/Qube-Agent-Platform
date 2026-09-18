@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/agent-goose",
+  "name": "@qap/agent-goose",
   "version": "0.1.0",
   "type": "module",
   "scripts": {

@@ -4,7 +4,7 @@ import { type UniversalEventInferred, UniversalEventSchema } from './events.sche
 
 /**
  * Drift guard between the canonical TS interface (`UniversalEvent` in
- * @neutree-ai/types) and the Zod doc-mirror registered for OpenAPI. If one side
+ * @qap/types) and the Zod doc-mirror registered for OpenAPI. If one side
  * adds or renames a field, this test fails and forces the other to catch
  * up — preserving a single source of truth.
  */

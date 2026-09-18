@@ -1,1 +1,1 @@
-export { ThemedToaster as Toaster } from "@neutree-ai/theme";
+export { ThemedToaster as Toaster } from "@qap/theme";

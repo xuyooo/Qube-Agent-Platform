@@ -62,7 +62,7 @@ import { cn } from '@/lib/utils'
 import { workspaceConfigRefresh } from '@/plugins/builder-mode'
 import { skillsRefresh } from '@/plugins/skills'
 import { useInstancePersistentState, useInstanceState } from '@/stores/instance-state-store'
-import { DEFAULT_MAX_STEPS } from '@neutree-ai/types'
+import { DEFAULT_MAX_STEPS } from '@qap/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,

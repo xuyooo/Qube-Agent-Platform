@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/acp-adapter",
+  "name": "@qap/acp-adapter",
   "version": "0.1.0",
   "private": true,
   "type": "module",

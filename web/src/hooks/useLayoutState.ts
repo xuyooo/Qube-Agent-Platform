@@ -9,7 +9,7 @@ import {
   layoutSkeletonEqual,
   normalizeLayoutSkeleton,
   skeletonToProfilePatch,
-} from '@neutree-ai/types'
+} from '@qap/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { useWorkspaceLayouts, workspaceLayoutsQueryKey } from './useWorkspaceLayouts'

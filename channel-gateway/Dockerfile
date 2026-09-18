@@ -1,4 +1,4 @@
-# Build stage — bundle src/ to dist/ with esbuild (inlines @neutree-ai/client and @neutree-ai/types)
+# Build stage — bundle src/ to dist/ with esbuild (inlines @qap/client and @qap/types)
 FROM node:22-bookworm-slim AS builder
 COPY .npmrc /root/.npmrc
 
@@ -10,7 +10,7 @@ RUN npm ci
 COPY channel-gateway/tsconfig.json ./
 COPY channel-gateway/src ./src
 
-# @neutree-ai/client and @neutree-ai/types are referenced via relative imports from src/.
+# @qap/client and @qap/types are referenced via relative imports from src/.
 # They get bundled into dist/index.js, so the runtime stage doesn't need them.
 COPY internal/client/src /app/internal/client/src
 COPY internal/types /app/internal/types

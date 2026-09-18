@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/titlegen",
+  "name": "@qap/titlegen",
   "version": "0.1.0",
   "private": true,
   "type": "module",

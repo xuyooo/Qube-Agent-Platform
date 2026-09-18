@@ -2,13 +2,13 @@
 name: qap-design-system
 description: QAP web design system — semantic OKLCH tokens, the shadcn-based UI component library, and the visual conventions that keep generated UI on-brand. Trigger when building or editing QAP web UI (React + Tailwind + shadcn/ui), styling a new page/panel/dialog, picking colors or components, or reviewing a frontend diff for design-token compliance.
 metadata:
-  source: agent-platform/web + @neutree-ai/theme
+  source: agent-platform/web + @qap/theme
 ---
 
 # QAP Design System
 
 QAP's web UI is **React + Vite + TailwindCSS (v3) + shadcn/ui**, themed by the
-shared `@neutree-ai/theme` package. Every color is a **semantic OKLCH token**, not
+shared `@qap/theme` package. Every color is a **semantic OKLCH token**, not
 a raw Tailwind palette color. Follow this skill to produce UI that matches the
 existing app instead of generic AI-looking output.
 
@@ -78,7 +78,7 @@ variant cheat-sheets in `references/components.md`:
 - Tailwind config: `web/tailwind.config.js`. Tokens are wired as
   `oklch(var(--token) / <alpha-value>)`, so `/NN` opacity modifiers work on
   every semantic color.
-- Theme variables: `@neutree-ai/theme/variables.css` (imported in
+- Theme variables: `@qap/theme/variables.css` (imported in
   `web/src/index.css`). Dark mode is **class-based** (`.dark` on the root).
 - Variants are authored with `class-variance-authority` (cva).
 - Custom font sizes: `text-micro` (9px), `text-mini` (10px), `text-tiny` (11px).

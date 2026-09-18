@@ -12,7 +12,7 @@
         "src/**/*.test.{ts,tsx}"
       ],
       "project": ["src/**/*.{ts,tsx,mdx}"],
-      "ignoreDependencies": ["@neutree-ai/theme"]
+      "ignoreDependencies": ["@qap/theme"]
     },
     "browser-service": {
       "project": ["src/**/*.ts"]

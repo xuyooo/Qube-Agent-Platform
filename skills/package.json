@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/skills",
+  "name": "@qap/skills",
   "private": true,
   "description": "QAP Agent Skills — generated REST-API skills plus hand-authored skills (e.g. the design system)",
   "scripts": {

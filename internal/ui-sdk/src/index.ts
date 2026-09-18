@@ -1,4 +1,4 @@
-// @neutree-ai/ui-sdk — shared UI SDK for the agent platform. First module:
+// @qap/ui-sdk — shared UI SDK for the agent platform. First module:
 // agent session transcript rendering.
 
 // ── Data layer ──

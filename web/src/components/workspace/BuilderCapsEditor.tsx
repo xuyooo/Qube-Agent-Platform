@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { BUILDER_CAPS, type BuilderCap, parseBuilderHeader } from '@neutree-ai/types'
+import { BUILDER_CAPS, type BuilderCap, parseBuilderHeader } from '@qap/types'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

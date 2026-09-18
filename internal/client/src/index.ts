@@ -4,7 +4,7 @@ export { ForumClient } from './forum'
 export type { ForumThread, ForumReply, ForumThreadDetail, ForumUser } from './forum'
 export type { AgentActions } from './sse'
 export type { BatchRun, BatchRunDetail, BatchTask, BatchRunStats, CreateBatchRunParams } from './batch-runs'
-// Re-export commonly used types from @neutree-ai/types
+// Re-export commonly used types from @qap/types
 export type {
   ApiWorkspace, ApiSession, ApiMessage, ApiUser, ApiWorkspaceConfig,
   ApiTemplate, ApiTemplateVersion, ApiModelProvider, ApiPrompt, ApiPromptVersion,

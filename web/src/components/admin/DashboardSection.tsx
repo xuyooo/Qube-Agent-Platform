@@ -143,7 +143,7 @@ function MiniDonut<T>({
 // `red` renders too dark on the dark donut track, and a red wedge reads as an
 // alert). The tremor names drive the ring; each chart-token dot tracks the ring
 // colour at the same index so a legend dot matches its slice. chart-4 (red) is
-// deliberately skipped; chart-7/8/9 (fuchsia/lime/teal) added in @neutree-ai/theme.
+// deliberately skipped; chart-7/8/9 (fuchsia/lime/teal) added in @qap/theme.
 const DONUT_COLORS = ['blue', 'amber', 'emerald', 'violet', 'cyan', 'fuchsia', 'lime', 'teal']
 const DONUT_DOTS = [
   'bg-chart-1',

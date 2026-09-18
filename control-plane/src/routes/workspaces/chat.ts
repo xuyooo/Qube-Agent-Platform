@@ -26,10 +26,10 @@ const WorkspaceIdParam = z.object({
 
 /**
  * OpenAPI schema for the JSON-mode response. This is a shallow mirror of
- * `ChatJsonResponseSchema` in @neutree-ai/types — we don't reuse that one here
+ * `ChatJsonResponseSchema` in @qap/types — we don't reuse that one here
  * because the `messages` array's deep discriminated union (ApiContentPart)
  * explodes zod-openapi's handler-return type inference (TS2589). The
- * authoritative shared shape for consumers lives in @neutree-ai/types; this
+ * authoritative shared shape for consumers lives in @qap/types; this
  * schema is purely for doc generation.
  */
 const ChatJsonResponseDoc = z.object({

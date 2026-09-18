@@ -22,7 +22,7 @@ import type { WorkspacePlugin } from '@/plugins/types'
 import { useAgentSessionActions, useAgentSessionStore } from '@/stores/AgentSessionContext'
 import { useSessionNavigation } from '@/stores/active-session-store'
 import { useInstancePersistentState, useInstanceState } from '@/stores/instance-state-store'
-import { useResolvedTheme } from '@neutree-ai/theme'
+import { useResolvedTheme } from '@qap/theme'
 import {
   getMcpText,
   jsonPreview,
@@ -30,7 +30,7 @@ import {
   safeParseResult,
   truncate,
   unwrapMcpInput,
-} from '@neutree-ai/ui-sdk'
+} from '@qap/ui-sdk'
 import i18n from 'i18next'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'

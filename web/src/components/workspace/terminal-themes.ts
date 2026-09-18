@@ -1,4 +1,4 @@
-import { useResolvedTheme } from '@neutree-ai/theme'
+import { useResolvedTheme } from '@qap/theme'
 import type { ITheme } from '@xterm/xterm'
 
 // One Dark (atom/VS Code) — standard palette

@@ -1,1 +1,1 @@
-export { ThemeProvider, useTheme, useResolvedTheme } from '@neutree-ai/theme'
+export { ThemeProvider, useTheme, useResolvedTheme } from '@qap/theme'

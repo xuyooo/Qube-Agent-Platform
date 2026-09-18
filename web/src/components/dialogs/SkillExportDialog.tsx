@@ -40,7 +40,7 @@ import {
   useSkillExports,
 } from '@/hooks/useSkillExports'
 import type { ApiSkill, ApiSkillExport } from '@/lib/api/types'
-import { MAX_SKILL_SLUG_LENGTH, deriveSkillSlug, isValidSkillSlug } from '@neutree-ai/types'
+import { MAX_SKILL_SLUG_LENGTH, deriveSkillSlug, isValidSkillSlug } from '@qap/types'
 import { AlertTriangle, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

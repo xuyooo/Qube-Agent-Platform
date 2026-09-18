@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/theme",
+  "name": "@qap/theme",
   "version": "0.1.0",
   "description": "Qube Agent Platform shared theme — React theme provider, toggle, and toaster with design-token CSS variables.",
   "type": "module",

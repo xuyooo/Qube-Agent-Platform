@@ -28,7 +28,7 @@ import {
   type ToolCall,
   toChatMessage,
   transcriptI18n,
-} from '@neutree-ai/ui-sdk'
+} from '@qap/ui-sdk'
 import { type StoreApi, createStore } from 'zustand/vanilla'
 import { clearDraftFor, getDraftFor, migrateDraft } from './draft-store'
 

@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/channel-gateway",
+  "name": "@qap/channel-gateway",
   "version": "0.1.0",
   "type": "module",
   "private": true,

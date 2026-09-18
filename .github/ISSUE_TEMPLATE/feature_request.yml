@@ -44,7 +44,7 @@ body:
         - skills-content-service
         - memory-fuse
         - agents (claude-code / codex)
-        - sandbox SDK (@neutree-ai/sandbox)
+        - sandbox SDK (@qap/sandbox)
         - self-host / deployment
         - other / not sure
     validations:

@@ -1,4 +1,4 @@
-# Build stage — bundle src/ to dist/ with esbuild (inlines sse-consumer + @neutree-ai/types)
+# Build stage — bundle src/ to dist/ with esbuild (inlines sse-consumer + @qap/types)
 # Build context is the OSS repo root so the internal/ packages are reachable.
 FROM node:22-bookworm-slim AS builder
 COPY .npmrc /root/.npmrc
@@ -11,7 +11,7 @@ RUN npm ci
 COPY scheduler/tsconfig.json ./
 COPY scheduler/src ./src
 
-# sse-consumer (and the @neutree-ai/types it pulls in) are referenced via relative
+# sse-consumer (and the @qap/types it pulls in) are referenced via relative
 # imports from src/. esbuild bundles them into dist/index.js, so the runtime
 # stage doesn't need them.
 COPY internal/sse-consumer/src /app/internal/sse-consumer/src

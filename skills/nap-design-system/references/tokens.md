@@ -1,6 +1,6 @@
 # Color Tokens
 
-Source of truth: `@neutree-ai/theme/src/variables.css`, wired into Tailwind in
+Source of truth: `@qap/theme/src/variables.css`, wired into Tailwind in
 `web/tailwind.config.js`. **Always style with these semantic tokens; never raw
 Tailwind palette colors or hex.**
 

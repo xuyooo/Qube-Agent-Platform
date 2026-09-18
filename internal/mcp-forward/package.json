@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/mcp-forward",
+  "name": "@qap/mcp-forward",
   "version": "0.1.0",
   "private": true,
   "type": "module",

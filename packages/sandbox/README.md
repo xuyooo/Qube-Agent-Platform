@@ -1,17 +1,17 @@
-# @neutree-ai/sandbox
+# @qap/sandbox
 
 TypeScript/JavaScript SDK for QAP Sandbox — create and manage isolated container environments for AI agents, code execution, and development.
 
 ## Install
 
 ```bash
-npm install @neutree-ai/sandbox
+npm install @qap/sandbox
 ```
 
 ## Quick Start
 
 ```typescript
-import { SandboxClient } from '@neutree-ai/sandbox'
+import { SandboxClient } from '@qap/sandbox'
 
 const client = new SandboxClient({
   baseUrl: 'https://sandbox.example.com', // your sandbox service URL

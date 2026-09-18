@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/agent-codex",
+  "name": "@qap/agent-codex",
   "version": "0.1.0",
   "type": "module",
   "scripts": {

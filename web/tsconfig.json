@@ -20,10 +20,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@neutree-ai/types": ["../internal/types"],
-      "@neutree-ai/sse-consumer": ["../internal/sse-consumer/src"],
-      "@neutree-ai/theme": ["../internal/theme/index.d.ts"],
-      "@neutree-ai/ui-sdk": ["../internal/ui-sdk/src/index.ts"]
+      "@qap/types": ["../internal/types"],
+      "@qap/sse-consumer": ["../internal/sse-consumer/src"],
+      "@qap/theme": ["../internal/theme/index.d.ts"],
+      "@qap/ui-sdk": ["../internal/ui-sdk/src/index.ts"]
     }
   },
   "include": ["src"],

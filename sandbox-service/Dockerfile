@@ -16,7 +16,7 @@ COPY .npmrc /root/.npmrc
 
 WORKDIR /app/sandbox-service
 
-# @neutree-ai/oauth-client is consumed as a file: dep; copy it before install so the
+# @qap/oauth-client is consumed as a file: dep; copy it before install so the
 # path in package.json (file:../internal/oauth-client) resolves.
 COPY internal/oauth-client /app/internal/oauth-client
 COPY sandbox-service/package.json sandbox-service/package-lock.json ./

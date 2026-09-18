@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/oauth-client",
+  "name": "@qap/oauth-client",
   "version": "0.1.0",
   "description": "Qube Agent Platform OAuth client — shared scaffolding for services acting as OAuth consumers of the control plane.",
   "type": "module",

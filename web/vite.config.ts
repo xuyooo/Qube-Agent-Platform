@@ -85,19 +85,19 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        '@neutree-ai/types': path.resolve(__dirname, '../internal/types/index.ts'),
-        '@neutree-ai/sse-consumer': path.resolve(
+        '@qap/types': path.resolve(__dirname, '../internal/types/index.ts'),
+        '@qap/sse-consumer': path.resolve(
           __dirname,
           '../internal/sse-consumer/src/index.ts',
         ),
-        '@neutree-ai/theme/variables.css': path.resolve(
+        '@qap/theme/variables.css': path.resolve(
           __dirname,
           '../internal/theme/src/variables.css',
         ),
-        '@neutree-ai/theme': path.resolve(__dirname, '../internal/theme/src/index.ts'),
-        '@neutree-ai/ui-sdk': path.resolve(__dirname, '../internal/ui-sdk/src/index.ts'),
+        '@qap/theme': path.resolve(__dirname, '../internal/theme/src/index.ts'),
+        '@qap/ui-sdk': path.resolve(__dirname, '../internal/ui-sdk/src/index.ts'),
       },
-      // @neutree-ai/ui-sdk (aliased to source) ships its own copies of these
+      // @qap/ui-sdk (aliased to source) ships its own copies of these
       // packages under internal/ui-sdk/node_modules. Radix primitives use
       // module-scoped React contexts, so a second instance means a <Tooltip>
       // from ui-sdk's MessageBubble can't see the app-root <TooltipProvider>

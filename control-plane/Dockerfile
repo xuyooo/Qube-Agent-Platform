@@ -27,14 +27,14 @@ COPY web/src ./src
 COPY web/public ./public
 COPY web/scripts ./scripts
 
-# @neutree-ai/types is referenced via tsconfig path "../internal/types"
+# @qap/types is referenced via tsconfig path "../internal/types"
 COPY internal/types /app/internal/types
 # sse-consumer is referenced via vite alias 'sse-consumer' → ../internal/sse-consumer/src
 COPY internal/sse-consumer /app/internal/sse-consumer
-# @neutree-ai/theme is referenced via vite alias '@neutree-ai/theme' → ../internal/theme/src
+# @qap/theme is referenced via vite alias '@qap/theme' → ../internal/theme/src
 # and tsconfig path "../internal/theme/index.d.ts"
 COPY internal/theme /app/internal/theme
-# @neutree-ai/ui-sdk is referenced via vite alias '@neutree-ai/ui-sdk' → ../internal/ui-sdk/src
+# @qap/ui-sdk is referenced via vite alias '@qap/ui-sdk' → ../internal/ui-sdk/src
 # and tsconfig path "../internal/ui-sdk/src/index.ts"; deps resolve from web/node_modules.
 COPY internal/ui-sdk /app/internal/ui-sdk
 
@@ -50,12 +50,12 @@ ENV VITE_CHANNEL_GATEWAY_PUBLIC_URL=$VITE_CHANNEL_GATEWAY_PUBLIC_URL
 ENV VITE_APP_VERSION=$GIT_SHA
 ENV VITE_BUILD_TIME=$BUILD_TIME
 
-# @neutree-ai/types declares `zod` as a runtime dep. The web build's tsc step resolves
+# @qap/types declares `zod` as a runtime dep. The web build's tsc step resolves
 # zod relative to /app/internal/types/, which has no node_modules of its
 # own, so install them here.
 RUN cd /app/internal/types && npm install --no-audit --no-fund
 
-# @neutree-ai/ui-sdk is consumed via its src (vite alias + tsconfig path). ui-sdk
+# @qap/ui-sdk is consumed via its src (vite alias + tsconfig path). ui-sdk
 # lives OUTSIDE the vite root (/app/web), so vite's resolve.dedupe does NOT reach
 # the deps it imports — giving ui-sdk its own node_modules yields duplicate
 # react / react-i18next / @radix-ui/* instances, which break React/i18next/Radix

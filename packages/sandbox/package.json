@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/sandbox",
+  "name": "@qap/sandbox",
   "version": "0.1.0",
   "description": "QAP Sandbox SDK — create and manage isolated sandbox environments",
   "type": "module",

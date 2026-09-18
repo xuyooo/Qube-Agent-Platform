@@ -5,7 +5,7 @@ export default {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
-    // @neutree-ai/ui-sdk is aliased to source (see vite.config) and ships its
+    // @qap/ui-sdk is aliased to source (see vite.config) and ships its
     // own Tailwind-classed components (MessageBubble, etc.). Without this the
     // ui-sdk-only utilities (e.g. the chat bubble's bg-primary/90, rounded-2xl)
     // get purged and the components render unstyled.

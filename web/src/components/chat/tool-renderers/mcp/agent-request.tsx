@@ -14,7 +14,7 @@ import {
   jsonPreview,
   safeParseResult,
   unwrapMcpInput,
-} from '@neutree-ai/ui-sdk'
+} from '@qap/ui-sdk'
 import { Check, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'

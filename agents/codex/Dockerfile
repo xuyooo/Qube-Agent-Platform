@@ -15,7 +15,7 @@ COPY internal/agent-usage/ ./internal/agent-usage/
 COPY internal/mcp-forward/ ./internal/mcp-forward/
 
 # Install shared package dependencies (needed for tsc to resolve imports).
-# @neutree-ai/types declares zod and is imported by the agent's tsc via paths; without
+# @qap/types declares zod and is imported by the agent's tsc via paths; without
 # its own node_modules, zod resolution fails inside the type module.
 WORKDIR /build/internal/types
 RUN npm install --no-audit --no-fund

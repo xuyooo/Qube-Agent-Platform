@@ -1,5 +1,5 @@
 // Imported via relative path so esbuild bundles the .ts source inline.
-// `@neutree-ai/oauth-client`'s package.json `exports` points at `./src/index.ts`, which
+// `@qap/oauth-client`'s package.json `exports` points at `./src/index.ts`, which
 // node can't load directly at runtime.
 import { createOAuthClient } from '../../../internal/oauth-client/src/index'
 

@@ -1,10 +1,10 @@
 import { i18n } from '@/lib/i18n'
-import { type TurnPlugin, runTurn } from '@neutree-ai/sse-consumer'
+import { type TurnPlugin, runTurn } from '@qap/sse-consumer'
 import type { AskUserQuestionItem, AskUserRequest, ChatImageAttachment, TurnStats } from './types'
 
 // ── UniversalEvent content types ──
 //
-// Kept here (rather than re-exported from `@neutree-ai/types`) because web stores
+// Kept here (rather than re-exported from `@qap/types`) because web stores
 // import these names directly and use them to shape Zustand state.
 
 export interface ContentDelta {

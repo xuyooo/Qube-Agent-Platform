@@ -1,4 +1,4 @@
-import { resolveRenderer } from '@neutree-ai/ui-sdk'
+import { resolveRenderer } from '@qap/ui-sdk'
 import { describe, expect, it } from 'vitest'
 
 /**

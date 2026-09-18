@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/k8s-provider",
+  "name": "@qap/k8s-provider",
   "version": "0.1.0",
   "private": true,
   "type": "module",

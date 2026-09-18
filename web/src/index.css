@@ -1,4 +1,4 @@
-@import "@neutree-ai/theme/variables.css";
+@import "@qap/theme/variables.css";
 
 /* Cascade layer order — declared up-front so host utilities always outrank
  * plugin-injected utilities. Plugins inject their own @tailwind utilities

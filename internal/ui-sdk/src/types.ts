@@ -2,7 +2,7 @@
 // normalizes from.
 //
 // The wire types (ApiContentPart/ApiMessage) are defined locally rather than
-// imported from @neutree-ai/types so this package is self-contained and
+// imported from @qap/types so this package is self-contained and
 // publishable without coupling to that (currently app-internal) package. They
 // are structurally compatible with the platform's ApiMessageSchema, so a host
 // can pass its own ApiMessage[] straight in.

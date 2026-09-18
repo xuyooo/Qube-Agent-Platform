@@ -18,7 +18,7 @@ see `<skill>/references/authentication.md`.
 | Skill | Kind | Source | Description |
 |-------|------|--------|-------------|
 | `qap-api/` | generated | control-plane `/api/docs/openapi.json` | QAP control plane — workspaces, prompts, templates, credentials, tokens, agent files, providers, tags, shares, schedules |
-| `qap-design-system/` | hand-authored | `web` + `@neutree-ai/theme` | QAP web design system — semantic OKLCH tokens, the shadcn-based UI component library, and the conventions that keep generated UI on-brand |
+| `qap-design-system/` | hand-authored | `web` + `@qap/theme` | QAP web design system — semantic OKLCH tokens, the shadcn-based UI component library, and the conventions that keep generated UI on-brand |
 
 ## Regenerate
 

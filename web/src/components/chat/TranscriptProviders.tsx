@@ -1,4 +1,4 @@
-// Wires the @neutree-ai/ui-sdk transcript providers for this app: the SDK's own
+// Wires the @qap/ui-sdk transcript providers for this app: the SDK's own
 // i18n (so the chat strings live solely in the SDK bundle — the app no longer
 // duplicates components.chat.*), the app's rich markdown renderer, the agent
 // type, and the lazy tool-renderer bridge (so on-demand plugin renderers still
@@ -17,7 +17,7 @@ import {
   LazyToolRenderersProvider,
   MarkdownProvider,
   TranscriptI18nProvider,
-} from '@neutree-ai/ui-sdk'
+} from '@qap/ui-sdk'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 

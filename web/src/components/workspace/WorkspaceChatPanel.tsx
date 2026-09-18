@@ -53,7 +53,7 @@ import { useAgentSessionActions, useAgentSessionStore } from '@/stores/AgentSess
 import type { ChatMessage as ChatMessageType } from '@/stores/agent-session-store'
 import { useComposerInsertRequests } from '@/stores/composer-store'
 import { useDraft } from '@/stores/draft-store'
-import { MessageBubble, TranscriptI18nProvider, TurnStatsBar } from '@neutree-ai/ui-sdk'
+import { MessageBubble, TranscriptI18nProvider, TurnStatsBar } from '@qap/ui-sdk'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   Bot,

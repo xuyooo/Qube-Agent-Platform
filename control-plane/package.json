@@ -1,5 +1,5 @@
 {
-  "name": "@neutree-ai/control-plane",
+  "name": "@qap/control-plane",
   "version": "0.1.0",
   "type": "module",
   "scripts": {

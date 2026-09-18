@@ -8,7 +8,7 @@
 
 import { SubAgentSessionLink } from '@/components/chat/SubAgentSessionLink'
 import { agentRequestProposeRenderer } from '@/components/chat/tool-renderers/mcp/agent-request'
-import { registerToolRenderer, setSubAgentSessionLink } from '@neutree-ai/ui-sdk'
+import { registerToolRenderer, setSubAgentSessionLink } from '@qap/ui-sdk'
 import { builderModePlugin } from './builder-mode'
 import { filesPlugin } from './files'
 import { memoryPlugin } from './memory'

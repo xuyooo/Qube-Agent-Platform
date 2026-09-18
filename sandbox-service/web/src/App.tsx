@@ -497,11 +497,11 @@ function HomePage() {
                   <p className="text-xs text-gray-600 mb-2">
                     {t('docs.sdk.install')}{' '}
                     <code className="bg-gray-100 px-1 rounded">
-                      npm install @neutree-ai/sandbox
+                      npm install @qap/sandbox
                     </code>
                     {t('docs.sdk.installSuffix')}
                   </p>
-                  <pre className="bg-gray-50 border rounded p-3 text-xs overflow-x-auto whitespace-pre">{`import { SandboxClient } from '@neutree-ai/sandbox'
+                  <pre className="bg-gray-50 border rounded p-3 text-xs overflow-x-auto whitespace-pre">{`import { SandboxClient } from '@qap/sandbox'
 
 const client = new SandboxClient({
   baseUrl: 'https://sandbox.example.com',  // sandbox service URL
@@ -533,12 +533,12 @@ const previewUrl = client.getPreviewUrl(sbx.id, 3000)
 await client.delete(sbx.id)`}</pre>
                   <p className="text-xs text-gray-500 mt-1">
                     <a
-                      href="https://www.npmjs.com/package/@neutree-ai/sandbox"
+                      href="https://www.npmjs.com/package/@qap/sandbox"
                       target="_blank"
                       rel="noreferrer noopener"
                       className="underline hover:text-gray-700"
                     >
-                      @neutree-ai/sandbox on npm
+                      @qap/sandbox on npm
                     </a>
                   </p>
                 </section>
