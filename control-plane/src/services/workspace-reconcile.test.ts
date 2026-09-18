@@ -17,13 +17,11 @@ vi.mock('./placement', () => ({
   ensureReplicaFloor: vi.fn(),
   setDesiredPhase: vi.fn(),
 }))
-vi.mock('./reflect', () => ({ reconcileReflectSchedule: vi.fn() }))
 
 import { hasLiveWorkspaceToken } from './db/workspace-tokens'
 import { getWorkspace, getWorkspaceConfig } from './db/workspaces'
 import * as k8s from './k8s'
 import { bumpWorkspaceSpec } from './placement'
-import { reconcileReflectSchedule } from './reflect'
 import { startWorkspaceInstance } from './workspace-reconcile'
 
 const workspace = vi.mocked(getWorkspace)
@@ -34,7 +32,6 @@ const bumpSpec = vi.mocked(bumpWorkspaceSpec)
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(getWorkspaceConfig).mockResolvedValue({ agent_type: 'claude-code' } as never)
-  vi.mocked(reconcileReflectSchedule).mockResolvedValue(undefined as never)
   // An existing pod that matches the desired spec exactly: zero drift reasons,
   // so a rebuild here can only come from `force`.
   markers.mockResolvedValue({
