@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { NapClient } from '../../../internal/client/src/index'
+import { QapClient } from '../../../internal/client/src/index'
 import {
   appendAttachmentPaths,
   extractSlackText,
@@ -163,7 +163,7 @@ describe('generic Slack attachments', () => {
       }
       calls.push('write')
       expect(String(url)).toBe(
-        'https://nap.test/api/workspaces/ws1/agent/files?path=.attachments%2Fslack%2FF1%2Freport.pdf',
+        'https://qap.test/api/workspaces/ws1/agent/files?path=.attachments%2Fslack%2FF1%2Freport.pdf',
       )
       expect(init?.body).toBeInstanceOf(ReadableStream)
       expect((init as RequestInit & { duplex?: string }).duplex).toBe('half')
@@ -184,7 +184,7 @@ describe('generic Slack attachments', () => {
           url_private: 'https://files.slack.com/report',
         },
       ],
-      new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+      new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
       'ws1',
       'xoxb-test',
     )
@@ -204,7 +204,7 @@ describe('generic Slack attachments', () => {
     await expect(
       stageGenericFiles(
         [{ id: 'F1', name: 'report.pdf', url_private: 'https://example.com/report' }],
-        new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+        new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
         'ws1',
         'xoxb-test',
       ),
@@ -233,7 +233,7 @@ describe('generic Slack attachments', () => {
             url_private: 'https://files.slack.com/report',
           },
         ],
-        new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+        new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
         'ws1',
         'xoxb-test',
       ),
@@ -270,7 +270,7 @@ describe('generic Slack attachments', () => {
             url_private: 'https://files.slack.com/report',
           },
         ],
-        new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+        new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
         'ws1',
         'xoxb-test',
       ),
@@ -291,7 +291,7 @@ describe('generic Slack attachments', () => {
     await expect(
       stageGenericFiles(
         [{ id: 'F1', name: 'report.pdf', url_private: 'https://files.slack.com/report' }],
-        new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+        new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
         'ws1',
         'xoxb-test',
       ),
@@ -312,7 +312,7 @@ describe('generic Slack attachments', () => {
     await expect(
       stageGenericFiles(
         [{ id: 'F1', name: 'report.pdf', url_private: 'https://files.slack.com/report' }],
-        new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+        new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
         'ws1',
         'xoxb-test',
       ),
@@ -338,7 +338,7 @@ describe('generic Slack attachments', () => {
     await expect(
       stageGenericFiles(
         [{ id: 'F1', name: 'report.pdf', url_private: 'https://files.slack.com/report' }],
-        new NapClient({ baseUrl: 'https://nap.test', serviceToken: 'route-owner-token' }),
+        new QapClient({ baseUrl: 'https://qap.test', serviceToken: 'route-owner-token' }),
         'ws1',
         'xoxb-test',
       ),
