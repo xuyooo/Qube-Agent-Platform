@@ -52,6 +52,7 @@ jobs:
           - { image: qap-agent-claude-code, dockerfile: agents/claude-code/Dockerfile, context: . }
           - { image: qap-agent-codex, dockerfile: agents/codex/Dockerfile, context: . }
           - { image: qap-agent-goose, dockerfile: agents/goose/Dockerfile, context: . }
+          - { image: qap-agent-dsh, dockerfile: agents/dsh/Dockerfile, context: . }
     steps:
       - uses: actions/checkout@v4
 
@@ -142,6 +143,7 @@ jobs:
           - qap-agent-claude-code
           - qap-agent-codex
           - qap-agent-goose
+          - qap-agent-dsh
     steps:
       # Same gate as the build job, plus the final tag set.
       - name: Gate & tags
