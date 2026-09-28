@@ -70,6 +70,10 @@ const STORE_COUNT_JOIN = `LEFT JOIN (
     FROM memories GROUP BY store_id
 ) c ON c.store_id = s.id`
 
+// TODO(memory-reflect): Implement Reflect separately after enforcing workspace/session/store
+// ownership, exhaustive activity pagination, fixed run windows with idempotent checkpoint
+// commits, and exclusive ownership for writable stores instead of assuming attachments imply it.
+
 // ── Stores ──────────────────────────────────────────────────────────────────
 
 export async function listStoresForUser(
