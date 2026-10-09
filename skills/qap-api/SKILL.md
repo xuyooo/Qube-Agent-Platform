@@ -1,49 +1,14 @@
-<%
-const descriptions = {
-  "qap-api": "Manage QAP workspaces, prompts, templates, credentials, service tokens, agent files, providers, tags, shares, schedules via REST. Trigger when the user wants to script or automate QAP outside the UI — e.g. \"create a workspace\", \"rotate a token\", \"bulk-upload prompts\", \"list agent files in workspace X\", CI integration with QAP.",
-};
-const description = descriptions[it.meta.name] || `${it.meta.description}. Use when working with the ${it.meta.title} or when the user needs to interact with this API.`;
-
-// Concrete base URL per skill. The OpenAPI spec only declares server `/`, which
-// leaves a fresh agent unable to find the host. Documented once here.
-const baseUrls = {
-  "qap-api": "https://qap.example.com",
-};
-const baseUrl = baseUrls[it.meta.name];
-
-// "I want to X" → which operation, for capabilities that are non-obvious from
-// the resource list (e.g. there is no exec endpoint; running commands goes
-// through the in-workspace agent via chat).
-const intents = {
-  "qap-api": [
-    ["Have the workspace agent do something — run a task, edit files, run commands, answer about its work", "Send a natural-language prompt to the in-workspace agent: `POST /api/workspaces/{id}/chat` (see operations/post-api-workspaces-id-chat.md). The agent has a full toolset (bash, file edit, etc.); this is the primary way to get work done in a workspace. There is no direct exec / command endpoint for service tokens by design — route the request through chat."],
-    ["Read / write / list files in a workspace", "Workspace filesystem → `agent-files` resource. The shared `/mnt/afs` volume → `agent-afs-files` resource (two distinct mounts)."],
-    ["Create / configure / start a workspace", "`workspaces` resource — `POST /api/workspaces`, then `PUT /api/workspaces/{id}/config`."],
-    ["Bulk-manage prompts / templates / skills", "`prompts`, `templates`, `skills` resources."],
-    ["Issue or rotate a token / credential", "`credentials` resource and the service-token operations."],
-  ],
-};
-const intentRows = intents[it.meta.name];
--%>
 ---
-name: <%= it.meta.name %>
-description: <%= description %>
-<% if (it.meta.license) { -%>
-license: <%= it.meta.license.name %><%= it.meta.license.url ? ` (${it.meta.license.url})` : "" %>
-<% } -%>
+name: qap-api
+description: Manage QAP workspaces, prompts, templates, credentials, service tokens, agent files, providers, tags, shares, schedules via REST. Trigger when the user wants to script or automate QAP outside the UI — e.g. "create a workspace", "rotate a token", "bulk-upload prompts", "list agent files in workspace X", CI integration with QAP.
 metadata:
-  api-version: "<%= it.meta.version %>"
-  openapi-version: "<%= it.meta.openapiVersion %>"
-<% if (it.meta.contact) { -%>
-  contact: "<%= it.meta.contact %>"
-<% } -%>
+  api-version: "0.1.0"
+  openapi-version: "3.1.0"
 ---
 
-# <%= it.meta.title %>
-<% if (it.meta.description) { -%>
-<%= it.meta.description %>
+# QAP Control Plane API
+REST API for the QAP control plane.
 
-<% } -%>
 ## How to Use This Skill
 
 This API documentation is split into multiple files for on-demand loading.
@@ -51,9 +16,9 @@ This API documentation is split into multiple files for on-demand loading.
 **Directory structure:**
 ```
 references/
-├── resources/      # <%= it.resources.length %> resource index files
-├── operations/     # <%= it.totalOps %> operation detail files
-└── schemas/        # <%= it.schemaGroups.length %> schema groups, <%= it.totalSchemas %> schema files
+├── resources/      # 17 resource index files
+├── operations/     # 193 operation detail files
+└── schemas/        # 7 schema groups, 12 schema files
 ```
 
 **Navigation flow:**
@@ -61,38 +26,33 @@ references/
 2. Read `references/resources/<resource>.md` to see available operations
 3. Read `references/operations/<operation>.md` for full details
 4. If an operation references a schema, read `references/schemas/<prefix>/<schema>.md`
-<% if (baseUrl) { %>
+
 ## Base URL
 
-`<%= baseUrl %>` — or set `$QAP_BASE_URL` to your deployment's host. Every operation path below is relative to it (e.g. `GET $QAP_BASE_URL/api/workspaces`).
-<% } else if (it.meta.servers.length > 0) { %>
-## Base URL
+`https://qap.example.com` — or set `$QAP_BASE_URL` to your deployment's host. Every operation path below is relative to it (e.g. `GET $QAP_BASE_URL/api/workspaces`).
 
-<% it.meta.servers.forEach(server => { -%>
-- `<%= server.url %>`<%= server.description ? ` - ${server.description}` : "" %>
-<% }) -%>
-<% } -%>
-<% if (it.meta.securitySchemes.length > 0) { %>
 ## Authentication
 
-Supported methods: <%= it.meta.securitySchemes.map(s => `**${s}**`).join(", ") %>. See `references/authentication.md` for details.
-<% } %>
+Supported methods: **bearerAuth**. See `references/authentication.md` for details.
+
 ## Conventions
 
 - Every operation path is relative to the Base URL above; send `Authorization: Bearer <token>` on every request.
 - **URL-encode path-bearing query params** (e.g. `path`): encode the whole value — slashes inside it are literal, not separators. A raw CJK or slashed value will 400 or mis-route.
-<% if (intentRows) { %>
+
 ## Common Intents → Operation
 
 Non-obvious capability routing (when the operation isn't where you'd first look):
 
 | I want to… | Use |
 |------------|-----|
-<% intentRows.forEach(row => { -%>
-| <%= row[0] %> | <%= row[1] %> |
-<% }) -%>
-<% } %>
-<% if (it.meta.name === "qap-api") { %>
+| Have the workspace agent do something — run a task, edit files, run commands, answer about its work | Send a natural-language prompt to the in-workspace agent: `POST /api/workspaces/{id}/chat` (see operations/post-api-workspaces-id-chat.md). The agent has a full toolset (bash, file edit, etc.); this is the primary way to get work done in a workspace. There is no direct exec / command endpoint for service tokens by design — route the request through chat. |
+| Read / write / list files in a workspace | Workspace filesystem → `agent-files` resource. The shared `/mnt/afs` volume → `agent-afs-files` resource (two distinct mounts). |
+| Create / configure / start a workspace | `workspaces` resource — `POST /api/workspaces`, then `PUT /api/workspaces/{id}/config`. |
+| Bulk-manage prompts / templates / skills | `prompts`, `templates`, `skills` resources. |
+| Issue or rotate a token / credential | `credentials` resource and the service-token operations. |
+
+
 ## Example — drive the agent (async chat + poll)
 
 The most common task, end to end. Send a prompt, poll until the turn ends, read the transcript — no other files needed:
@@ -143,9 +103,23 @@ echo "long task text..." | scripts/handoff.sh -          # task from stdin
 ```
 
 The poll loop treats any non-`agent` `chat_status` as the turn handing back (idle, human, …) — but also requires the last message to be this turn's assistant reply, guarding against a just-issued POST briefly reading the previous turn's status. It prints only the agent's final text; read the full turn (tool calls included) with `GET /api/workspaces/{id}/messages?session_id=…`, and pull any files the agent produced with `GET /api/workspaces/{id}/agent/files?path=…`.
-<% } %>
+
 ## Resources
 
-<% it.resources.forEach(resource => { -%>
-- **<%= resource.tag %>** → `references/resources/<%= it.toFileName(resource.tag) %>.md` (<%= resource.operations.length %> ops)<%= resource.description ? ` - ${resource.description.substring(0, 50)}` : "" %>
-<% }) -%>
+- **workspaces** → `references/resources/workspaces.md` (50 ops)
+- **skills** → `references/resources/skills.md` (36 ops)
+- **teams** → `references/resources/teams.md` (12 ops)
+- **agent-files** → `references/resources/agent-files.md` (11 ops)
+- **templates** → `references/resources/templates.md` (11 ops)
+- **environments** → `references/resources/environments.md` (10 ops)
+- **prompts** → `references/resources/prompts.md` (10 ops)
+- **memory-stores** → `references/resources/memory-stores.md` (9 ops)
+- **agent-afs-files** → `references/resources/agent-afs-files.md` (8 ops)
+- **providers** → `references/resources/providers.md` (8 ops)
+- **afs** → `references/resources/afs.md` (6 ops)
+- **shares** → `references/resources/shares.md` (5 ops)
+- **tags** → `references/resources/tags.md` (5 ops)
+- **transfers** → `references/resources/transfers.md` (4 ops)
+- **workspace-memory** → `references/resources/workspace-memory.md` (4 ops)
+- **credentials** → `references/resources/credentials.md` (3 ops)
+- **chat** → `references/resources/chat.md` (1 ops)
