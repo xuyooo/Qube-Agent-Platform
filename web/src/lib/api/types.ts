@@ -123,6 +123,8 @@ export type {
   TeamRole,
 } from '@qap/types'
 
+export type { ApiWorkspaceTeamShare } from '@qap/types'
+
 export type {
   ApiTransferPlan,
   ApiWorkspaceTransfer,

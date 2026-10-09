@@ -45,7 +45,11 @@ export interface AgentSessionApi {
   getSession(
     workspaceId: string,
     sessionId: string,
-  ): Promise<{ chat_status: string; pending_message: PendingMessage | null }>
+  ): Promise<{
+    chat_status: string
+    pending_message: PendingMessage | null
+    last_active_at?: string
+  }>
   setPendingMessage(workspaceId: string, sessionId: string, msg: PendingMessage): Promise<void>
   clearPendingMessage(workspaceId: string, sessionId: string): Promise<void>
   getPendingQuestion(workspaceId: string, sessionId: string): Promise<AskUserRequest | null>
@@ -168,8 +172,14 @@ interface AgentSessionActions {
   stop(): Promise<void>
   abortStream(): void
   deleteSession(): Promise<void>
-  syncRemoteTurn(): Promise<void>
   reconnect(): void
+  /**
+   * Catch up with turns someone else started in the active session — in a
+   * shared workspace, another person. While idle: attach to a turn that is
+   * running, or reload history if the session moved since the last check.
+   * Meant to be polled.
+   */
+  syncRemoteTurn(): Promise<void>
   /** Load pre-fetched history into the store. */
   loadHistory(history: ApiMessage[], stats?: ContextGauge | null): void
   /** Clear all messages and errors. */
@@ -252,6 +262,10 @@ export function createAgentSessionStore(
       () => store.getState().activeSessionId,
     )
   }
+
+  // `last_active_at` of the active session as of the last syncRemoteTurn — a
+  // change means messages were written by someone other than this tab.
+  let remoteSyncMark: { sessionId: string; lastActiveAt: string | undefined } | null = null
 
   // cp drains a queued follow-up asynchronously after `session.ended`; these
   // bound the poll that waits for the drained turn to register (~10s total).
@@ -928,6 +942,7 @@ export function createAgentSessionStore(
     async syncRemoteTurn() {
       const { activeSessionId: sessionId, isBusy, isSwitching } = store.getState()
       if (!sessionId || isBusy || isSwitching) {
+        remoteSyncMark = null
         return
       }
       const version = switchVersion
@@ -939,7 +954,11 @@ export function createAgentSessionStore(
       }
       const state = store.getState()
       if (version !== switchVersion || state.activeSessionId !== sessionId || state.isBusy) return
+      const previous = remoteSyncMark?.sessionId === sessionId ? remoteSyncMark : null
+      remoteSyncMark = { sessionId, lastActiveAt: detail.last_active_at }
       const running = detail.chat_status === 'agent'
+      const moved = !!previous && previous.lastActiveAt !== detail.last_active_at
+      if (!running && !moved) return
       try {
         const history = await deps.api.getWorkspaceMessages(workspaceId, sessionId)
         if (version !== switchVersion || store.getState().isBusy) return

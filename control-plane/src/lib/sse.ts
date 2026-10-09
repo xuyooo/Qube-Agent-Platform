@@ -922,7 +922,7 @@ function createPersistMainTurnPlugin(ctx: PersistPluginCtx): TurnPlugin {
           })
         }
       }
-      const msg = await addMessage(workspaceId, state.sessionId, 'user', text)
+      const msg = await addMessage(workspaceId, state.sessionId, 'user', text, callerUserId)
       await insertUserMessageBlocks(msg.id, state.sessionId, userBlocks)
     }, logError('user message persist'))
   }
@@ -1068,7 +1068,10 @@ function createPersistMainTurnPlugin(ctx: PersistPluginCtx): TurnPlugin {
                     type: reason === 'error' ? 'failure' : 'success',
                     url,
                   },
-                  targetUserIds: [ws.user_id],
+                  // Whoever started the turn — in a shared workspace that may
+                  // be a team member. Turns with no web caller (schedules,
+                  // IM channels) notify the owner.
+                  targetUserIds: [callerUserId ?? ws.user_id],
                   scope: `ws:${workspaceId}`,
                 })
               })

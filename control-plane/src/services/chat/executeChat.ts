@@ -199,7 +199,7 @@ export async function executeChat(opts: ExecuteChatOpts): Promise<Response> {
       // `session.started` assigns an id.
       if (userMessageText) {
         const blocks = buildUserMessageBlocks(userMessageText, images)
-        const msg = await addMessage(workspaceId, sessionId, 'user', userMessageText)
+        const msg = await addMessage(workspaceId, sessionId, 'user', userMessageText, callerUserId)
         await insertUserMessageBlocks(msg.id, sessionId, blocks)
         userMessageText = null // prevent the interceptor from persisting a duplicate
       }
@@ -298,6 +298,7 @@ export async function drainPendingMessage(
       sessionId,
       images: pending.images?.length ? pending.images : null,
       source: 'web',
+      callerUserId: pending.author_user_id,
     })
     if (!resp.headers.get('Content-Type')?.includes('text/event-stream')) {
       await restorePendingMessage(sessionId, pending).catch(() => {})
