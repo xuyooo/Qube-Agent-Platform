@@ -124,6 +124,16 @@ export type {
 } from '@qap/types'
 
 export type {
+  ApiTransferPlan,
+  ApiWorkspaceTransfer,
+  TransferAction,
+  TransferCopySelection,
+  TransferItem,
+  TransferItemKind,
+  TransferStatus,
+} from '@qap/types'
+
+export type {
   ApiTeamworkParticipant,
   ApiTeamworkRosterCandidate,
   ApiTeamworkSession,

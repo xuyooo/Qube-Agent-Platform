@@ -11,6 +11,8 @@ interface MemoryStoreRow {
   name: string
   description: string
   archived_at: string | null
+  /** The workspace this store was provisioned for; it changes hands with it. */
+  origin_workspace_id: string | null
   created_at: string
   updated_at: string
 }
@@ -62,7 +64,7 @@ function sha256(text: string): string {
 }
 
 const STORE_COLS_WITH_COUNTS = `s.id, s.owner_user_id, s.name, s.description,
-  s.archived_at, s.created_at, s.updated_at,
+  s.archived_at, s.origin_workspace_id, s.created_at, s.updated_at,
   COALESCE(c.memory_count, 0)::int AS memory_count`
 
 const STORE_COUNT_JOIN = `LEFT JOIN (
@@ -105,12 +107,14 @@ export async function createStore(input: {
   ownerUserId: string
   name: string
   description?: string
+  /** Set when the store is provisioned as a workspace's own memory. */
+  originWorkspaceId?: string
 }): Promise<MemoryStoreWithCounts> {
   const id = generateId()
   await pool.query(
-    `INSERT INTO memory_stores (id, owner_user_id, name, description)
-     VALUES ($1, $2, $3, $4)`,
-    [id, input.ownerUserId, input.name, input.description ?? ''],
+    `INSERT INTO memory_stores (id, owner_user_id, name, description, origin_workspace_id)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [id, input.ownerUserId, input.name, input.description ?? '', input.originWorkspaceId ?? null],
   )
   return (await getStoreById(id))!
 }

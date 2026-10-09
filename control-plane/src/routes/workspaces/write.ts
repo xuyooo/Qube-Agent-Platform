@@ -206,6 +206,7 @@ write.openapi(createRouteDef, async (c) => {
         const store = await createStore({
           ownerUserId: currentUser.sub,
           name: body.name,
+          originWorkspaceId: workspace.id,
         })
         await attachStore({
           workspaceId: workspace.id,
