@@ -88,6 +88,7 @@ export interface SSEHandlers {
   onItemCompleted?: (item: UniversalItem) => void
   onQuestionRequested?: (request: AskUserRequest) => void
   onError?: (error: string) => void
+  onSessionBusy?: (message: string) => void
 }
 
 export interface AgentSessionEffects {
@@ -129,6 +130,11 @@ interface AgentSessionState {
    * turn. Single draft — re-sending while busy newline-merges into it.
    */
   pendingMessage: PendingMessage | null
+  /**
+   * A message the server refused because someone else's turn was running in
+   * the session. Handed back for the composer to restore, then cleared.
+   */
+  returnedDraft: PendingMessage | null
 }
 
 interface AgentSessionActions {
@@ -154,12 +160,15 @@ interface AgentSessionActions {
    * whatever images are already queued (so a text-only re-arm keeps them).
    */
   updatePendingMessage(content: string, images?: ChatImageAttachment[]): void
+  /** Drop `returnedDraft` once the composer has taken it. */
+  clearReturnedDraft(): void
   /** Discard the queued draft. */
   clearPendingMessage(): void
   respondToQuestion(answers: Record<string, string>): Promise<void>
   stop(): Promise<void>
   abortStream(): void
   deleteSession(): Promise<void>
+  syncRemoteTurn(): Promise<void>
   reconnect(): void
   /** Load pre-fetched history into the store. */
   loadHistory(history: ApiMessage[], stats?: ContextGauge | null): void
@@ -638,6 +647,7 @@ export function createAgentSessionStore(
     lastTurnStats: null,
     isBusy: false,
     pendingMessage: null,
+    returnedDraft: null,
 
     // Actions
     async switchSession(sessionId, context) {
@@ -771,14 +781,35 @@ export function createAgentSessionStore(
       }))
 
       const ac = newAbortController()
+      const version = switchVersion
       deps.sse.createAgentChat(
         workspaceId,
         content.trim(),
         store.getState().activeSessionId,
-        buildSSEHandlers(assistantId, switchVersion),
+        {
+          ...buildSSEHandlers(assistantId, version),
+          // Someone else's turn is running here. Nothing was sent: take the
+          // optimistic bubbles back, return the text to the composer, and
+          // attach to the turn that is running.
+          onSessionBusy: (message) => {
+            if (version !== switchVersion) return
+            store.setState((s) => ({
+              error: message,
+              isLoading: false,
+              isBusy: false,
+              messages: s.messages.filter((m) => m.id !== userMessage.id && m.id !== assistantId),
+              returnedDraft: { content, images: images ?? [] },
+            }))
+            void store.getState().syncRemoteTurn()
+          },
+        },
         ac.signal,
         images,
       )
+    },
+
+    clearReturnedDraft() {
+      store.setState({ returnedDraft: null })
     },
 
     sendMessageToSession(sessionId, content, images) {
@@ -892,6 +923,35 @@ export function createAgentSessionStore(
 
     reconnect() {
       startReconnect()
+    },
+
+    async syncRemoteTurn() {
+      const { activeSessionId: sessionId, isBusy, isSwitching } = store.getState()
+      if (!sessionId || isBusy || isSwitching) {
+        return
+      }
+      const version = switchVersion
+      let detail: Awaited<ReturnType<AgentSessionApi['getSession']>>
+      try {
+        detail = await deps.api.getSession(workspaceId, sessionId)
+      } catch {
+        return
+      }
+      const state = store.getState()
+      if (version !== switchVersion || state.activeSessionId !== sessionId || state.isBusy) return
+      const running = detail.chat_status === 'agent'
+      try {
+        const history = await deps.api.getWorkspaceMessages(workspaceId, sessionId)
+        if (version !== switchVersion || store.getState().isBusy) return
+        store.setState({
+          messages: history.map(toChatMessage),
+          loadedSessionId: sessionId,
+          pendingMessage: detail.pending_message,
+        })
+      } catch {
+        // History reload failed — attaching below still streams the live turn.
+      }
+      if (running) startReconnect()
     },
 
     loadHistory(history, stats) {
