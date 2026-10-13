@@ -4,7 +4,7 @@ Phase 1A 最小实现 + Phase 1C 完整实现。必读：`02-contracts.md §7 §
 
 ## 1. 拥有的文件
 
-`plugins/teamwork/server/lifecycle.ts`、`capabilities.ts`、`plugin-guard.ts`；`plugins/teamwork/plugin.json`；migration 144 的内容（由 TW1 提交）。
+`plugins/teamwork/server/lifecycle.ts`、`capabilities.ts`、`plugin-guard.ts`；`plugins/teamwork/plugin.json`；migration 150 的内容（由 TW1 提交）。
 
 ## 2. 产品形态
 

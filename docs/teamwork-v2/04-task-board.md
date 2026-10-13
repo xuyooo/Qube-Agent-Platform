@@ -109,13 +109,13 @@ PL1 是关键路径（§7）。为了让 PL1 也能并行，2.2.7 把 Managed Ex
 
 | WP | 内容（ws 任务） | 开工依赖 | 合入 / 闸门依赖 | 只写文件 | 完成标准与验证 | 规模 |
 | --- | --- | --- | --- | --- | --- | --- |
-| WP-PL1a | migration 142 + repo + 事件到状态的映射（PL1-1、2、5 的映射部分）；R2 条件 UPDATE 封装 | M0 | — | `control-plane/migrations/142_managed_executions.sql`、`control-plane/src/services/execution/{repo.ts,status-map.ts}` 及测试 | 真实 PG 测试：每条写入路径都带非终态条件与 `last_seq` 单调；`02 §1.3` 映射逐行测试 | M |
-| WP-PL1b | 执行核心：`runManagedTurn` 从 `executeChat` 抽出；`dispatchManagedTurn`：singleflight、步骤 1 先判终态、发送权 CAS、0 行重读、412、`send_state` 先于网络调用提交；SSE 投影写 `managed_executions`；lifecycle bus；`disablePendingDrain`（PL1-3、4、4a、4b、4e、5、6、11）；判定逻辑写成纯函数（PL1-4d）。**不含**取消、恢复、人工处理，这些方法只放转发桩 | WP-PL1a | 合入：WP-QA1 | `control-plane/src/services/chat/{executeChat.ts,dispatchChatTurn.ts}`、`control-plane/src/lib/{sse.ts,sse-aggregate.ts}`、`control-plane/src/services/execution/{service.ts,dispatch.ts,lifecycle-bus.ts,pure/**}`，以及 `{interrupt,resolve,respond,recovery}.ts` 的 `NotImplemented` 桩 | 现有 chat（stream / async / sync）、scheduler、connector 测试全绿；F-01；A-31（fake 级）。**生产入口不得调到桩方法**：旧 interrupt 路由与旧 `session-recovery.ts` 维持原路径，分别由 PL1d、PL1c 切换（D-59）；加一条测试断言桩方法在生产装配中没有调用方 | L |
+| WP-PL1a | migration 148 + repo + 事件到状态的映射（PL1-1、2、5 的映射部分）；R2 条件 UPDATE 封装 | M0 | — | `control-plane/migrations/148_managed_executions.sql`、`control-plane/src/services/execution/{repo.ts,status-map.ts}` 及测试 | 真实 PG 测试：每条写入路径都带非终态条件与 `last_seq` 单调；`02 §1.3` 映射逐行测试 | M |
+| WP-PL1b | 执行核心：`runManagedTurn` 从 `executeChat` 抽出；`dispatchManagedTurn`：singleflight、步骤 1 先判终态、发送权 CAS、0 行重读、412、`send_state` 先于网络调用提交；SSE 投影写 `managed_executions`；lifecycle bus；`disablePendingDrain`（PL1-3、4、4a、4b、4e、5、6、11）；判定逻辑写成纯函数（PL1-4d）。**复用 main 已有的会话 turn 租约**（`session-turn.ts`），顺序为：执行行 → claim session → acquireTurn → 发送权（`02 §1.6`，D-65）；`session_busy` 映射为 `admission / session_busy`。**不含**取消、恢复、人工处理，这些方法只放转发桩 | WP-PL1a | 合入：WP-QA1 | `control-plane/src/services/chat/{executeChat.ts,dispatchChatTurn.ts}`、`control-plane/src/lib/{sse.ts,sse-aggregate.ts}`、`control-plane/src/services/execution/{service.ts,dispatch.ts,lifecycle-bus.ts,pure/**}`，以及 `{interrupt,resolve,respond,recovery}.ts` 的 `NotImplemented` 桩 | 现有 chat（stream / async / sync）、scheduler、connector 测试全绿，**包括 main 新增的 `executeChat.test.ts`、`session-turn.test.ts`、`sse-replace.test.ts`**；F-01；A-31（fake 级）；同 session 第二个 turn 得到 `session_busy` 且不发送。**生产入口不得调到桩方法**：旧 interrupt 路由与旧 `session-recovery.ts` 维持原路径，分别由 PL1d、PL1c 切换（D-59）；加一条测试断言桩方法在生产装配中没有调用方 | L |
 | WP-PL1c | 恢复：fence / lookup 调用、`02 §1.5` 恢复判定表、启动时先收敛 `managed_executions` 再跑旧恢复、`reconnectManagedExecution`（PL1-4c、7、9、10）；**本 WP 负责把旧恢复流程切换到新实现** | WP-PL1b | 合入：WP-QA1 | `control-plane/src/services/execution/{recovery.ts,lookup.ts}`、`control-plane/src/lib/session-recovery.ts` | F-02～F-06、F-12～F-14（对 fake agent-server） | M |
 | WP-PL1d | 停止与人工处理：`interruptManagedExecution`（0 行重读、墓碑、`asFailure`、调用执行级中断、五种结果收敛）；`resolveManagedExecution`；`respondToRequest`；`interruptTargeted=false` 拒绝派发（PL1-8、8b、8c、12）；**本 WP 负责把旧 interrupt 路由切换到新实现** | WP-PL1b | 合入：WP-QA1 | `control-plane/src/services/execution/{interrupt.ts,resolve.ts,respond.ts,capability-gate.ts}`、`control-plane/src/routes/workspaces/_shared.ts`（只改 `interruptAgentSession` 的调用路径） | F-08、**F-11**（从 PL1b 移来，D-59）；A-34、A-35、A-36（fake 级）；能力为 false 的 fake runtime 收到 0 次托管请求 | M |
-| WP-PL1e | 其他入口统一改走 `dispatchManagedTurn`（Web / API / scheduler / connector）（PL1-13） | WP-PL1b | — | `control-plane/src/routes/workspaces/chat.ts` 及调用 `dispatchChatTurn` 的路由文件（PL1b 合入后由 INT 列出精确清单） | 全量回归；外部 HTTP 契约不变 | M |
+| WP-PL1e | 其他入口统一改走 `dispatchManagedTurn`（Web / API / scheduler / connector）（PL1-13）；**会话守卫扩展点** `registerSessionGuard`，在 claim session 之前对所有 origin 调用（D-66） | WP-PL1b | — | `control-plane/src/routes/workspaces/chat.ts` 及调用 `dispatchChatTurn` 的路由文件（PL1b 合入后由 INT 列出精确清单） | 全量回归；外部 HTTP 契约不变 | M |
 | WP-PL2a | claude-code：两层 registry、fence、`/chat` 去重与 412、`GET /executions/:key`、`/info` 能力、`session.started` 附带字段（PL2-2～6、9、10） | M0 | 合入：WP-QA2 | `agents/claude-code/**` | QA2 契约测试中 F-14 及 registry 用例通过 | M |
-| WP-PL2b | ACP 骨架：同上，放在 `createAcpAgentApp` 层；与 bridge LRU 分离（P-13）；goose `SessionIdCodec`（PL2-2～6、9、10） | M0 | 合入：WP-QA2 | `internal/acp-adapter/**`、`agents/codex/**`、`agents/goose/**` | 同上；bridge 回收后 lookup 仍能得到终态 | M |
+| WP-PL2b | ACP 骨架：同上，放在 `createAcpAgentApp` 层；与 bridge LRU 分离（P-13）；goose `SessionIdCodec`（PL2-2～6、9、10）；ACP `authRequired`（-32000）在 error 事件中附带结构化 `code:'provider_auth_required'`，保留 `ae5ce73` 已有的提示文本（D-68）；以 `main@0758e7e` 升级后的 Codex ACP 为准复核映射 | M0 | 合入：WP-QA2 | `internal/acp-adapter/**`、`agents/codex/**`、`agents/goose/**` | 同上；bridge 回收后 lookup 仍能得到终态；`universal-events.test.ts` 与 codex fixtures 全绿；authRequired 用例带结构化 code | M |
 | WP-PL2c | DSH：继承 PL2b registry；cancel / resume 映射（PL2-7） | WP-PL2b | 合入：WP-QA2 | `internal/dsh-adapter/**`、`agents/dsh/**` | 同上 | S |
 | WP-PL2d | claude-code 执行级中断：方式 (a) AbortController；五种结果；`/chat` 受理即登记句柄；`interruptTargeted / interruptConfirm`（PL2-12～14b） | WP-PL2a | 合入：WP-QA2（F-16 / F-17 runner） | `agents/claude-code/**` | F-16、F-17（硬性） | M |
 | WP-PL2e | ACP（codex / goose）执行级中断：方式 (b) session 锁 + cancel + 交错时重建子进程；同时实现方式 (c) 锁内终止子进程；按 F-17 结果选择（PL2-12～14b） | WP-PL2b | 合入：WP-QA2（F-16 / F-17 runner） | `internal/acp-adapter/**`、`agents/codex/**`、`agents/goose/**` | F-16、F-17（硬性，codex 与 goose 分别通过）、F-18 | L |
@@ -126,6 +126,7 @@ PL1 是关键路径（§7）。为了让 PL1 也能并行，2.2.7 把 Managed Ex
 | WP-PL4a | Fleet app 贡献、app registry、`useFleetApps` 合并（**保留**硬编码）、懒加载占位、导航参数深链接（PL4-2、3、5） | M0 | — | `web/src/plugins/{types.ts,registry.ts}`、`web/src/lib/{plugin-loader.ts,plugin-lazy-registry.ts}`、`web/src/hooks/useFleetApps.ts` | 无 Workspace MCP 时 fleet app 仍出现；同 id 冲突被拒 | M |
 | WP-PL4b | `SessionView`（自带 Provider）与 `hostApiMajor`（PL4-4） | WP-PL4a | — | `web/src/lib/host.ts`、`web/src/lib/session-view/**` | 在 fleet 根下完整显示会话并回答原生问题 | M |
 | WP-PL4c | 服务端插件 guard 扩展点、bundle 版本校验、manifest Zod 钩子（PL4-6） | M0 | — | `control-plane/src/routes/plugins.ts`、`control-plane/src/services/db/plugins.ts` | guard 抛错时返回 409 且 DB 不变 | S |
+| WP-PL4d | Workspace 所有权转移扩展点 `WorkspaceTransferHook` 的注册与调用：check 在接受转移前调用，apply 在转移事务内调用（D-67）。**旧的 teamwork 直接 SQL 保留不动**，删除放在 WP-INT3 切换 PR 中 | M0 | — | `control-plane/src/services/workspace-transfer.ts`、`control-plane/src/services/workspace-transfer-hooks.ts`（新建） | 注册测试钩子后，check 拒绝时转移返回 409 且无任何写入；apply 在同一事务内执行，抛错时整个转移回滚；未注册钩子时行为与现在完全一致 | S |
 
 ### 5.3 Teamwork 工作流
 
@@ -133,9 +134,9 @@ PL1 是关键路径（§7）。为了让 PL1 也能并行，2.2.7 把 Managed Ex
 
 | WP | 内容（ws 任务） | 开工依赖 | 合入 / 闸门依赖 | 只写文件 | 完成标准与验证 | 规模 |
 | --- | --- | --- | --- | --- | --- | --- |
-| WP-TW1a | migration 143 / 144；`db/tx.ts` **只实现**事务 helper（`WithTx`，基于 pg `PoolClient`，`sendDb` 可用于 pg-boss `send({db})`），类型引用 `contracts/tx`，不另行定义（D-62）；全部 1A repos（tasks、runs、events、commands、settings、sessions、resources、roster）：partial unique index、`ActiveRunExists`、乐观锁、`commands.claim`、`claimLease / commitOp / resolveUncertain / replaceOrphan`、`applied_exec_seq` 条件更新；把 contract test 套件接到 CT 的 `InMemoryRepos` 上（TW1-1～10、12） | M0 | — | `control-plane/migrations/{143_*,144_*}.sql`、`plugins/teamwork/server/db/**`（含 `__contract__`） | 真实 PG 与 InMemoryRepos 跑同一套 contract test 全绿；并发 insert ×20 只成功 1 行；unknown 占位；A-27（DB 部分） | L |
-| WP-TW1b | Phase 2：migration 145、`work-items.ts`、依赖写入时查环（TW1-11） | WP-TW1a、G4 | — | `control-plane/migrations/145_*.sql`、`plugins/teamwork/server/db/work-items.ts` | 环与跨 task 依赖被拒 | M |
-| WP-TW1c | migration 146（切换期约束），只随 G4 切换 PR 合入（TW1-2b） | WP-TW1a | — | `control-plane/migrations/146_*.sql` | 预发演练通过 | S |
+| WP-TW1a | migration 149 / 150；`db/tx.ts` **只实现**事务 helper（`WithTx`，基于 pg `PoolClient`，`sendDb` 可用于 pg-boss `send({db})`），类型引用 `contracts/tx`，不另行定义（D-62）；全部 1A repos（tasks、runs、events、commands、settings、sessions、resources、roster）：partial unique index、`ActiveRunExists`、乐观锁、`commands.claim`、`claimLease / commitOp / resolveUncertain / replaceOrphan`、`applied_exec_seq` 条件更新；把 contract test 套件接到 CT 的 `InMemoryRepos` 上（TW1-1～10、12） | M0 | — | `control-plane/migrations/{149_*,150_*}.sql`、`plugins/teamwork/server/db/**`（含 `__contract__`） | 真实 PG 与 InMemoryRepos 跑同一套 contract test 全绿；并发 insert ×20 只成功 1 行；unknown 占位；A-27（DB 部分） | L |
+| WP-TW1b | Phase 2：migration 151、`work-items.ts`、依赖写入时查环（TW1-11） | WP-TW1a、G4 | — | `control-plane/migrations/151_*.sql`、`plugins/teamwork/server/db/work-items.ts` | 环与跨 task 依赖被拒 | M |
+| WP-TW1c | migration 152（切换期约束），只随 G4 切换 PR 合入（TW1-2b） | WP-TW1a | — | `control-plane/migrations/152_*.sql` | 预发演练通过 | S |
 | WP-TW2a | 纯状态机：Task 转换表、blocked_reason 解除、`02 §3.5` 两步、`allowedCommands`、`dispatch_epoch` 递增规则（TW2-2、16） | M0 | — | `plugins/teamwork/server/state-machine.ts` 及测试 | 转换表每行一个测试；非法组合全部 409 | M |
 | WP-TW2b | 命令管线与路由：授权与 admin 清单、`commands.claim`、拒绝也写结果、事务内 send、全部命令处理器（含 `requestResolution`、`resolveUncertain`、accept 时的探测与 digest 复核）、读接口、OpenAPI（TW2-1、3～15、6b、6c）；命令管线的判定部分写成纯函数，供 PT-03 使用 | WP-TW1a、WP-TW2a | 闸门：WP-TW4b、WP-TW6b、WP-TW5a、WP-TW7a（本 WP 经 ports 对接 fake） | `plugins/teamwork/server/{commands.ts,routes.ts,authz.ts}` | A-03、A-13、A-21、A-28、A-37（fake 级，真实 PG）。**PT-03 不在本 WP 验收**，归 QA5（D-59） | L |
 | WP-TW3a | reconcile 纯判定核心：协调员资格、未处理输入、`wait_for_items` 规则、待验收两步、redispatch 选择、换新 Session 规则（TW3-4、7、7b、7c 判定部分） | M0 | — | `plugins/teamwork/server/reconcile/{decide.ts,eligibility.ts}` 及测试 | 纯函数测试覆盖 `ws-tw3 §3` 每条规则 | M |
@@ -152,6 +153,7 @@ PL1 是关键路径（§7）。为了让 PL1 也能并行，2.2.7 把 Managed Ex
 | WP-TW6b | seal、release、`probeMounts`、`continueAfterResolve`、产物 digest（TW6-4、5） | WP-TW6a | 闸门：WP-PL2g（若派发；本 WP 用 FakeAfs 的 `probeMounts`） | `plugins/teamwork/server/resources/{seal.ts,probe.ts,artifacts.ts,resolve.ts}` | A-24、A-33、A-33b～d | M |
 | WP-TW6c | Phase 2：成员挂载与同环境检查（TW6-7） | WP-TW6b、G4 | — | `plugins/teamwork/server/resources/member.ts` | M 系列 | S |
 | WP-TW7a | `LifecycleGuard`、capabilities 端点、协议头中间件、开发用 seed（TW7-1～3） | M0 | — | `plugins/teamwork/server/{lifecycle.ts,capabilities.ts,protocol.ts}` | 426 / lifecycle 409 用例 | S |
+| WP-TW2c | 与 main 新功能的对接（D-66、D-67）：会话守卫实现（非 teamwork origin 访问非终态任务的受管 Session → 拒绝）；`WorkspaceTransferHook` 的 check / apply 实现（`ws-tw2 §4.1`）；roster 严格同 owner、不用 `canAccessWorkspace`；任务详情的共享提示数据 | WP-TW1a | 闸门：WP-PL1e、WP-PL4d（本 WP 只实现函数，由 WP-INT4 注册） | `plugins/teamwork/server/{session-guard.ts,transfer-hook.ts}` | A-38（会话守卫，fake 级）；A-39（转移，fake 级：有非终态任务时拒绝；终态任务只改归属；成员移除写事件） | M |
 | WP-TW7b | `plugin/commands`、disable 检查清单、guard 实现（由 INT4 注册到 PL4 扩展点）、manifest 校验、运维文档（TW7-4～6） | WP-PL4c、WP-TW2b | 闸门：WP-QA7-L | `plugins/teamwork/server/{plugin-guard.ts,plugin-commands.ts}`、`plugins/teamwork/plugin.json` | L-03～L-06、L-08 的 fake 级变体（InMemoryRepos + FakeExecutionPort）。完整版本由 QA7-L 执行 | M |
 | WP-TW8a | 插件骨架、`registerPlugin`、领域 client、mock API、自带 QueryClient；**Web bundle 构建**（IIFE、React / ReactDOM / JSX runtime 外置、manifest 产出，D-60）（TW8-1） | M0、WP-PL4a | — | `plugins/teamwork/web/{index.ts,api.ts,query.ts,mocks/**,build.*}` | 在 mock 下能打开空看板；产出的 bundle 能通过现有 `/api/plugins` 上传并被 loader 加载 | M |
 | WP-TW8b | 看板：七列、卡片、筛选、分页、拖拽映射为命令、键盘操作（TW8-2） | WP-TW8a | — | `plugins/teamwork/web/board/**` | U-01～U-04 | M |
@@ -171,10 +173,10 @@ PL1 是关键路径（§7）。为了让 PL1 也能并行，2.2.7 把 Managed Ex
 | WP-QA6 | G2 集成测试 A-01～A-37（真实 PG + fake agent-server + FakeAfs，在测试装配中运行） | WP-QA4、G1 | — | `control-plane/e2e/teamwork/a-series/**` | 全部通过 | L |
 | WP-QA7-U | U 系列 E2E（测试装配 + TW8a 产出的测试 bundle） | WP-QA6、WP-TW8b、WP-TW8c、WP-TW8d | — | `control-plane/e2e/teamwork/u-series/**`、`web/e2e/teamwork/**` | U-01～U-10 全部通过 → **G3** | M |
 | WP-QA7-L | L 系列 E2E，分两段（D-61）：**切换前**在测试装配中执行 L-01～L-06、L-08；**切换候选**在 WP-INT3 候选 PR 的预发部署上执行 L-07 与切换 / 回滚演练 | 切换前：WP-QA6、WP-INT4b；切换候选：WP-INT3（候选 PR 已开） | — | `control-plane/e2e/teamwork/l-series/**` | 两段全部通过 → **G4** | M |
-| WP-INT4 | **装配**：实现 `plugins/teamwork/server/index.ts` 的 `registerTeamwork(deps)`。实例化各模块并注入依赖（repos、state machine、reconciler、run lifecycle、context / tools、resources、lifecycle guard）；挂载 `/api/teamwork` 路由与内部 reconcile 路由；订阅 `ExecutionPort.onExecutionLifecycle('teamwork', …)`；注册 MCP scope resolver（PL3a 扩展点）；导出 scheduler 侧的 worker 注册函数。plugin guard 的注册不在本 WP，见 WP-INT4b。`ExecutionPort`、`afs`、`db`、`boss` 都作为参数注入，测试装配与生产使用**同一个**函数（D-60） | WP-INT1、WP-TW2b、WP-TW3c、WP-TW4b、WP-TW5b、WP-TW6b、WP-TW7a、WP-PL3a、WP-PL4c | — | `plugins/teamwork/server/index.ts`、`plugins/teamwork/worker/register.ts` | 用全部 fake 注入时，一个 fake 级 A-02（创建 → start → 协调员 Run → submit_review → in_review → accept）端到端跑通；生产入口仍未调用（`03 §4.1`） | M |
+| WP-INT4 | **装配**：实现 `plugins/teamwork/server/index.ts` 的 `registerTeamwork(deps)`。实例化各模块并注入依赖（repos、state machine、reconciler、run lifecycle、context / tools、resources、lifecycle guard）；挂载 `/api/teamwork` 路由与内部 reconcile 路由；订阅 `ExecutionPort.onExecutionLifecycle('teamwork', …)`；注册 MCP scope resolver（PL3a 扩展点）、会话守卫（PL1e 扩展点，实现来自 TW2c）、Workspace 转移钩子（PL4d 扩展点，实现来自 TW2c；**只在测试装配中生效**，生产要等 INT3 切换）；导出 scheduler 侧的 worker 注册函数。plugin guard 的注册不在本 WP，见 WP-INT4b。`ExecutionPort`、`afs`、`db`、`boss` 都作为参数注入，测试装配与生产使用**同一个**函数（D-60） | WP-INT1、WP-TW2b、WP-TW2c、WP-TW3c、WP-TW4b、WP-TW5b、WP-TW6b、WP-TW7a、WP-PL3a、WP-PL4c、WP-PL4d、WP-PL1e | — | `plugins/teamwork/server/index.ts`、`plugins/teamwork/worker/register.ts` | 用全部 fake 注入时，一个 fake 级 A-02（创建 → start → 协调员 Run → submit_review → in_review → accept）端到端跑通；生产入口仍未调用（`03 §4.1`） | M |
 | WP-INT4b | 在 `registerTeamwork` 中注册 TW7b 的 plugin guard 到 PL4c 扩展点，挂载 `plugin/commands` 路由 | WP-INT4、WP-TW7b | — | `plugins/teamwork/server/index.ts` | 通用插件接口对 Teamwork 的 enable / disable / upload / delete 都经过 guard（fake 级 L-05） | S |
 | WP-INT2 | 闸门执行与报告（G1～G4） | 各闸门前置 | — | `docs/teamwork-v2/gates/**` | 报告包含命令、通过数、失败项、未覆盖项 | S×4 |
-| WP-INT3 | **G4 原子切换**，分两步（D-61）：① G3 通过后开**候选 PR**，内容是 `index.ts` 改为调用 WP-INT4 的 `registerTeamwork`（传真实依赖）、scheduler 注册 worker、删除 `legacyTeamworkScope`（PL3 执行）、删除内置入口（PL4 执行）、TW9 删除清单、migration 146、TW9a 文档，并部署到预发；② QA7-L 的切换候选段在其上通过（G4）之后才**合并** | 开候选：G3、WP-INT4b、WP-TW1c、WP-TW9a；合并：G4 | — | `control-plane/src/index.ts`、`scheduler/src/index.ts`，以及 `ws-tw9 §2` 删除清单中的文件 | 候选 PR 在预发通过 L-07 与切换 / 回滚演练 | M |
+| WP-INT3 | **G4 原子切换**，分两步（D-61）：① G3 通过后开**候选 PR**，内容是 `index.ts` 改为调用 WP-INT4 的 `registerTeamwork`（传真实依赖）、scheduler 注册 worker、删除 `legacyTeamworkScope`（PL3 执行）、删除内置入口（PL4 执行）、删除 `workspace-transfer.ts` 中直接改写 teamwork 表的 SQL（PL4d 执行，改由钩子处理，D-67）、WorkspaceChatPanel 对受管 Session 的只读提示（TW9 执行，D-66）、TW9 删除清单、migration 152、TW9a 文档，并部署到预发；② QA7-L 的切换候选段在其上通过（G4）之后才**合并** | 开候选：G3、WP-INT4b、WP-TW1c、WP-TW9a；合并：G4 | — | `control-plane/src/index.ts`、`scheduler/src/index.ts`，以及 `ws-tw9 §2` 删除清单中的文件 | 候选 PR 在预发通过 L-07 与切换 / 回滚演练 | M |
 
 **WP-PL1b 与 PL1c / PL1d 的接口约定**：PL1b 在 `services/execution/service.ts` 中实现 `ManagedExecutionService` 的全部方法签名。其中 interrupt、resolve、respond、recovery 方法只做转发，调用 `interrupt.ts / resolve.ts / respond.ts / recovery.ts` 的导出函数；这几个文件由 PL1b 先放入抛 `NotImplemented` 的桩，再由 PL1c / PL1d 填实现。这样 PL1c / PL1d 不需要修改 `service.ts`。
 
@@ -227,7 +229,8 @@ flowchart LR
   end
 
   subgraph INT[装配与切换]
-    INT1 & TW2b & TW3c & TW4b & TW5b & TW6b & TW7a & PL3a & PL4c --> INT4
+    INT1 & TW2b & TW2c & TW3c & TW4b & TW5b & TW6b & TW7a & PL3a & PL4c & PL4d & PL1e --> INT4
+    TW1a --> TW2c
     INT4 & TW7b --> INT4b
     INT4 --> QA4
   end
@@ -236,7 +239,7 @@ flowchart LR
   QA1 -.-> PL1b & PL1c & PL1d & PL3b
   QA2 -.-> PL2a & PL2b & PL2c & PL2d & PL2e & PL2f
 
-  M0 --> PL1a & PL2a & PL2b & PL3a & PL4a & PL4c & QA1 & TW1a & TW2a & TW3a & TW4a & TW5a & TW60 & TW7a & TW9a
+  M0 --> PL1a & PL2a & PL2b & PL3a & PL4a & PL4c & PL4d & QA1 & TW1a & TW2a & TW3a & TW4a & TW5a & TW60 & TW7a & TW9a
 
   PL1c & PL1d & PL1e & PL2d & PL2e & PL2f & PL3b & QA2 & QA3 --> G1{G1}
   G1 & QA4 & QA5 --> QA6 --> G2{G2}
@@ -256,8 +259,8 @@ flowchart LR
 | 波次 | 触发条件 | 可同时派发的 WP | 数量 |
 | --- | --- | --- | --- |
 | W0 | — | INT0 → CT1 → {CT2, CT3} → INT1 | 1～2 |
-| W1 | M0 | PL1a、PL2a、PL2b、PL3a、PL4a、PL4c、QA1、TW1a、TW2a、TW3a、TW4a、TW5a、TW6-0、TW7a、TW9a | 15 |
-| W2 | 对应前置合入 | PL1b、PL2c、PL2d、PL2e、PL4b、QA2、TW1c（开发，随 INT3 合入）、TW2b、TW3b、TW4b、TW5b、TW6a、TW8a | 13 |
+| W1 | M0 | PL1a、PL2a、PL2b、PL3a、PL4a、PL4c、PL4d、QA1、TW1a、TW2a、TW3a、TW4a、TW5a、TW6-0、TW7a、TW9a | 16 |
+| W2 | 对应前置合入 | PL1b、PL2c、PL2d、PL2e、PL4b、QA2、TW1c（开发，随 INT3 合入）、TW2b、TW2c、TW3b、TW4b、TW5b、TW6a、TW8a | 14 |
 | W3 | 对应前置合入 | PL1c、PL1d、PL1e、PL2f、TW3c、TW6b、TW7b、TW8b、TW8c、TW8d、（PL2g，条件） | 10～11 |
 | W4 | 对应前置合入 | PL3b、QA3、**INT4** | 3 |
 | W5 | 对应前置合入 | INT4b、QA4、QA5 | 3 |
@@ -297,11 +300,11 @@ G2：    max(G1, TW 链) → QA6(4.5)                                           
   | A2 | PL2b → PL2e → PL2c → PL2f |
   | A3 | PL2a → PL2d → PL1d → PL3b |
   | A4 | QA1 → QA2 → QA3 → QA5 → QA6 → QA7-U → QA7-L |
-  | A5 | TW1a → TW2b → TW7b → TW1c |
+  | A5 | TW1a → TW2b → TW2c → TW7b → TW1c |
   | A6 | TW2a → TW3a → TW3b → TW3c → INT4（INT 委托）→ INT4b（INT 委托）→ QA4 |
   | A7 | TW4a → TW4b → TW5a → TW5b |
   | A8 | TW6-0 → TW6a → TW6b →（PL2g，条件） |
-  | A9 | PL3a → PL4c → TW7a → TW9a |
+  | A9 | PL3a → PL4c → PL4d → TW7a → TW9a |
   | A10 | PL4a → PL4b → TW8a → TW8b → TW8c → TW8d |
 
 - 只有 8 个 Agent 时，把 A9 的 WP 分给 A3 与 A7，把 A10 的 TW8b ～ d 推迟到 W3 之后。

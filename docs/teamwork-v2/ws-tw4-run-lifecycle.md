@@ -24,9 +24,9 @@ Phase 1A。必读：`02-contracts.md §1.3–1.5 §3.3 §5（RunLifecycle）§11
 
 | 分类 | 判定 | 自动重试 | 手动 retry |
 | --- | --- | --- | --- |
-| `retryable` | `stage ∈ {pre_dispatch, admission, workspace_start}`；或 `stage=transport` 且有 fence 回执 `fenced` 或 `412 instance_mismatch`（D-30） | 是，最多 3 次，10s / 30s / 120s（尊重更长的 Retry-After） | 是 |
+| `retryable` | `stage ∈ {pre_dispatch, admission, workspace_start}`（含 `session_busy`，D-65；但 `session_managed` 除外，它归 non_retryable）；或 `stage=transport` 且有 fence 回执 `fenced` 或 `412 instance_mismatch`（D-30） | 是，最多 3 次，10s / 30s / 120s（尊重更长的 Retry-After） | 是 |
 | `manual_only` | `stage=in_turn` 且 `code ∈ {provider_error, provider_rate_limited, agent_http_status}` 且 `toolActivityObserved=true`；或 prompt 渲染以外的 in_turn 错误但无法判断副作用 | 否 | 是 |
-| `non_retryable` | `code ∈ {permission_denied, invalid_configuration, budget_exhausted, agent_fatal}` 或 `runtimeReportedFatal=true` | 否 | 修复原因后是 |
+| `non_retryable` | `code ∈ {permission_denied, invalid_configuration, budget_exhausted, agent_fatal, provider_auth_required, session_managed}` 或 `runtimeReportedFatal=true` | 否 | 修复原因后是 |
 | `unknown` | Execution `unknown` | **禁止**（I-08） | 否，只能 `resolve_execution` |
 
 补充：

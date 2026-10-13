@@ -133,6 +133,12 @@ export interface ManagedExecutionService {
   /** 回答原生问题 / 权限请求，路由到原 session */
   respondToRequest(dispatchKey: string, requestId: string, answer: unknown): Promise<void>
 
+  /** 会话守卫扩展点（D-66）。每次 dispatch（任何 origin）在 claim session 之前调用所有已注册守卫；
+   *  任一守卫返回 reject，该 turn 以 failed{stage:'pre_dispatch', code:'session_managed'} 拒绝，HTTP 入口返回 409。
+   *  平台不解读守卫的语义（I-13）；Teamwork 用它拒绝"非 teamwork origin 直接向受管 Session 发起 turn"。 */
+  registerSessionGuard(guard: (ctx: { origin: ManagedExecution['origin']; workspaceId: string; sessionId: string | null; userId: string }) =>
+    Promise<{ allow: true } | { allow: false; reason: string }>): void
+
   /** 人工处理不确定执行（D-49）。这是 `managed_executions` 唯一的人工写入路径；调用方不得绕过它直接改 Run。
    *  - 适用：status ∈ {unknown, running（suspected_stall）}；已终态时幂等返回现状，不改写（R2）；
    *  - bind_existing：先 probe，确认原执行在同一实例上仍然存在，再写入观察到的状态；probe 不能确认则拒绝；
@@ -158,7 +164,7 @@ export interface ExecutionLifecycleEvent {
 
 `progress` 事件节流：同一 execution 每 15s 至多一次，只用于更新 `last_progress_at` 投影，不做业务推进。
 
-### 1.2 平台表 `managed_executions`（PL1，migration 142）
+### 1.2 平台表 `managed_executions`（PL1，migration 148）
 
 ```sql
 CREATE TABLE managed_executions (
@@ -222,7 +228,7 @@ CREATE INDEX managed_executions_origin_idx ON managed_executions (origin, origin
 
 ### 1.4 规范化错误码（`failure.code`）
 
-`capacity_unavailable`、`workspace_start_failed`、`workspace_not_found`、`session_invalid`、`token_mint_failed`、`transport_error`、`agent_http_status`、`agent_fatal`、`provider_error`、`provider_rate_limited`、`permission_denied`、`invalid_configuration`、`budget_exhausted`、`interrupted_by_request`、`runtime_restarted`、`persist_failed`、`unknown`。
+`capacity_unavailable`、`session_busy`（D-65）、`provider_auth_required`（D-68）、`session_managed`（D-66）、`workspace_start_failed`、`workspace_not_found`、`session_invalid`、`token_mint_failed`、`transport_error`、`agent_http_status`、`agent_fatal`、`provider_error`、`provider_rate_limited`、`permission_denied`、`invalid_configuration`、`budget_exhausted`、`interrupted_by_request`、`runtime_restarted`、`persist_failed`、`unknown`。
 
 平台只报告事实（stage、code、retryAfterMs、toolActivityObserved）。**是否重试由 Teamwork 判定**（TW4）。
 
@@ -285,6 +291,16 @@ CREATE INDEX managed_executions_origin_idx ON managed_executions (origin, origin
 - 从非终态到终态：`WHERE status NOT IN ('succeeded','failed','interrupted')`；
 - 非终态字段更新（进展时间、pending_requests 等）：同样要求当前为非终态，并且 `last_seq` 单调递增（`WHERE last_seq < $seq`）；
 - 同一 dispatch_key 进入终态后只能读，重试一律由调用方新建 dispatch_key。
+
+**与会话 turn 租约的关系**（D-65，`main@0758e7e` 已有，`services/chat/session-turn.ts`、migration 147）：
+
+- main 已实现"一个 session 同时只有一个 turn"：`sessions.turn_claim` 租约，TTL 60s，20s 续租，单条条件 UPDATE，**跨 replica 生效**。复用 session 时必须先 `claimSessionTurn`，拿不到返回 `409 session_busy`；新 session 在 `session.started` 后 `adopt`；恢复时 `adopt`。
+- Managed Execution **复用**这个租约，不另造一套。`runManagedTurn` 的顺序为：步骤 1（执行行）→ **claim session（仅复用 session 时）** → 步骤 2 acquireTurn → 步骤 3 → 步骤 4 发送权 → 步骤 5 发送。租约的释放随 turn 结束（与现有 `releaseSession` 一致）。
+- 两者职责不同，互不替代：
+  - 租约：保证同一 session 不会同时跑两个 turn，**不按 dispatch_key 去重**；
+  - dispatch_key 与发送权：保证同一次执行只发送一次、取消与发送二选一。
+- `session_busy` 发生在发送之前，映射为 `failed{stage:'admission', code:'session_busy'}`，归为 `retryable`（P-177）。典型场景是上一轮刚结束、租约尚未释放，或者 CP 崩溃后租约要等 TTL 过期。注意不要把它和 `capacity_unavailable` 混在一起计数。
+- 新 session 在 `session.started` 之前没有租约，此时发送权与 fence 照常适用。
 
 "影响 0 行"**不等于**已取消。同一 key 的两个并发调用可能都读到 `not_sent`，一个取得发送权后，另一个的 UPDATE 同样影响 0 行，而此时请求可能已经在执行（P-150）。
 
@@ -510,7 +526,7 @@ V2.2.1 把"已只读收敛"列为前提，同时又要求进入 in_review 后才
 Migration 编号预分配见 §12。以下为规范定义。旧表以 `ALTER` 扩展，旧行默认 `status='backlog'`，不迁移语义（D-27）。
 
 ```sql
--- 143_teamwork_v2_core.sql
+-- 149_teamwork_v2_core.sql
 ALTER TABLE teamwork_tasks
   ADD COLUMN status                 TEXT NOT NULL DEFAULT 'backlog',
   ADD COLUMN priority               INT  NOT NULL DEFAULT 3,            -- 1 最高 .. 4 最低
@@ -543,7 +559,7 @@ CREATE INDEX teamwork_tasks_sweep_idx ON teamwork_tasks (status, next_run_at)
 ALTER TABLE teamwork_participants ADD COLUMN role_description TEXT;
 
 ALTER TABLE teamwork_sessions ADD COLUMN work_item_id TEXT;      -- 协调员为 NULL
--- I-19 的唯一索引 teamwork_sessions_session_uq 放在 146_teamwork_cutover.sql，随 G4 原子切换执行（D-35）；
+-- I-19 的唯一索引 teamwork_sessions_session_uq 放在 152_teamwork_cutover.sql，随 G4 原子切换执行（D-35）；
 -- 在此之前由 TW1 repo 在写入事务内检查，测试装配中照常生效
 
 CREATE TABLE teamwork_runs (
@@ -652,7 +668,7 @@ CREATE UNIQUE INDEX teamwork_resources_ws_current_uq ON teamwork_resources (task
 ```
 
 ```sql
--- 144_teamwork_plugin_settings.sql（内容由 TW7 定义，TW1 统一提交）
+-- 150_teamwork_plugin_settings.sql（内容由 TW7 定义，TW1 统一提交）
 CREATE TABLE teamwork_plugin_settings (
   id         INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   lifecycle  TEXT NOT NULL DEFAULT 'disabled',   -- active | draining | disabled
@@ -663,7 +679,7 @@ CREATE TABLE teamwork_plugin_settings (
 ```
 
 ```sql
--- 145_teamwork_work_items.sql（Phase 2）
+-- 151_teamwork_work_items.sql（Phase 2）
 CREATE TABLE teamwork_work_items (
   id                    TEXT PRIMARY KEY,
   task_id               TEXT NOT NULL REFERENCES teamwork_tasks(id),
@@ -843,7 +859,19 @@ export interface LifecycleGuard {
 // ── 平台依赖（PL1 提供，TW 只通过此接口访问执行层） ─────────────────
 export type ExecutionPort = Pick<ManagedExecutionService,
   'dispatchManagedTurn' | 'getManagedExecution' | 'interruptManagedExecution' |
-  'reconnectManagedExecution' | 'onExecutionLifecycle' | 'respondToRequest' | 'resolveManagedExecution'>
+  'reconnectManagedExecution' | 'onExecutionLifecycle' | 'respondToRequest' | 'resolveManagedExecution' | 'registerSessionGuard'>
+
+// ── 平台扩展点：Workspace 所有权转移（D-67，PL4d 提供；main@0758e7e 已有转移功能） ──
+// 现有 services/workspace-transfer.ts 在转移事务内直接改写 teamwork_participants / teamwork_tasks（P-178）。
+// V2 改为由 Teamwork 注册钩子，平台在转移事务内调用；平台代码不再出现 teamwork 表名。
+export interface WorkspaceTransferHook {
+  name: string
+  /** 转移请求被接受前调用（事务外，只读）。返回 reject 则拒绝转移，并把原因展示给用户 */
+  check(ctx: { workspaceId: string; fromUserId: string; toUserId: string }): Promise<{ allow: true } | { allow: false; reason: string }>
+  /** 转移事务内调用，传入同一个事务 client；只能写钩子自己拥有的表 */
+  apply(tx: Tx, ctx: { workspaceId: string; fromUserId: string; toUserId: string }): Promise<void>
+}
+// registerTeamwork 通过 deps.workspaceTransfer.register(hook) 注册
 // 2.2.7 修正（D-57）：补上 resolveManagedExecution（D-49）。ExecutionPort 必须与 §1.1 ManagedExecutionService 的公开方法保持一致
 ```
 
@@ -978,6 +1006,16 @@ export const RunResult = z.object({
 | `teamwork_plan_items` | 协调员 | `{run_ref, items:[{key, title, description, assignee_workspace_id, acceptance_criteria, required, depends_on_keys}]}` | 持久化 WorkItem 与依赖（写时查环）；设 `pending_decision=wait_for_items`；**不派发** | 2 |
 | `teamwork_accept_item` | 协调员 | `{run_ref, work_item_id, result_run_id, decision: accept|rework, note?}` | 必须绑定 `result_run_id` 防止接受旧结果 | 2 |
 
+### 9.0 受管 Session 的直接 turn（D-66）
+
+受管 Teamwork Session（出现在 `teamwork_sessions` 中、且所属 task 未到终态）只能由 Teamwork 的 Run 驱动。如果有人通过 Workspace 聊天面板、API chat、schedule、connector 直接向它发 turn，就会产生一个没有 Run 记账的 turn。它会改变对话上下文和 AFS 内容，而且在复用 session 时与下一个 Run 争抢 `session_busy`。
+
+main 的团队共享（D-67）让能访问 Workspace 的人变多了，这个问题因此更容易发生（P-179）。规则：
+
+- Teamwork 通过 `registerSessionGuard` 注册守卫：`origin !== 'teamwork'` 且 session 属于非终态的 Teamwork task 时拒绝，返回 `409 session_managed`，并提示"请在 Teamwork 任务中补充说明"。
+- Task 进入 done / cancelled / archived 后，守卫放行，用户可以在原 Session 上继续自由对话；这不影响已验收的结果。
+- UI（TW8 / 现有 WorkspaceChatPanel）对受管 Session 显示只读提示与跳转链接。WorkspaceChatPanel 的改动由 TW9 在 G4 切换时一并处理。
+
 ### 9.1 run_ref：工具调用的 Run 归属（D-32）
 
 问题：session token 按 session 复用（`lib/session-token.ts` `ensureTokenForSession`），ACP core 在创建 / 加载 session 时就把 `X-Session-Token` 固化进 MCP 配置（`internal/acp-adapter/acp-server.ts:377,430,521`）。续跑与重试复用 Session，只凭"session 的当前非终态 Run"会把上一轮迟到的写调用算到下一轮头上。
@@ -1064,18 +1102,24 @@ export const RunResult = z.object({
 
 ## 12. Migration 编号预分配
 
-编号由集成者分配；工作流不得自行取号。起始 `142`（当前最新为 `141_workspace_max_steps.sql`；`001–114` 被 squash 前链条占用）。
+编号由集成者分配；工作流不得自行取号。`001–114` 被 squash 前链条占用。
+
+**2.2.10 重排**（D-64）：设计时预留的 142～146 已被 main 上的其他工作占用（`142_message_event_count` ～ `147_session_turn_claim`，截至 `main@0758e7e`），因此整体顺移：
 
 | 编号 | 文件 | 负责 | Phase |
 | --- | --- | --- | --- |
-| 142 | `142_managed_executions.sql` | PL1 | 0 |
-| 143 | `143_teamwork_v2_core.sql` | TW1 | 1A |
-| 144 | `144_teamwork_plugin_settings.sql` | TW1（内容 TW7） | 1A |
-| 145 | `145_teamwork_work_items.sql` | TW1 | 2 |
-| 146 | `146_teamwork_cutover.sql`：`teamwork_sessions_session_uq` 等切换期约束（D-35） | TW1，随 G4 切换 PR 合入 | 1C |
-| 147–149 | 预留 | 集成者 | — |
+| 148 | `148_managed_executions.sql` | PL1 | 0 |
+| 149 | `149_teamwork_v2_core.sql` | TW1 | 1A |
+| 150 | `150_teamwork_plugin_settings.sql` | TW1（内容 TW7） | 1A |
+| 151 | `151_teamwork_work_items.sql` | TW1 | 2 |
+| 152 | `152_teamwork_cutover.sql`：`teamwork_sessions_session_uq` 等切换期约束（D-35） | TW1，随 G4 切换 PR 合入 | 1C |
+| 153–155 | 预留 | 集成者 | — |
 
-Migration 文件名即身份，已应用后不得改名或改内容；修正只能新建编号。
+**main 仍在并行开发，编号以合并时为准**（P-176）：
+
+- WP 分支上的 migration 先按上表命名；
+- INT 在合并前检查 main 的最新编号，如有冲突，要求作者改名后再合并；
+- 只有尚未在任何环境应用过的 migration 才能改名，已应用的不得改名或改内容，修正只能新建编号。
 
 ## 13. 预留：Tracker Adapter（Phase 4，本轮只定义类型）
 

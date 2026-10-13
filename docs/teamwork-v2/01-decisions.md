@@ -47,7 +47,7 @@ V2.0（GPT handoff）、`teamwork-technical-proposal.md`（下称 TP）、`teamw
 | D-32 | #4 Session 复用导致迟到工具调用写入下一轮 | 成立，且代码中更明确：token 按 session 复用，ACP 在 session 创建时固化 headers | **V2.2.1 修订**：主方案为 `run_ref` 比对：CP 在 prompt 中下发本轮 Run id，写工具必须带回，与 session 当前非终态 Run 不一致即拒绝。兜底：终态不确定的 Run 之后换新 Session。**不改 agent-server**，不加 execution token、hop、turn 屏障，也不加 CP 派发屏障。删除 `sessionTokenScope`；更新 I-25、A-18、A-22 | 02 §2.3 §5 §9.1、ws-tw3、ws-tw5 |
 | D-33 | #5 重放先于授权 | 成立 | 授权先于重放；重放仍先于 lifecycle 与 version；幂等范围改为 `scope_key`（create 为 `user:{id}:create`）；保存 `payload_hash`，不同 payload 返回 422；新增 I-26、A-21 | 02 §4 §7 §8、ws-tw2 |
 | D-34 | #6 AFS 回执丢失 | 成立。`createDir` 无幂等键、无 lookup，`accessKey` 只返回一次 | 不再宣称每步幂等；逐步列出恢复能力；调用前持久化 `op_id`；返回后立即写 `resource_id / secret_ref`；回执丢失的目录标 `orphan_suspected` 并重建；挂载幂等性由 TW6-0 先验证；新增 `uncertain` 状态、A-19、A-20 | 02 §4、ws-tw6 |
-| D-35 | #7 G2–G4 切换计划自相矛盾 | 成立 | G4 之前新实现只在测试装配（`control-plane/e2e/teamwork/app.ts`）中运行，生产只挂载旧实现；G4 一个原子切换 PR 同时替换路由、worker、MCP resolver、UI 入口并删除旧实现；session 唯一索引推迟到切换 migration 146 | 03 §4、ws-tw1、ws-tw9、02 §12 |
+| D-35 | #7 G2–G4 切换计划自相矛盾 | 成立 | G4 之前新实现只在测试装配（`control-plane/e2e/teamwork/app.ts`）中运行，生产只挂载旧实现；G4 一个原子切换 PR 同时替换路由、worker、MCP resolver、UI 入口并删除旧实现；session 唯一索引推迟到切换 migration 152 | 03 §4、ws-tw1、ws-tw9、02 §12 |
 
 ## 1.2 V2.2.2 评审修订（2026-09-28）
 
@@ -135,7 +135,21 @@ V2.0（GPT handoff）、`teamwork-technical-proposal.md`（下称 TP）、`teamw
 | D-62 | P1 M0 契约编译依赖 M0 之后才创建的 `Tx` | `Tx` / `WithTx` 类型移入 `contracts/tx.ts`，由 CT2 交付；TW1a 的 `db/tx.ts` 只实现 helper。自查同类问题：ports 引用的全部 Row / Input / Outcome 类型都明确归 CT2；ports.ts 只能从 contracts 与 `internal/types` 导入，并加检查。顺带修正：契约中的 `@qap/types/...` 路径别名在仓库中不存在，改为相对路径。新增 P-175 | 02 §5、04 WP-CT2 / WP-TW1a、ws-tw1 |
 | D-63 | P2 03 的线性合并顺序与任务板冲突 | 删除 `03 §6` 的线性合并顺序，合并顺序统一以 `04` 的开工 / 合入依赖为准；Phase 与闸门只定义验收顺序。分支命名统一为按 WP（`tw2/<wp-id>-<slug>`） | 03 §6 |
 
-### 1.3.1 架构一致性复核（截至 2.2.9）
+## 1.10 V2.2.10 基线同步（2026-10-09）
+
+来源：开工前把设计基线从 `main@80361d0` 同步到 `main@0758e7e`。中间的 11 个提交里，有 5 处影响契约或任务板。
+
+| ID | 主题 | 修订 | 影响文件 |
+| --- | --- | --- | --- |
+| D-64 | migration 编号冲突 | 142～147 已被 main 占用，Teamwork 的 migration 顺移到 148～152，153～155 预留。main 仍在并行开发，编号以合并时为准，INT 合并前复核，未应用过的 migration 才允许改名。新增 P-176 | 02 §12、03 §5、全部 ws 文档 |
+| D-65 | 会话 turn 租约（`71bda46`） | Managed Execution 复用 `session-turn.ts` 的跨 replica 租约，不另造：执行行 → claim session → acquireTurn → 发送权。`session_busy` 映射为 `admission`、retryable、单独计数。租约与 dispatch_key / 发送权职责不同，互不替代。新增 P-177、A-40 | 02 §1.4 §1.6、ws-tw4、04 WP-PL1b |
+| D-66 | 受管 Session 被直接 turn | 平台新增会话守卫扩展点 `registerSessionGuard`（PL1e），在 claim session 之前对所有 origin 调用；Teamwork 拒绝非 teamwork origin 访问非终态任务的受管 Session（`409 session_managed`）。团队共享让这个问题更容易出现。新增 P-179、A-38、WP-TW2c | 02 §1.1 §9.0、04 WP-PL1e / WP-TW2c / WP-INT4 |
+| D-67 | 所有权转移与团队共享（`786816b`、`b501f7c`） | 平台新增 `WorkspaceTransferHook` 扩展点（WP-PL4d），转移有非终态任务时拒绝，终态任务由钩子改写归属；`workspace-transfer.ts` 中直接改写 teamwork 表的 SQL 在 G4 切换时删除。roster 严格同 owner，不用 `canAccessWorkspace`；团队成员可读取共享 Workspace 上挂载的任务文件，首版接受并提示（Q-10）。新增 P-178、A-39 | 02 §5、ws-tw2 §4.1、04 WP-PL4d / WP-TW2c / WP-INT3 |
+| D-68 | Codex ACP 升级（`ae5ce73`） | agent-server 对 ACP `authRequired` 附带结构化 `provider_auth_required`，CP 归为 non_retryable；PL2b 以升级后的协议为准复核。新增 P-180 | 04 WP-PL2b、ws-tw4、02 §1.4 |
+
+未受影响：消息事件计数（142～144）、运行时间线计费、API Skill 自动生成、工具调用分组 UI、Skill 解压缓冲区等提交，均不触及本设计的契约面。
+
+### 1.3.1 架构一致性复核（截至 2.2.10）
 
 三轮评审共做了 22 项修订。逐项对照 V2.0 / V2.1 确立的架构决定：
 
@@ -180,4 +194,5 @@ V2.0（GPT handoff）、`teamwork-technical-proposal.md`（下称 TP）、`teamw
 | Q-06 | 预算是否引入 token / 费用上限 | 1A 只有 turn 与重试次数 | 产品 |
 | Q-07 | AFS 服务端是否支持：调用方幂等键（`CreateDir{client_op_id}`）、按名称查询、**按操作序号拒绝过期的挂载请求**。前两项用于消除孤儿目录，最后一项从根本上解决 P-162 | 1A 接受孤儿目录泄漏；挂载不确定时走 `uncertain` + 观察 | AFS 负责人 |
 | Q-08 | fence 键集合上限 200,000 是否足够；超出后是否需要按时间分段 | 超出即 `not_authoritative` | 平台 |
+| Q-10 | 协调员或成员 Workspace 被共享给团队时，团队成员能通过 Workspace 文件接口读到任务挂载目录。是否需要在共享时提示、限制，或在任务开始时拒绝已共享的 Workspace | 首版接受并在任务详情中提示（D-67） | 产品 |
 | Q-09 | 实际挂载状态怎么观察（`probeMounts`）：fuse-server 状态 RPC，或 agent-server 读取 `/proc/mounts`。另：将来能否满足"实例变更"作为自动证据的三个前提（D-55） | TW6-0 调研后决定。在 Q-07 到位前，`mutate_mount` 超时一律人工 `resolve_resource` | AFS 负责人 + 平台 |

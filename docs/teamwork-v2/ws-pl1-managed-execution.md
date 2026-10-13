@@ -11,14 +11,14 @@ Phase 0。必读：`00-architecture.md`、`02-contracts.md §1 §2`、`90-pitfal
 - 新建 `control-plane/src/services/execution/`：`service.ts`（实现 `ManagedExecutionService`）、`repo.ts`、`recovery.ts`、`lifecycle-bus.ts`、`lookup.ts`、`*.test.ts`
 - 修改 `control-plane/src/services/chat/executeChat.ts`、`dispatchChatTurn.ts`
 - 修改 `control-plane/src/lib/sse.ts`、`lib/sse-aggregate.ts`、`lib/session-recovery.ts`、`lib/session-token.ts`
-- 新建 `control-plane/migrations/142_managed_executions.sql`
+- 新建 `control-plane/migrations/148_managed_executions.sql`
 
 ## 3. 任务
 
 | # | 任务 | 完成标准 |
 | --- | --- | --- |
 | PL1-1 | 提交代码映射复核（不改代码） | `03-parallel-plan.md §8` 中 PL1 行确认或修正 |
-| PL1-2 | migration 142 + repo | 表与索引与契约一致；repo 单测 |
+| PL1-2 | migration 148 + repo | 表与索引与契约一致；repo 单测 |
 | PL1-3 | 从 `executeChat` 抽出执行核心 `runManagedTurn`：admission → `ensureWorkspaceRunning` → session 校验 → `pickReplicaForTurn` → token → `send_state=sending` 落库 → POST `/chat`（带 `dispatch_key`）→ `sent` → SSE 拦截持久化 | 现有 chat 路由、async / sync / stream 三种模式行为回归不变 |
 | PL1-4 | `dispatchManagedTurn` 幂等：同 key 已存在时按 §1.5 恢复判定表返回，不重复 POST | 并发 10 次同 key 只有 1 次 POST（fake agent 计数） |
 | PL1-4a | 发送权 / 取消权原子二选一（`02 §1.6`）：`not_sent → sending` 与 `not_sent → cancelled` 以同一条件 UPDATE 竞争；turn-gate 排队结束后才尝试取得发送权；取消可作用于尚不存在的执行行（墓碑）。**UPDATE 影响 0 行后重新读取，按实际状态返回，失败的竞争者不写执行状态**（D-36，P-150）；同 key 进程内 singleflight | F-11：取消与发送并发 ×100，每次恰好一方获胜；取消获胜时 fake agent 收到 0 次请求。F-01：同 key 并发 dispatch ×10，只执行一次，且执行行的 `status / send_state / ended_at / failure` 从未被失败的竞争者改写 |

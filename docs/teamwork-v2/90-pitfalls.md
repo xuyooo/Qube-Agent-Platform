@@ -2,7 +2,7 @@
 
 所有已知陷阱集中登记于此。每条包含：陷阱、证据 / 来源、必须遵守的规则、负责工作流。新发现的陷阱通过 PR 追加，编号只增不改。
 
-证据中的"代码"指 `main@80361d0` 的实际位置；"TP"指 `teamwork-technical-proposal.md`；"V2.0"指 GPT handoff；"Sym"指 Symphony SPEC。
+证据中的"代码"指 `main@80361d0` 的实际位置（P-176 起为 `main@0758e7e`，行号可能已随后续提交移动）；"TP"指 `teamwork-technical-proposal.md`；"V2.0"指 GPT handoff；"Sym"指 Symphony SPEC。
 
 ## A. 执行与运行时（平台）
 
@@ -228,6 +228,11 @@
 
 | ID | 陷阱 | 证据 | 规则 | WS |
 | --- | --- | --- | --- | --- |
+| P-176 | 设计时预留的 migration 编号在实施前已被 main 上其他工作占用（142～147），按原编号提交会冲突或被跳过 | `main@0758e7e` migrations | 2.2.10 重排为 148～152；编号以合并时为准，INT 合并前复核（D-64） | INT, PL1, TW1 |
+| P-177 | 把 `session_busy`（会话 turn 租约未释放）当成不可重试的失败，或者和容量不足混在一起计数；CP 崩溃后租约要等 TTL 过期才释放 | `services/chat/session-turn.ts` | 映射为 `admission / session_busy`，retryable，单独计数（D-65） | PL1, TW4 |
+| P-178 | 平台代码（workspace 所有权转移）直接改写 teamwork 表：删除 participants、改 task owner，绕过状态机，也不检查活动 Run 与资源操作 | `services/workspace-transfer.ts:397-410` | 平台提供 `WorkspaceTransferHook`，由 Teamwork 判断是否允许并自行改写；有非终态任务时拒绝转移（D-67） | PL4, TW2 |
+| P-179 | 用户（尤其是团队共享后的成员）在 Workspace 聊天面板中直接向受管 Teamwork Session 发 turn，产生没有 Run 记账的 turn，并与下一个 Run 争抢 session 租约 | `main@0758e7e` 团队共享 + 现有 chat 路由 | 平台会话守卫扩展点；Teamwork 拒绝非 teamwork origin 的受管 Session turn（D-66） | PL1, TW5 |
+| P-180 | ACP `authRequired`（-32000）只被转成一段人类可读的错误文本，CP 无法与其他 turn 内错误区分，可能被当作可重试失败反复重试 | `internal/acp-adapter/acp-server.ts`（`ae5ce73`） | agent-server 在 error 事件中附带结构化 `code:'provider_auth_required'`；CP 映射为 `non_retryable`（D-68） | PL2, TW4 |
 | P-174 | WP 的完成标准引用了后续 WP 才提供的东西：PL1b 要通过 PL1d 才实现的 F-11；TW2b 要通过 QA5 的 PT-03；TW3b / TW7b 等直接要求只有测试装配或闸门才能运行的 A / L 场景；QA4 需要的完整装配没有任何 WP 负责；QA7 要求切换后才可能通过的 L-07。结果是 Agent 无法独立完成并合入，或者被迫自行补做别人的工作 | 2.2.7 任务板评审 | R-WP：依赖分开工 / 合入 / 闸门三类；完成标准只用"开工 + 合入依赖"范围内能运行的测试；场景编号指 fake 级变体；修改任务板时卡片、依赖图、波次、关键路径、分配表同步（D-59～D-61） | INT |
 | P-175 | 冻结的契约文件引用了冻结之后才由实现 WP 创建的类型（`ports.ts` 导入 `./db/tx`），导致 M0 无法编译、形成 CT2 ↔ TW1a 循环；同时引用了仓库中不存在的路径别名 `@qap/types` | 2.2.8 `02 §5` | ports 只能从 contracts 与 `internal/types` 导入；ports 引用的类型全部由 CT2 定义；跨包使用相对路径（D-62） | CT |
 | P-173 | 修订流程与正文时没有同步 `02 §5` 的 ports：`resolveExecution` 仍是带事务的同步签名，`ExecutionPort` 缺 `resolveManagedExecution`，`ResourceManager` 缺 resolve 续接。CT 按旧 ports 冻结的话，各 Agent 会按互相矛盾的接口实现 | V2.2.6 `02 §5` vs D-49、D-52 | 任何契约 RFC 必须在同一 PR 内同步 ports；CT 在冻结前逐项核对 ports 与正文 | CT, INT |

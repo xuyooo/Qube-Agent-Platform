@@ -90,6 +90,9 @@ CP 侧崩溃点通过测试钩子注入（环境变量控制的 `crashAt(point)`
 | A-33b | 同 A-33，旧 rw 请求分别在"探测显示不一致持续很久之后"、以及"人为模拟的验收时刻之后"才生效 | 系统在任何时刻都没有凭观察结果或等待时间解除 `uncertain`；从未发出新的 mutate_mount；从未进入 in_review |
 | A-33c | `uncertain` 经两种证据之一解除（fake AFS 按序号拒绝 / 人工 `resolve_resource`） | 解除后按 `probeMounts` 决定完成或重新发起；之后 seal、in_review 正常 |
 | A-33d | 旧 rw 请求延迟到 fuse-server 重启之后才送达新实例 | 系统不会因为实例变更就解除 `uncertain`；该行一直保持 `uncertain`，直到有上述两种证据之一；期间没有发出新的 mutate_mount，也没有进入 in_review。fake AFS 让延迟请求在新实例生效，断言后续探测能发现，并且 accept 被拒 |
+| A-38 | 会话守卫：协调员 Session 在任务进行中，owner 或团队共享成员通过 Workspace chat / API chat / schedule 直接发 turn | 返回 `409 session_managed`；没有发送；没有 Run 之外的 turn；任务 done 后同样的请求被放行 |
+| A-39 | Workspace 所有权转移：任务进行中尝试转移协调员 / 成员 Workspace；任务全部为终态后再转移 | 进行中时转移被拒并给出原因，DB 无任何变化；终态后转移成功，协调员任务的 owner 变为新 owner，不同 owner 的成员被移出并写 `participant.removed{workspace_transferred}`；teamwork 表只由钩子写入 |
+| A-40 | 复用 Session 的 Run 遇到 `session_busy`（上一轮租约未释放 / 另一 replica 持有） | 归为 retryable，单独计数，按退避重试；不发送、不误判为容量不足 |
 | A-37 | `resolve_resource` 权限：平台 admin 处理他人任务的资源故障；普通非 owner 用户调用；带旧 `op_id` 调用 | admin 成功，写 `actor_type=admin` 事件并通知 owner；非 owner 返回 404；旧 op_id 返回 409，不改变资源状态 |
 | A-34 | resolve_execution（三种结论）→ CP 重启 → 该执行的旧事件再到达 | 结论经平台写入 `resolution`，Run 只经投影更新；重启后状态不变；旧事件不回退；下一个 Run 使用新 Session |
 | A-35 | 上一轮已结束、同一 Session 已开始下一轮，此时一个迟到的取消请求到达 | 取消侧重新读取发现目标已终态，不调用 runtime；即使调用了执行级中断，也返回 `ended` 或 `execution_mismatch`；新一轮不被中断 |

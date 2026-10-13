@@ -36,7 +36,7 @@ G4 之前新实现只在测试装配中运行；生产只挂载旧实现。本�
 
 ## 4. 数据
 
-- 不删除旧 Preview 数据（D-27）。旧行已被 migration 143 标为 backlog，可在新 UI 中查看或开始。
+- 不删除旧 Preview 数据（D-27）。旧行已被 migration 149 标为 backlog，可在新 UI 中查看或开始。
 - 旧 `afs_share_id` 由 TW6 登记为已存在 share。
 - 是否处置旧数据是部署前的单独决策，本工作流不执行。
 

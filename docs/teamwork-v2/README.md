@@ -1,6 +1,6 @@
 # QAP Teamwork V2.1 文档集
 
-版本：2.2.9　状态：可冻结 M0、按 `04-task-board.md` 派发实施　日期：2026-09-28
+版本：2.2.10　状态：已同步到 `main@0758e7e`，待评审后冻结 M0　日期：2026-10-09
 
 2.2.0 变更：采纳外部设计评审的 7 项意见（D-29～D-35，见 `01-decisions.md §1.1`；踩坑 P-141～P-147；不变量 I-23～I-27；新增测试 F-11～F-14、A-10b、A-17～A-21）。
 
@@ -86,7 +86,17 @@ R4 补充一句："等待时间不是证据；降级 capability 不能代替满�
 - 删除 `03 §6` 的线性合并顺序，合并顺序统一以任务板依赖为准，闸门只定义验收顺序；分支按 WP 命名。
 
 新增：踩坑 P-175。
-代码基线：`main@80361d0`　参考实现：Symphony `8001b52`
+
+2.2.10 变更：基线从 `main@80361d0` 同步到 `main@0758e7e`（D-64～D-68，见 `01-decisions.md §1.10`）。
+
+- migration 编号顺移到 148～152（142～147 已被 main 占用），以合并时为准；
+- Managed Execution 复用 main 新增的会话 turn 租约，`session_busy` 为可重试；
+- 新增会话守卫扩展点：拒绝直接向受管 Session 发 turn；
+- 新增 Workspace 所有权转移钩子：转移不再直接改写 teamwork 表；roster 严格同 owner，不受团队共享影响；
+- ACP `authRequired` 带结构化错误码。
+
+新增：WP-PL4d、WP-TW2c（工作包共 61 个）；踩坑 P-176～P-180；测试 A-38～A-40；未决问题 Q-10。
+代码基线：设计于 `main@80361d0`，2.2.10 同步到 `main@0758e7e`　参考实现：Symphony `8001b52`
 
 V2.1 合并了三份来源：GPT《QAP Teamwork V2 架构设计与实施 Handoff》(2.0.0)、`docs/teamwork-technical-proposal.md`（产品与细节方案）、`docs/teamwork-architecture.md`（Symphony 映射与架构视图）。三者冲突之处以本文档集为准，决策见 `01-decisions.md`。
 

@@ -53,6 +53,27 @@ state-machine.ts  (task, command, ctx) → TransitionResult，无 IO，100% 单�
   | 其他所有 task 命令与读接口 | 否 | admin 视同非 owner，返回 404 |
 
 - 新增 admin 例外时，必须同时更新本表、对应命令的审计与通知规则，以及 A-37 一类的权限测试。
+
+### 4.1 与 main 上团队共享、所有权转移的关系（D-67，`main@0758e7e`）
+
+**团队共享**（`lib/workspace-access.ts`、`workspace_team_shares`）：
+
+- Workspace 的 owner 可以把它共享给团队成员，成员获得"access"级权限（聊天、改配置、读文件），但 Agent 始终以 owner 身份运行。
+- Teamwork 的 task 权限**不随** Workspace 共享扩大：task 读写仍只认 `teamwork_tasks.owner_user_id`（以及 admin 例外清单）。
+- **roster 候选与成员校验**只认严格同 owner：`workspace.user_id === task.owner_user_id`，**不用** `canAccessWorkspace`。共享给我的 Workspace 不能加入我的任务（D-22 不变）。
+- 已知的信任边界扩展（Q-10）：能访问某个 Workspace 的团队成员，同样能通过该 Workspace 的文件接口读到挂载在它上面的 `/mnt/afs/team-<taskId>/`。这与 P-112（路径不是安全边界）一致，首版**接受**，并在任务详情中提示"协调员 / 成员 Workspace 已共享给团队，团队成员可读取任务文件"。
+- 共享用户直接向受管 Session 发 turn 会被会话守卫拒绝（`02 §9.0`）。
+
+**所有权转移**（`services/workspace-transfer.ts`）：
+
+- 现有实现会在转移事务内直接 `DELETE teamwork_participants` 并 `UPDATE teamwork_tasks.owner_user_id`。这会绕过状态机，也不检查活动 Run（P-178）。
+- V2 改为通过 `WorkspaceTransferHook`（`02 §5`）：
+  - **check**：该 Workspace 担任协调员或成员的任务中，只要有任何任务不在 `backlog / done / cancelled` 状态，或者存在非终态 Run 或未完成的资源操作，就拒绝转移，并提示"请先暂停或取消相关 Teamwork 任务"。
+  - **apply**（转移事务内）：
+    - 作为协调员的任务：`owner_user_id` 改为新 owner。成员 Workspace 不同属新 owner 的，从 roster 移除，并写 `participant.removed{reason:'workspace_transferred'}` 事件。
+    - 作为成员的任务：从 roster 移除并写同样的事件。如果该成员是某个 WorkItem 的执行者，该 WorkItem 进入 `blocked/permission_changed`（Phase 2）。
+    - 已结束的任务只改归属，不改历史。
+- G4 之前生产仍运行旧实现，旧的直接 SQL 保留不动；G4 切换时（WP-INT3）由钩子替换。旧 SQL 的删除由 PL4d 在切换 PR 中执行。
 - 读取 Session / 文件：必须通过 task 关系检查（I-21），不能只凭 workspace_id / session_id。
 - 不提供硬删除（D-28，P-53）。
 

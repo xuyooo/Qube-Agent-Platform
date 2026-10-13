@@ -63,7 +63,7 @@ flowchart LR
 | 闸门 | 合入内容 | 必须通过 |
 | --- | --- | --- |
 | G1 Phase 0 | PL1、PL2abc、PL3、QA harness | QA：F-01～F-14、F-16～F-18（**F-17 为硬性项，每个 runtime 单独通过**）；PT-01；I-24、I-27、I-29、I-32、I-35、I-37 测试；I-04、I-14、I-20 测试；普通 Web chat / API chat / scheduler / connector / call_agent 回归通过；四种 runtime 输出一致的 Execution Facts |
-| G2 Phase 1A | TW1–TW7 最小（代码合入 main，**生产装配不注册**） | QA：A-01～A-37（含 A-01a～c、A-10b、A-33b～d）；PT-02、PT-03；I-25、I-28、I-30、I-31、I-33、I-34、I-36 测试；I-01～I-03、I-05、I-07～I-12、I-15～I-19、I-21、I-22 测试。全部在**测试装配**（§4.1）中运行；生产 CP 仍只挂载旧实现 |
+| G2 Phase 1A | TW1–TW7 最小（代码合入 main，**生产装配不注册**） | QA：A-01～A-40（含 A-01a～c、A-10b、A-33b～d）；PT-02、PT-03；I-25、I-28、I-30、I-31、I-33、I-34、I-36 测试；I-01～I-03、I-05、I-07～I-12、I-15～I-19、I-21、I-22 测试。全部在**测试装配**（§4.1）中运行；生产 CP 仍只挂载旧实现 |
 | G3 Phase 1B | PL4 host 部分、TW8（代码合入 main，插件 bundle 不上传生产） | QA7-U：U-01～U-10，在测试装配（WP-INT4 + WP-QA4）+ TW8a 产出的测试 bundle 下运行；生产仍是旧 UI |
 | G4 Phase 1C | TW7 完整、PL4 guard、装配（WP-INT4 / INT4b）、TW9 **原子切换候选 PR**（§4.2） | QA：L-01～L-06、L-08（切换前，在测试装配中）；L-07 与切换 / 回滚演练（在切换候选 PR 的预发部署上）。**G4 通过后才合并切换 PR**；合并后只有新实现在服务，不存在两套 Teamwork（D-61） |
 | G5 Phase 2 | WorkItem 全链路 | QA：M-01～M-10；PT-02 覆盖 WorkItem 事件 |
@@ -76,7 +76,7 @@ flowchart LR
 
 - `registerTeamwork(deps)` 已合入 main，但**生产**的 `control-plane/src/index.ts` 与 `scheduler/src/index.ts` **不调用**它，生产继续挂载旧 `routes/teamwork.ts`。
 - QA 维护一个测试装配入口 `control-plane/e2e/teamwork/app.ts`：只注册新实现（新路由、TW5 scope resolver、teamwork worker），不挂载旧路由，连接独立测试库。G2、G3 的全部验收在这里运行。
-- 新表（migration 143、144）可以提前在生产库执行；旧代码不读写新列，写入时取默认值。`teamwork_sessions_session_uq` 唯一索引**推迟到切换 migration**（编号 146），因为旧 Preview 数据可能存在重复 session，需要在切换前人工确认。
+- 新表（migration 149、150）可以提前在生产库执行；旧代码不读写新列，写入时取默认值。`teamwork_sessions_session_uq` 唯一索引**推迟到切换 migration**（编号 152），因为旧 Preview 数据可能存在重复 session，需要在切换前人工确认。
 - 不设 feature flag 让两套实现在同一进程里二选一，也不写兼容层。
 
 ### 4.2 G4：原子切换
@@ -93,7 +93,7 @@ flowchart LR
 3. `mcp/server.ts`：删除 `legacyTeamworkScope`，由 TW5 resolver 生效（PL3）；
 4. `useFleetApps.ts`、`wsApps.tsx`：删除内置 Teamwork 入口（PL4 / TW9）；
 5. 删除旧 Teamwork 路由、服务、DB 模块与 UI（TW9 删除清单）；
-6. migration 146：`teamwork_sessions_session_uq` 与其他切换期约束；
+6. migration 152：`teamwork_sessions_session_uq` 与其他切换期约束；
 7. 部署后管理员上传插件 bundle，并通过 `plugin/commands` 设为 active。
 
 切换前在预发环境完整演练一次：执行切换 PR → 旧 Preview 任务在新看板中显示为待规划 → 能开始并完成一个新任务 → 回滚演练（回滚到切换前版本时，新表保留但不被读取）。
@@ -111,7 +111,7 @@ flowchart LR
 | `control-plane/src/services/chat/executeChat.ts`、`dispatchChatTurn.ts`、`turn-gate.ts` | PL1 | 热点，PL3 不得直接改 |
 | `control-plane/src/lib/sse.ts`、`lib/sse-aggregate.ts`、`lib/session-recovery.ts` | PL1 | 热点 |
 | `control-plane/src/services/replica-router.ts` | PL1 | 只读使用为主 |
-| `control-plane/migrations/142_*` | PL1 | |
+| `control-plane/migrations/148_*` | PL1 | |
 | `agents/claude-code/**` | PL2a | |
 | `internal/acp-adapter/**`、`agents/codex/**`、`agents/goose/**` | PL2b | |
 | `internal/dsh-adapter/**`、`agents/dsh/**` | PL2c | |
@@ -119,7 +119,7 @@ flowchart LR
 | `control-plane/src/mcp/scope-registry.ts`（新建） | PL3 | |
 | `web/src/lib/host.ts`、`web/src/plugins/types.ts`、`registry.ts`、`web/src/lib/plugin-loader.ts`、`plugin-lazy-registry.ts`、`web/src/hooks/useFleetApps.ts` | PL4 | |
 | `control-plane/src/routes/plugins.ts`、`services/db/plugins.ts` | PL4 | 增加 guard 扩展点 |
-| `control-plane/migrations/143_* 144_* 145_*` | TW1 | |
+| `control-plane/migrations/149_* 150_* 151_* 152_*` | TW1 | 编号以 `02 §12` 为准，合并时由 INT 复核（D-64） |
 | `plugins/teamwork/server/db/**` | TW1 | |
 | `plugins/teamwork/server/state-machine.ts`、`commands.ts`、`routes.ts` | TW2 | |
 | `plugins/teamwork/server/reconcile.ts`、`dispatcher.ts`、`plugins/teamwork/worker/**` | TW3 | |
@@ -165,7 +165,7 @@ flowchart LR
 
 ## 8. 初始代码映射（开工第一步需各所有者复核）
 
-V2.0 §63 要求在大规模改代码前输出映射报告。以下为 INT 基于 `main@80361d0` 的初稿；各工作流开工首个 PR **只提交复核后的映射**（可修正标记），不改代码。
+V2.0 §63 要求在大规模改代码前输出映射报告。以下为 INT 基于 `main@80361d0` 的初稿，2.2.10 按 `main@0758e7e` 补充了新增模块（表尾）；各工作流开工首个 PR **只提交复核后的映射**（可修正标记），不改代码。
 
 | 模块 | 路径 | 标记 | 负责 | 说明 |
 | --- | --- | --- | --- | --- |
@@ -200,6 +200,9 @@ V2.0 §63 要求在大规模改代码前输出映射报告。以下为 INT 基�
 | Teamwork 类型 | `internal/types/api.ts` Teamwork 定义 | REPLACE | CT / TW9 | 改由 plugin contracts 拥有 |
 | scheduler 主入口 | `scheduler/src/index.ts` | EXTEND | INT（注册）/ TW3（worker） | |
 | scheduler handler | `scheduler/src/handler.ts` | KEEP | — | Teamwork 不使用 `agent-session` 队列 |
+| 会话 turn 租约（`main@0758e7e` 新增） | `control-plane/src/services/chat/session-turn.ts`、`services/db/sessions.ts` 的 claim / adopt / renew / release、migration 147 | KEEP（复用） | PL1 | Managed Execution 复用它保证同一 session 同时只有一个 turn（D-65） |
+| Workspace 所有权转移（`main@0758e7e` 新增） | `control-plane/src/services/workspace-transfer.ts` | EXTEND（扩展点）→ 切换时删除 teamwork 直接 SQL | PL4d / INT3 | 第 397～410 行直接改写 teamwork 表（P-178） |
+| Workspace 访问与团队共享（`main@0758e7e` 新增） | `control-plane/src/lib/workspace-access.ts`、`workspace_team_shares` | KEEP | — | Teamwork 的 roster 不使用 `canAccessWorkspace`，要求严格同 owner（D-67） |
 | pg-boss 发送 | `control-plane/src/lib/jobs.ts` | EXTEND | TW3 | 增加事务内 send helper（`SendOptions.db`） |
 | AFS | `control-plane/src/services/afs.ts` | KEEP | — | TW6 通过现有接口调用 |
 | 用量账本 | `workspace_usage_events` | KEEP | — | 按 run / session 去重展示 |
