@@ -15,7 +15,8 @@
 --           dropped   - could not be delivered; `delivery_note` says why
 --
 -- `delivery_lease_expires_at` is held by the replica posting the result, so two
--- replicas never post the same one. `input_requested_at` marks a child parked
+-- replicas do not normally claim the same result concurrently. A crash after
+-- dispatch but before acknowledgement can still cause redelivery. `input_requested_at` marks a child parked
 -- on a question to its user: the parent is told once (`input_notified_at`) and
 -- the call stays open.
 --
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.agent_calls (
     caller_user_id text,
     status text NOT NULL DEFAULT 'running',
     error text,
+    result_text text,
     delivery text NOT NULL DEFAULT 'pending',
     delivery_note text,
     delivery_attempts integer NOT NULL DEFAULT 0,
@@ -39,6 +41,7 @@ CREATE TABLE IF NOT EXISTS public.agent_calls (
     input_notified_at timestamp with time zone,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     ended_at timestamp with time zone,
+    last_turn_completed_at timestamp with time zone,
     delivered_at timestamp with time zone,
     CONSTRAINT agent_calls_status_check CHECK (status IN ('running', 'ended', 'failed')),
     CONSTRAINT agent_calls_delivery_check

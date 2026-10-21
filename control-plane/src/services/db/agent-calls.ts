@@ -15,6 +15,7 @@ export interface AgentCall {
   caller_user_id: string | null
   status: AgentCallStatus
   error: string | null
+  result_text: string | null
   delivery: 'pending' | 'delivered' | 'consumed' | 'dropped'
   delivery_note: string | null
   delivery_attempts: number
@@ -117,8 +118,10 @@ export async function endAgentCalls(
   error: string | null,
 ): Promise<AgentCall[]> {
   const { rows } = await pool.query(
-    `UPDATE agent_calls
-        SET status = $2, error = $3, ended_at = now()
+    `UPDATE agent_calls c
+        SET status = $2, error = $3, ended_at = now(),
+            result_text = COALESCE(result_text, (SELECT content FROM messages
+              WHERE session_id = $1 AND role = 'assistant' AND created_at >= c.created_at ORDER BY created_at DESC LIMIT 1))
       WHERE child_session_id = $1 AND status = 'running'
       RETURNING *`,
     [childSessionId, status, error],
@@ -215,7 +218,11 @@ export async function failAgentCallDelivery(
  * rows of one post share a `delivered_at`, which is what
  * `countAgentCallDeliveries` counts.
  */
-export async function markAgentCallsDelivered(ids: string[], leaseToken: string, inputIds: string[]): Promise<void> {
+export async function markAgentCallsDelivered(
+  ids: string[],
+  leaseToken: string,
+  inputIds: string[],
+): Promise<void> {
   await pool.query(
     `UPDATE agent_calls
         SET delivery_lease_expires_at = NULL, delivery_lease_token = NULL,
@@ -227,7 +234,11 @@ export async function markAgentCallsDelivered(ids: string[], leaseToken: string,
   )
 }
 
-export async function dropAgentCallDelivery(ids: string[], note: string, leaseToken: string): Promise<void> {
+export async function dropAgentCallDelivery(
+  ids: string[],
+  note: string,
+  leaseToken: string,
+): Promise<void> {
   await pool.query(
     `UPDATE agent_calls
         SET delivery = 'dropped', delivery_note = $2, delivery_lease_expires_at = NULL
@@ -266,9 +277,14 @@ export async function listParentsWithDeliverableCalls(limit: number): Promise<st
 export async function listStaleRunningAgentCalls(
   graceSeconds: number,
   limit: number,
-): Promise<{ child_session_id: string; session_gone: boolean }[]> {
-  const { rows } = await pool.query<{ child_session_id: string; session_gone: boolean }>(
-    `SELECT DISTINCT c.child_session_id, (s.id IS NULL) AS session_gone
+): Promise<{ child_session_id: string; session_gone: boolean; turn_completed: boolean }[]> {
+  const { rows } = await pool.query<{
+    child_session_id: string
+    session_gone: boolean
+    turn_completed: boolean
+  }>(
+    `SELECT DISTINCT c.child_session_id, (s.id IS NULL) AS session_gone,
+            (c.last_turn_completed_at IS NOT NULL) AS turn_completed
        FROM agent_calls c
        LEFT JOIN sessions s ON s.id = c.child_session_id
       WHERE c.status = 'running'
@@ -289,4 +305,37 @@ export async function listStaleRunningAgentCalls(
     [graceSeconds, limit],
   )
   return rows
+}
+
+/** Record a completed turn even if this session still awaits nested calls. */
+export async function recordAgentCallTurnCompleted(sessionId: string): Promise<void> {
+  await pool.query(
+    `UPDATE agent_calls c SET last_turn_completed_at = now(),
+    result_text = (SELECT content FROM messages WHERE session_id=$1 AND role='assistant'
+      AND created_at >= c.created_at ORDER BY created_at DESC LIMIT 1)
+    WHERE child_session_id=$1 AND status='running'`,
+    [sessionId],
+  )
+}
+/** A server-started continuation has a new outcome, not the previous turn's. */
+export async function resetAgentCallTurnOutcome(sessionId: string): Promise<void> {
+  await pool.query(
+    `UPDATE agent_calls SET last_turn_completed_at=NULL, result_text=NULL,
+    input_requested_at=NULL, input_notified_at=NULL
+    WHERE child_session_id=$1 AND status='running'`,
+    [sessionId],
+  )
+}
+
+/** Keep a slow dispatch's lease alive; a stale owner cannot renew its successor. */
+export async function renewAgentCallDelivery(
+  ids: string[],
+  leaseToken: string,
+  seconds: number,
+): Promise<void> {
+  await pool.query(
+    `UPDATE agent_calls SET delivery_lease_expires_at = now() + make_interval(secs => $3)
+    WHERE id = ANY($1) AND delivery='pending' AND delivery_lease_token=$2`,
+    [ids, leaseToken, seconds],
+  )
 }

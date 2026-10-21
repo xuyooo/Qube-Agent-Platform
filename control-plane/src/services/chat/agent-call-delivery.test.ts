@@ -13,10 +13,15 @@ const calls = vi.hoisted(() => ({
   markAgentCallInputRequested: vi.fn(),
   markAgentCallsDelivered: vi.fn(),
   releaseAgentCallDelivery: vi.fn(),
+  recordAgentCallTurnCompleted: vi.fn(),
+  renewAgentCallDelivery: vi.fn().mockResolvedValue(undefined),
   takeDeliverableAgentCalls: vi.fn(),
 }))
 vi.mock('../db/agent-calls', () => calls)
 
+const access = vi.hoisted(() => ({ canAccessWorkspace: vi.fn(), getUser: vi.fn() }))
+vi.mock('../../lib/workspace-access', () => access)
+vi.mock('../db/users', () => access)
 const sessions = vi.hoisted(() => ({ getSession: vi.fn() }))
 vi.mock('../db/sessions', () => sessions)
 const workspaces = vi.hoisted(() => ({ getWorkspace: vi.fn() }))
@@ -46,6 +51,7 @@ function call(over: Partial<AgentCall> = {}): AgentCall {
     caller_user_id: 'u1',
     status: 'ended',
     error: null,
+    result_text: 'looks good',
     delivery: 'pending',
     delivery_note: null,
     delivery_attempts: 0,
@@ -67,6 +73,8 @@ function jsonResponse(status: number): Response {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  access.canAccessWorkspace.mockResolvedValue(true)
+  access.getUser.mockResolvedValue({ role: 'user' })
   sse.isDraining.mockReturnValue(false)
   calls.countAgentCallDeliveries.mockResolvedValue(0)
   calls.countOpenAgentCalls.mockResolvedValue(0)
@@ -180,7 +188,11 @@ describe('settling a turn', () => {
 
     await noteSessionInputRequested('child', startTurn)
 
-    expect(calls.takeDeliverableAgentCalls).toHaveBeenCalledWith('parent', expect.any(Number), expect.any(String))
+    expect(calls.takeDeliverableAgentCalls).toHaveBeenCalledWith(
+      'parent',
+      expect.any(Number),
+      expect.any(String),
+    )
   })
 })
 
@@ -220,7 +232,11 @@ describe('delivering results', () => {
     expect(opts.message).toContain('Reviewer (@agent/reviewer) — session_id s1 — ended\nlooks good')
     expect(opts.message).toContain('session_id s2 — failed\nError: model overloaded')
     expect(opts.message).toContain('1 more call(s) from this session are still running')
-    expect(calls.markAgentCallsDelivered).toHaveBeenCalledWith(['c1', 'c2'], calls.takeDeliverableAgentCalls.mock.calls[0][2], [])
+    expect(calls.markAgentCallsDelivered).toHaveBeenCalledWith(
+      ['c1', 'c2'],
+      calls.takeDeliverableAgentCalls.mock.calls[0][2],
+      [],
+    )
   })
 
   it('says so when nothing else is outstanding', async () => {
@@ -247,7 +263,7 @@ describe('delivering results', () => {
 
   it('cuts a long reply and points at the full one', async () => {
     calls.takeDeliverableAgentCalls.mockResolvedValue([call()])
-    messages.getLastAssistantMessage.mockResolvedValue({ content: 'x'.repeat(20_000) })
+    calls.takeDeliverableAgentCalls.mockResolvedValue([call({ result_text: 'x'.repeat(20_000) })])
 
     await deliverAgentCallResults('parent', startTurn)
 
@@ -262,7 +278,10 @@ describe('delivering results', () => {
 
     await deliverAgentCallResults('parent', startTurn)
 
-    expect(calls.releaseAgentCallDelivery).toHaveBeenCalledWith(['c1'], calls.takeDeliverableAgentCalls.mock.calls[0][2])
+    expect(calls.releaseAgentCallDelivery).toHaveBeenCalledWith(
+      ['c1'],
+      calls.takeDeliverableAgentCalls.mock.calls[0][2],
+    )
     expect(calls.markAgentCallsDelivered).not.toHaveBeenCalled()
     expect(calls.failAgentCallDelivery).not.toHaveBeenCalled()
   })
@@ -318,29 +337,92 @@ describe('delivering results', () => {
   })
 })
 
-
 describe('recovery', () => {
   it('retries ready calls and fails an orphan conservatively', async () => {
-    calls.listStaleRunningAgentCalls.mockResolvedValue([{child_session_id:'orphan',session_gone:false}])
+    calls.listStaleRunningAgentCalls.mockResolvedValue([
+      { child_session_id: 'orphan', session_gone: false },
+    ])
     calls.listParentsWithDeliverableCalls.mockResolvedValue(['parent'])
     await sweepAgentCalls(startTurn)
-    expect(calls.endAgentCalls).toHaveBeenCalledWith('orphan', 'failed', 'the called turn ended without a recorded outcome')
+    expect(calls.endAgentCalls).toHaveBeenCalledWith(
+      'orphan',
+      'failed',
+      'the called turn ended without a recorded outcome',
+    )
     expect(calls.takeDeliverableAgentCalls).toHaveBeenCalledWith('parent', 120, expect.any(String))
   })
   it('recovers deletion and does not launch overlapping sweeps', async () => {
     let resolve!: (value: unknown[]) => void
-    calls.listStaleRunningAgentCalls.mockImplementationOnce(() => new Promise(r => {resolve=r}))
+    calls.listStaleRunningAgentCalls.mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r
+        }),
+    )
     calls.listParentsWithDeliverableCalls.mockResolvedValue([])
-    const first=sweepAgentCalls(startTurn)
+    const first = sweepAgentCalls(startTurn)
     await sweepAgentCalls(startTurn)
     expect(calls.listStaleRunningAgentCalls).toHaveBeenCalledTimes(1)
-    resolve([{child_session_id:'deleted',session_gone:true}])
+    resolve([{ child_session_id: 'deleted', session_gone: true }])
     await first
-    expect(calls.endAgentCalls).toHaveBeenCalledWith('deleted', 'failed', 'the called session was deleted')
+    expect(calls.endAgentCalls).toHaveBeenCalledWith(
+      'deleted',
+      'failed',
+      'the called session was deleted',
+    )
   })
   it('keeps a final result pending when acknowledging an earlier question snapshot', async () => {
-    calls.takeDeliverableAgentCalls.mockResolvedValue([call({status:'running',input_requested_at:'now'})])
+    calls.takeDeliverableAgentCalls.mockResolvedValue([
+      call({ status: 'running', input_requested_at: 'now' }),
+    ])
     await deliverAgentCallResults('parent', startTurn)
     expect(calls.markAgentCallsDelivered).toHaveBeenCalledWith(['c1'], expect.any(String), ['c1'])
   })
+})
+
+it('drops delivery after workspace sharing is revoked', async () => {
+  calls.takeDeliverableAgentCalls.mockResolvedValue([call()])
+  access.canAccessWorkspace.mockResolvedValue(false)
+  await deliverAgentCallResults('parent', startTurn)
+  expect(startTurn).not.toHaveBeenCalled()
+  expect(calls.dropAgentCallDelivery).toHaveBeenCalledWith(
+    ['c1'],
+    'caller no longer has workspace access',
+    expect.any(String),
+  )
+})
+
+it('recovers a completed nested turn whose delivery acknowledgement arrived late', async () => {
+  calls.listStaleRunningAgentCalls.mockResolvedValue([
+    { child_session_id: 'child', session_gone: false, turn_completed: true },
+  ])
+  calls.listParentsWithDeliverableCalls.mockResolvedValue([])
+  await sweepAgentCalls(startTurn)
+  expect(calls.endAgentCalls).toHaveBeenCalledWith('child', 'ended', null)
+})
+
+it('renews a slow dispatch lease and stops renewing after acknowledgement', async () => {
+  vi.useFakeTimers()
+  try {
+    calls.takeDeliverableAgentCalls.mockResolvedValue([call()])
+    let finish!: (response: Response) => void
+    startTurn.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve
+        }),
+    )
+    const delivery = deliverAgentCallResults('parent', startTurn)
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(startTurn).toHaveBeenCalledTimes(1)
+    const token = calls.takeDeliverableAgentCalls.mock.calls[0][2]
+    expect(calls.renewAgentCallDelivery).toHaveBeenCalledWith(['c1'], token, 120)
+    finish(sseResponse())
+    await delivery
+    calls.renewAgentCallDelivery.mockClear()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(calls.renewAgentCallDelivery).not.toHaveBeenCalled()
+  } finally {
+    vi.useRealTimers()
+  }
 })

@@ -4,6 +4,7 @@ import {
   formatAgentCallDelivery,
 } from '../../../../internal/types/agent-call-delivery'
 import { isDraining } from '../../lib/sse'
+import { canAccessWorkspace } from '../../lib/workspace-access'
 import {
   type AgentCall,
   countAgentCallDeliveries,
@@ -16,12 +17,14 @@ import {
   listStaleRunningAgentCalls,
   markAgentCallInputRequested,
   markAgentCallsDelivered,
+  recordAgentCallTurnCompleted,
   releaseAgentCallDelivery,
+  renewAgentCallDelivery,
   takeDeliverableAgentCalls,
 } from '../db/agent-calls'
-import { getLastAssistantMessage } from '../db/messages'
 import { getSession } from '../db/sessions'
 import type { Workspace } from '../db/types'
+import { getUser } from '../db/users'
 import { getWorkspace } from '../db/workspaces'
 
 // Delivers the results of `call_agent` calls back to the session that made
@@ -150,6 +153,7 @@ async function closeCallsAsChild(sessionId: string, outcome: TurnOutcome): Promi
   // The session ended its turn while still waiting on calls of its own: its
   // answer so far is interim, so the call stays running until those return
   // and a later turn ends with nothing outstanding.
+  await recordAgentCallTurnCompleted(sessionId)
   const open = await countOpenAgentCalls(sessionId)
   if (open > 0) return []
   return endAgentCalls(sessionId, 'ended', null)
@@ -182,6 +186,12 @@ export async function deliverAgentCallResults(
   const calls = await takeDeliverableAgentCalls(parentSessionId, DELIVERY_LEASE_SECONDS, leaseToken)
   if (calls.length === 0) return
   const ids = calls.map((c) => c.id)
+  const renewal = setInterval(() => {
+    void renewAgentCallDelivery(ids, leaseToken, DELIVERY_LEASE_SECONDS).catch(() =>
+      console.warn(`[agent-call] lease renewal failed session=${parentSessionId}`),
+    )
+  }, 30_000)
+  renewal.unref?.()
 
   try {
     const session = await getSession(parentSessionId)
@@ -190,7 +200,12 @@ export async function deliverAgentCallResults(
       return
     }
     if (session.status !== 'active') {
-      await dropUndeliverable(parentSessionId, ids, `calling session is ${session.status}`, leaseToken)
+      await dropUndeliverable(
+        parentSessionId,
+        ids,
+        `calling session is ${session.status}`,
+        leaseToken,
+      )
       return
     }
     const workspace = await getWorkspace(session.workspace_id)
@@ -199,6 +214,19 @@ export async function deliverAgentCallResults(
       return
     }
 
+    const callerId = calls[0].caller_user_id
+    if (callerId) {
+      const caller = await getUser(callerId)
+      if (!caller || !(await canAccessWorkspace(workspace, { sub: callerId, role: caller.role }))) {
+        await dropUndeliverable(
+          parentSessionId,
+          ids,
+          'caller no longer has workspace access',
+          leaseToken,
+        )
+        return
+      }
+    }
     const message = await buildDeliveryMessage(parentSessionId, calls)
     const resp = await startTurn({
       workspace,
@@ -213,7 +241,11 @@ export async function deliverAgentCallResults(
       // The turn streams, persists and broadcasts on its own; nobody reads
       // this copy of the stream.
       void resp.body?.cancel().catch(() => {})
-      await markAgentCallsDelivered(ids, leaseToken, calls.filter(c => c.status === 'running').map(c => c.id))
+      await markAgentCallsDelivered(
+        ids,
+        leaseToken,
+        calls.filter((c) => c.status === 'running').map((c) => c.id),
+      )
       console.log(`[agent-call] delivered ${ids.length} result(s) to session=${parentSessionId}`)
       return
     }
@@ -223,7 +255,12 @@ export async function deliverAgentCallResults(
       await releaseAgentCallDelivery(ids, leaseToken)
       return
     }
-    await failAgentCallDelivery(ids, MAX_DELIVERY_ATTEMPTS, `chat dispatch returned ${resp.status}`, leaseToken)
+    await failAgentCallDelivery(
+      ids,
+      MAX_DELIVERY_ATTEMPTS,
+      `chat dispatch returned ${resp.status}`,
+      leaseToken,
+    )
     console.warn(
       `[agent-call] delivery to session=${parentSessionId} failed with status ${resp.status}; will retry`,
     )
@@ -231,6 +268,8 @@ export async function deliverAgentCallResults(
     const note = e instanceof Error ? e.message : String(e)
     await failAgentCallDelivery(ids, MAX_DELIVERY_ATTEMPTS, note, leaseToken).catch(() => {})
     console.error(`[agent-call] delivery to session=${parentSessionId} threw:`, e)
+  } finally {
+    clearInterval(renewal)
   }
 }
 
@@ -263,8 +302,7 @@ async function buildDeliveryMessage(parentSessionId: string, calls: AgentCall[])
     }
 
     finished++
-    const last = await getLastAssistantMessage(call.child_session_id)
-    const text = quoteReply(last?.content ?? '')
+    const text = quoteReply(call.result_text ?? '')
     if (call.status === 'failed') {
       entries.push({ ...entry, status: 'failed', text, error: call.error ?? 'unknown error' })
       continue
@@ -296,10 +334,16 @@ export async function sweepAgentCalls(startTurn: StartTurn): Promise<void> {
   try {
     const parents = new Set<string>()
     const stale = await listStaleRunningAgentCalls(STALE_CALL_GRACE_SECONDS, SWEEP_BATCH)
-    for (const { child_session_id, session_gone } of stale) {
+    for (const { child_session_id, session_gone, turn_completed } of stale) {
       const closed = session_gone
         ? await endAgentCalls(child_session_id, 'failed', 'the called session was deleted')
-        : await endAgentCalls(child_session_id, 'failed', 'the called turn ended without a recorded outcome')
+        : turn_completed
+          ? await endAgentCalls(child_session_id, 'ended', null)
+          : await endAgentCalls(
+              child_session_id,
+              'failed',
+              'the called turn ended without a recorded outcome',
+            )
       for (const call of closed) parents.add(call.parent_session_id)
     }
     for (const parent of await listParentsWithDeliverableCalls(SWEEP_BATCH)) {

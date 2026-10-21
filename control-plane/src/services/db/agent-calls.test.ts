@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 const query = vi.hoisted(() => vi.fn())
 vi.mock('./pool', () => ({ pool: { query }, generateId: () => 'new-call' }))
-import { consumeAgentCall, markAgentCallsDelivered, releaseAgentCallDelivery, takeDeliverableAgentCalls, listStaleRunningAgentCalls } from './agent-calls'
+import {
+  consumeAgentCall,
+  listStaleRunningAgentCalls,
+  markAgentCallsDelivered,
+  releaseAgentCallDelivery,
+  takeDeliverableAgentCalls,
+} from './agent-calls'
 beforeEach(() => query.mockReset().mockResolvedValue({ rows: [], rowCount: 0 }))
 describe('AgentCall database boundaries', () => {
   it('fences leased updates with a unique delivery owner', async () => {
