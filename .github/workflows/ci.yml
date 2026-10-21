@@ -42,8 +42,8 @@ jobs:
           - { ws: sandbox-service }
           - { ws: browser-service }
           - { ws: skills-content-service, test: npm test }
-          - { ws: agents/claude-code }
-          - { ws: agents/codex }
+          - { ws: agents/claude-code, test: npm test }
+          - { ws: agents/codex, test: npm --prefix ../../internal/acp-adapter test }
           - { ws: agents/goose }
           - { ws: agents/dsh }
     steps:
