@@ -25,9 +25,9 @@ interface McpRequestContext {
  * — keep this function unaware of specific tool options.
  */
 export function registerTools(server: McpServer, ctx: McpRequestContext) {
-  const { workspaceId, taskId, headers } = ctx
+  const { workspaceId, taskId, sessionId, headers } = ctx
   registerMemoryTools(server, workspaceId)
-  registerAgentTools(server, workspaceId, taskId)
+  registerAgentTools(server, workspaceId, taskId, sessionId)
   registerBrowserTools(server, workspaceId)
   registerSandboxTools(server, workspaceId)
   registerSkillsTools(server, workspaceId)

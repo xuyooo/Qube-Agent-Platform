@@ -1,3 +1,8 @@
+vi.mock('../db/agent-calls', () => ({ resetAgentCallTurnOutcome: vi.fn() }))
+vi.mock('./agent-call-delivery', () => ({
+  settleSessionTurn: vi.fn(),
+  noteSessionInputRequested: vi.fn(),
+}))
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Workspace } from '../db/types'
 
@@ -198,5 +203,27 @@ describe('executeChat one turn per session', () => {
 
     expect(resp.status).toBe(400)
     expect(claimRows.has('gone')).toBe(false)
+  })
+})
+
+describe('core turn follow-ups', () => {
+  it('drains the user draft before delivering results', async () => {
+    const { chatTurnHooks } = await import('./executeChat')
+    const { takePendingMessage } = await import('../db/sessions')
+    const { settleSessionTurn } = await import('./agent-call-delivery')
+    vi.mocked(takePendingMessage).mockResolvedValue(null)
+    await chatTurnHooks(WS).afterTurn('s1', 'completed')
+    expect(settleSessionTurn).toHaveBeenCalledWith('s1', { reason: 'completed' }, executeChat)
+    expect(vi.mocked(takePendingMessage).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(settleSessionTurn).mock.invocationCallOrder[0],
+    )
+  })
+  it('settles interrupted turns without draining the user draft', async () => {
+    const { chatTurnHooks } = await import('./executeChat')
+    const { takePendingMessage } = await import('../db/sessions')
+    const { settleSessionTurn } = await import('./agent-call-delivery')
+    await chatTurnHooks(WS).afterTurn('s1', 'interrupted')
+    expect(takePendingMessage).not.toHaveBeenCalled()
+    expect(settleSessionTurn).toHaveBeenCalledWith('s1', { reason: 'interrupted' }, executeChat)
   })
 })

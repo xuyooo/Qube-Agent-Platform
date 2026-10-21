@@ -13,6 +13,37 @@ afterEach(() => {
 // Whatever the earlier turn holds for the session has to be given up at the
 // takeover, not at the end of its stream.
 describe('setupActiveStream replacement', () => {
+  it('does not settle the replacement turn when the old stream eventually closes', async () => {
+    let upstream!: ReadableStreamDefaultController<Uint8Array>
+    const afterTurn = vi.fn()
+    const onTurnEnd = vi.fn()
+    const onSessionSettled = vi.fn()
+    createInterceptedSSEResponse(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            upstream = controller
+          },
+        }),
+        { headers: { 'Content-Type': 'text/event-stream' } },
+      ),
+      {
+        workspaceId: 'ws1',
+        existingSessionId: 's1',
+        userMessageText: null,
+        onSessionSettled,
+        onTurnEnd,
+        turnHooks: { afterTurn, onInputRequested: vi.fn() },
+      },
+    )
+    const replacement = setupActiveStream('ws1', 's1').activeStream
+    upstream.close()
+    await vi.waitFor(() => expect(onTurnEnd).toHaveBeenCalledTimes(1))
+    expect(onSessionSettled).toHaveBeenCalledTimes(1)
+    expect(afterTurn).not.toHaveBeenCalled()
+    expect(activeStreams.get('ws1:s1')).toBe(replacement)
+  })
+
   it('tells the stream it replaces', () => {
     const first = setupActiveStream('ws1', 's1').activeStream
     first.onReplaced = vi.fn()
@@ -46,6 +77,7 @@ describe('setupActiveStream replacement', () => {
       userMessageText: null,
       existingSessionId: 's1',
       onSessionSettled,
+      turnHooks: { afterTurn: vi.fn(), onInputRequested: vi.fn() },
     })
     expect(onSessionSettled).not.toHaveBeenCalled()
 
