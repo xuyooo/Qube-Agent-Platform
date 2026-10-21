@@ -5,23 +5,23 @@ description: 用你已有的 ingress controller 替换默认的 NodePort，为 Q
 
 ## 何时替换 NodePort
 
-默认部署用 NodePort 暴露平台（`NAP_NODE_PORT` / `BROWSER_NODE_PORT` / `SANDBOX_NODE_PORT`）。如果你的集群已有 ingress 栈、想要域名 + TLS，或者需要在 ingress 层做 WAF / 鉴权 / 灰度，可以把这三个 HTTP 服务通过你自己的 ingress 路由。
+默认部署用 NodePort 暴露平台（`QAP_NODE_PORT` / `BROWSER_NODE_PORT` / `SANDBOX_NODE_PORT`）。如果你的集群已有 ingress 栈、想要域名 + TLS，或者需要在 ingress 层做 WAF / 鉴权 / 灰度，可以把这三个 HTTP 服务通过你自己的 ingress 路由。
 
 切换方式：在 `values.env` 中把 `INGRESS_MODE` 设为 `external`。`install.sh` 会把这三个 Service 渲染为 `ClusterIP` 并去掉 `nodePort` 字段，然后你从自己的 ingress controller 把流量代理到这些 ClusterIP Service。三个 `*_NODE_PORT` 值仍保留在 `values.env` 中以便切回，但渲染输出不会包含它们。
 
 ## 哪些走 ingress，哪些不走
 
-为平台控制面（manifest 中的 Service `nap-cp`）选定一个**主域名**；下文用 `<main-domain>` 代指该值。其他服务的子域名都从它派生 —— 因此在 OEM 场景下，控制面可以占用客户的根域名（例如 `acme.com`），用户永远看不到带厂商品牌的子域名。
+为平台控制面（manifest 中的 Service `qap-cp`）选定一个**主域名**；下文用 `<main-domain>` 代指该值。其他服务的子域名都从它派生 —— 因此在 OEM 场景下，控制面可以占用客户的根域名（例如 `acme.com`），用户永远看不到带厂商品牌的子域名。
 
 **走 ingress** —— HTTP 协议族，任何 controller 都能直接代理：
 
 | 服务 | 主机名 | 端口 | 说明 |
 | --- | --- | --- | --- |
-| nap-cp | `<main-domain>` | 3000 | Web UI + API，SSE / WebSocket |
-| nap-cp | `files.<main-domain>` | 3000 | 公开文件导出，匿名访问，控制面按 host 路由 |
-| nap-browser | `browsers.<main-domain>` | 3005 | Agent Browser WebRTC 信令 + WebSocket |
-| nap-sandbox | `sandbox.<main-domain>` | 3006 | Sandbox API + WebSocket |
-| nap-sandbox 子域名预览 | `*.sandbox.<main-domain>` | 3006 | 用户在 sandbox 中启动的临时 web 服务；通配子域名，需要通配证书 |
+| qap-cp | `<main-domain>` | 3000 | Web UI + API，SSE / WebSocket |
+| qap-cp | `files.<main-domain>` | 3000 | 公开文件导出，匿名访问，控制面按 host 路由 |
+| qap-browser | `browsers.<main-domain>` | 3005 | Agent Browser WebRTC 信令 + WebSocket |
+| qap-sandbox | `sandbox.<main-domain>` | 3006 | Sandbox API + WebSocket |
+| qap-sandbox 子域名预览 | `*.sandbox.<main-domain>` | 3006 | 用户在 sandbox 中启动的临时 web 服务；通配子域名，需要通配证书 |
 
 换句话说，无论主域名是什么，其他域名都在它下面生长。当 `<main-domain>` 是顶级域（`acme.com`）时，files 为 `files.acme.com`；当它是 `nap.acme.com` 时，files 为 `files.nap.acme.com`。
 
@@ -44,7 +44,7 @@ description: 用你已有的 ingress controller 替换默认的 NodePort，为 Q
 | A / AAAA | `sandbox.<main-domain>` | ingress VIP |
 | A / AAAA | `*.sandbox.<main-domain>` | ingress VIP |
 
-**通配记录是必需的** —— sandbox 预览 URL 形如 `{id}-{port}.sandbox.<main-domain>`，每次启动都是新名字，无法逐个添加。同样的原因，`nap-sandbox-tls-cert` 必须是通配证书。
+**通配记录是必需的** —— sandbox 预览 URL 形如 `{id}-{port}.sandbox.<main-domain>`，每次启动都是新名字，无法逐个添加。同样的原因，`qap-sandbox-tls-cert` 必须是通配证书。
 
 如果你的 DNS 系统不支持通配 A 记录，可以把 `*.sandbox.<main-domain>` CNAME 到 `sandbox.<main-domain>`，效果等价。
 
@@ -61,20 +61,20 @@ description: 用你已有的 ingress controller 替换默认的 NodePort，为 Q
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
-  name: nap-main
+  name: qap-main
   namespace: nap
 spec:
   virtualhost:
     fqdn: nap.example.com
     tls:
-      secretName: nap-tls-cert
+      secretName: qap-tls-cert
   routes:
     - timeoutPolicy:
         response: infinity
         idle: infinity
       enableWebsockets: true
       services:
-        - name: nap-cp
+        - name: qap-cp
           port: 3000
 ---
 # Public file export. The control plane routes files.* by host as an anonymous
@@ -83,84 +83,84 @@ spec:
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
-  name: nap-files
+  name: qap-files
   namespace: nap
 spec:
   virtualhost:
     fqdn: files.nap.example.com
     tls:
-      secretName: nap-tls-cert
+      secretName: qap-tls-cert
   routes:
     - services:
-        - name: nap-cp
+        - name: qap-cp
           port: 3000
 ---
 # Agent Browser: WebRTC signaling + WebSocket.
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
-  name: nap-browser
+  name: qap-browser
   namespace: nap
 spec:
   virtualhost:
     fqdn: browsers.nap.example.com
     tls:
-      secretName: nap-tls-cert
+      secretName: qap-tls-cert
   routes:
     - timeoutPolicy:
         response: infinity
         idle: infinity
       enableWebsockets: true
       services:
-        - name: nap-browser
+        - name: qap-browser
           port: 3005
 ---
 # Sandbox API.
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
-  name: nap-sandbox
+  name: qap-sandbox
   namespace: nap
 spec:
   virtualhost:
     fqdn: sandbox.nap.example.com
     tls:
-      secretName: nap-tls-cert
+      secretName: qap-tls-cert
   routes:
     - timeoutPolicy:
         response: infinity
         idle: infinity
       enableWebsockets: true
       services:
-        - name: nap-sandbox
+        - name: qap-sandbox
           port: 3006
 ---
 # Sandbox subdomain preview: temporary web services / URLs users start are routed
-# back to nap-sandbox via a wildcard subdomain. Looks like
-# {id}-{port}.sandbox.nap.example.com. Requires a wildcard cert (nap-sandbox-tls-cert).
+# back to qap-sandbox via a wildcard subdomain. Looks like
+# {id}-{port}.sandbox.nap.example.com. Requires a wildcard cert (qap-sandbox-tls-cert).
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
-  name: nap-sandbox-preview
+  name: qap-sandbox-preview
   namespace: nap
 spec:
   virtualhost:
     fqdn: "*.sandbox.nap.example.com"
     tls:
-      secretName: nap-sandbox-tls-cert
+      secretName: qap-sandbox-tls-cert
   routes:
     - timeoutPolicy:
         response: infinity
         idle: infinity
       enableWebsockets: true
       services:
-        - name: nap-sandbox
+        - name: qap-sandbox
           port: 3006
 ```
 
 ## 长连接超时
 
-WebSocket / SSE 流量必须显式延长超时，否则反向代理默认的 60 秒会断开连接。在 Contour 示例中，`nap-cp` / `nap-browser` / `nap-sandbox` 路由都设置了 `timeoutPolicy: infinity`。移植到其他 controller 时，按同样思路配置：
+WebSocket / SSE 流量必须显式延长超时，否则反向代理默认的 60 秒会断开连接。在 Contour 示例中，`qap-cp` / `qap-browser` / `qap-sandbox` 路由都设置了 `timeoutPolicy: infinity`。移植到其他 controller 时，按同样思路配置：
 
 - **nginx-ingress**：`nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"` 和 `proxy-send-timeout: "3600"`
 - **traefik**：在路由 middleware 上加 `forwardingTimeouts.responseHeaders` 和 `responseForwarding.flushInterval`

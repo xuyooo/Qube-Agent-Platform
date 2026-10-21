@@ -37,7 +37,7 @@ TURN_AUTH_SECRET=        # openssl rand -hex 32
 
 ## 安装 OpenSandbox
 
-Code Sandbox 由 **OpenSandbox**（[github.com/alibaba/OpenSandbox](https://github.com/alibaba/OpenSandbox)）驱动，这是一个**第三方**组件，平台安装器**不会**为你安装。当 `SANDBOX_ENABLED=true` 时，`install.sh` 部署 `nap-sandbox`，并假定 OpenSandbox 已安装好且可在 `OPENSANDBOX_URL` 处访问。
+Code Sandbox 由 **OpenSandbox**（[github.com/alibaba/OpenSandbox](https://github.com/alibaba/OpenSandbox)）驱动，这是一个**第三方**组件，平台安装器**不会**为你安装。当 `SANDBOX_ENABLED=true` 时，`install.sh` 部署 `qap-sandbox`，并假定 OpenSandbox 已安装好且可在 `OPENSANDBOX_URL` 处访问。
 
 从 OpenSandbox 上游 Helm charts 安装它（controller + server），然后把平台指向它：
 
@@ -55,12 +55,12 @@ helm install opensandbox ./opensandbox \
 
 两个服务都通过平台 OAuth 流程登录，使用固定的 `client_id`（`sandbox-service` / `browser-service`）—— 它们是 PKCE public client，没有 `client_secret`。这些 client 必须存在于控制面的 `oauth_clients` 表中，否则登录时 `GET /api/oauth/authorize` 会返回 `400 invalid_client`。
 
-seed 完 admin 后，`install.sh` 运行一个 `nap-seed-oauth-clients` Job，根据已启用的模块**自动注册**这两行 —— 无需在"应用"页面手动创建。注册的 `redirect_uri` 与服务自身计算回调用的 origin 一致，因此不会漂移：
+seed 完 admin 后，`install.sh` 运行一个 `qap-seed-oauth-clients` Job，根据已启用的模块**自动注册**这两行 —— 无需在"应用"页面手动创建。注册的 `redirect_uri` 与服务自身计算回调用的 origin 一致，因此不会漂移：
 
 | client_id | 默认 redirect_uri |
 | --- | --- |
-| `sandbox-service` | `http://<NAP_HOST>:<SANDBOX_NODE_PORT>/api/auth/callback` |
-| `browser-service` | `http://<NAP_HOST>:<BROWSER_NODE_PORT>/api/auth/callback` |
+| `sandbox-service` | `http://<QAP_HOST>:<SANDBOX_NODE_PORT>/api/auth/callback` |
+| `browser-service` | `http://<QAP_HOST>:<BROWSER_NODE_PORT>/api/auth/callback` |
 
 该 Job 是幂等的：改了 NodePort 或公网 URL 后，重新执行 `install.sh`（或 `install.sh --seed-only`）会自动同步 `redirect_uris`。
 
@@ -77,7 +77,7 @@ BROWSER_PUBLIC_URL=https://browsers.example.com
 
 ## 排障
 
-- 登录跳转报 `400 invalid_client` —— `oauth_clients` 中缺少匹配行。确认 seed Job 已运行且成功：`kubectl -n <ns> logs job/nap-seed-oauth-clients`；日志会打印 `registered "sandbox-service" → ...`。手动重跑：`install.sh --seed-only`。
+- 登录跳转报 `400 invalid_client` —— `oauth_clients` 中缺少匹配行。确认 seed Job 已运行且成功：`kubectl -n <ns> logs job/qap-seed-oauth-clients`；日志会打印 `registered "sandbox-service" → ...`。手动重跑：`install.sh --seed-only`。
 - 登录回调报 `400 invalid_redirect_uri` —— 注册的 `redirect_uri` 与服务实际的回调地址不匹配。常见于配置了外部 ingress 但没设 `*_PUBLIC_URL`，或改了 NodePort 却没重新 seed。设置 `*_PUBLIC_URL` 并重新执行 `install.sh --seed-only`。
 - 浏览器无画面 / 黑屏 —— 通常是 TURN 不可达。确认 `TURN_HOST` 是浏览器端实际能访问到的 IP（kubelet 自动探测在多网卡节点上不可靠，所以要显式设置），并确认 coturn 已就绪：`kubectl -n <ns> get pod -l app=coturn`。
 - Sandbox 起不来 —— 先检查 OpenSandbox 是否已安装：`kubectl -n <ns> get pod -l app.kubernetes.io/name=opensandbox`。
