@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readSSE, type SSEEvent } from './read-sse'
+import { type SSEEvent, readSSE } from './read-sse'
 
 function makeResponse(chunks: string[]): Response {
   const encoder = new TextEncoder()
@@ -47,16 +47,12 @@ describe('readSSE', () => {
 
   it('parses explicit event field', async () => {
     const res = makeResponse(['event: session.started\ndata: {"x":1}\n\n'])
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'session.started', data: '{"x":1}' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'session.started', data: '{"x":1}' }])
   })
 
   it('concatenates multiple data lines with \\n', async () => {
     const res = makeResponse(['data: line1\ndata: line2\ndata: line3\n\n'])
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'message', data: 'line1\nline2\nline3' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'message', data: 'line1\nline2\nline3' }])
   })
 
   it('yields multiple events separated by blank lines', async () => {
@@ -69,9 +65,7 @@ describe('readSSE', () => {
   })
 
   it('resets event type after each event boundary', async () => {
-    const res = makeResponse([
-      'event: foo\ndata: 1\n\ndata: 2\n\nevent: bar\ndata: 3\n\n',
-    ])
+    const res = makeResponse(['event: foo\ndata: 1\n\ndata: 2\n\nevent: bar\ndata: 3\n\n'])
     expect(await collect(readSSE(res))).toEqual([
       { event: 'foo', data: '1' },
       { event: 'message', data: '2' },
@@ -81,9 +75,7 @@ describe('readSSE', () => {
 
   it('strips a single leading space after the colon', async () => {
     const res = makeResponse(['data:  two-spaces\n\n'])
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'message', data: ' two-spaces' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'message', data: ' two-spaces' }])
   })
 
   it('handles CRLF line endings', async () => {
@@ -98,9 +90,7 @@ describe('readSSE', () => {
 
   it('buffers across chunk boundaries mid-line', async () => {
     const res = makeResponse(['data: hel', 'lo wor', 'ld\n\n'])
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'message', data: 'hello world' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'message', data: 'hello world' }])
   })
 
   it('buffers across chunk boundaries mid-event', async () => {
@@ -130,23 +120,17 @@ describe('readSSE', () => {
       },
     })
     const res = new Response(stream)
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'message', data: '≥≤' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'message', data: '≥≤' }])
   })
 
   it('flushes a trailing event without a final blank line', async () => {
     const res = makeResponse(['data: lonely\n'])
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'message', data: 'lonely' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'message', data: 'lonely' }])
   })
 
   it('ignores unknown fields', async () => {
     const res = makeResponse(['id: 42\nretry: 1000\ndata: ok\n\n'])
-    expect(await collect(readSSE(res))).toEqual([
-      { event: 'message', data: 'ok' },
-    ])
+    expect(await collect(readSSE(res))).toEqual([{ event: 'message', data: 'ok' }])
   })
 
   it('emits nothing for an empty body', async () => {

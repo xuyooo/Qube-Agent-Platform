@@ -137,16 +137,23 @@ describe('POST /:id/afs/shares', () => {
 
 describe('AFS recovery outcomes', () => {
   it('recovers membership without changing other members or creating a directory', async () => {
-    const members = [{share_id:'share1',workspace_id:'other',permission:'read_only'}]
+    const members = [{ share_id: 'share1', workspace_id: 'other', permission: 'read_only' }]
     let mounted = false
     vi.mocked(getAfsShareByName).mockResolvedValue(share as never)
     vi.mocked(listAfsShareMembers).mockImplementation(async () => members as never)
     vi.mocked(unmountAtWorkspace).mockRejectedValue(new Error('already absent'))
-    vi.mocked(mountAtWorkspace).mockImplementation(async () => {mounted=true})
-    vi.mocked(addAfsShareMember).mockImplementation(async (shareId,workspaceId,permission) => {members.push({share_id:shareId,workspace_id:workspaceId,permission})})
+    vi.mocked(mountAtWorkspace).mockImplementation(async () => {
+      mounted = true
+    })
+    vi.mocked(addAfsShareMember).mockImplementation(async (shareId, workspaceId, permission) => {
+      members.push({ share_id: shareId, workspace_id: workspaceId, permission })
+    })
     expect((await create('team')).status).toBe(201)
     expect(mounted).toBe(true)
-    expect(members).toEqual([{share_id:'share1',workspace_id:'other',permission:'read_only'},{share_id:'share1',workspace_id:'ws1',permission:'read_write'}])
+    expect(members).toEqual([
+      { share_id: 'share1', workspace_id: 'other', permission: 'read_only' },
+      { share_id: 'share1', workspace_id: 'ws1', permission: 'read_write' },
+    ])
     expect((await create('team')).status).toBe(201)
     expect(members).toHaveLength(2)
     expect(createDir).not.toHaveBeenCalled()
@@ -154,27 +161,29 @@ describe('AFS recovery outcomes', () => {
   it('does not report success when the recovery mount fails again', async () => {
     vi.mocked(getAfsShareByName).mockResolvedValue(share as never)
     vi.mocked(mountAtWorkspace).mockRejectedValue(new Error('offline'))
-    const res=await create('team')
+    const res = await create('team')
     expect(res.status).toBe(502)
-    expect(await res.json()).toMatchObject({error: expect.stringContaining('offline')})
+    expect(await res.json()).toMatchObject({ error: expect.stringContaining('offline') })
     expect(addAfsShareMember).not.toHaveBeenCalled()
     expect(createDir).not.toHaveBeenCalled()
   })
   it('concurrent first requests cannot create duplicate logical shares; retry converges', async () => {
-    let exists=false
-    const members: {share_id:string;workspace_id:string;permission:string}[]=[]
-    vi.mocked(getAfsShareByName).mockImplementation(async () => exists ? share as never : null)
+    let exists = false
+    const members: { share_id: string; workspace_id: string; permission: string }[] = []
+    vi.mocked(getAfsShareByName).mockImplementation(async () => (exists ? (share as never) : null))
     vi.mocked(createAfsShare).mockImplementation(async () => {
-      if(exists) throw Object.assign(new Error('duplicate owner/name'),{code:'23505'})
-      exists=true; return share as never
+      if (exists) throw Object.assign(new Error('duplicate owner/name'), { code: '23505' })
+      exists = true
+      return share as never
     })
     vi.mocked(listAfsShareMembers).mockImplementation(async () => members as never)
-    vi.mocked(addAfsShareMember).mockImplementation(async (shareId,workspaceId,permission) => {
-      if(!members.some(m=>m.workspace_id===workspaceId)) members.push({share_id:shareId,workspace_id:workspaceId,permission})
+    vi.mocked(addAfsShareMember).mockImplementation(async (shareId, workspaceId, permission) => {
+      if (!members.some((m) => m.workspace_id === workspaceId))
+        members.push({ share_id: shareId, workspace_id: workspaceId, permission })
     })
-    const responses=await Promise.all([create('team'),create('team')])
-    expect(responses.some(r=>r.status===201)).toBe(true)
+    const responses = await Promise.all([create('team'), create('team')])
+    expect(responses.some((r) => r.status === 201)).toBe(true)
     expect((await create('team')).status).toBe(201)
-    expect(members).toEqual([{share_id:'share1',workspace_id:'ws1',permission:'read_write'}])
+    expect(members).toEqual([{ share_id: 'share1', workspace_id: 'ws1', permission: 'read_write' }])
   })
 })

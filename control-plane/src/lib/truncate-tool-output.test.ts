@@ -54,24 +54,31 @@ describe('capToolResultEvent', () => {
 
 // Boundary coverage shared with persistence semantics.
 describe('broadcast boundaries', () => {
-  it.each([31 * 1024, 32 * 1024, 64 * 1024, 10 * 1024 * 1024])('caps only oversized outputs (%i bytes)', size => {
-    const evt = toolResultEvent('x'.repeat(size))
-    const raw = JSON.stringify(evt)
-    const result = capToolResultEvent(evt, raw)
-    if (size <= MAX_TOOL_OUTPUT_BYTES) expect(result).toBe(raw)
-    else {
-      expect(result.length).toBeLessThan(MAX_TOOL_OUTPUT_BYTES + 500)
-      expect(JSON.parse(result).item.content[0].output).toContain('[truncated by cp:')
-    }
-  })
+  it.each([31 * 1024, 32 * 1024, 64 * 1024, 10 * 1024 * 1024])(
+    'caps only oversized outputs (%i bytes)',
+    (size) => {
+      const evt = toolResultEvent('x'.repeat(size))
+      const raw = JSON.stringify(evt)
+      const result = capToolResultEvent(evt, raw)
+      if (size <= MAX_TOOL_OUTPUT_BYTES) expect(result).toBe(raw)
+      else {
+        expect(result.length).toBeLessThan(MAX_TOOL_OUTPUT_BYTES + 500)
+        expect(JSON.parse(result).item.content[0].output).toContain('[truncated by cp:')
+      }
+    },
+  )
   it('keeps small errors and NUL untouched, sanitizes capped multi-part content without mutation', () => {
     const evt = toolResultEvent('bad\0')
     evt.item!.content[0].is_error = true
     const raw = JSON.stringify(evt)
     expect(capToolResultEvent(evt, raw)).toBe(raw)
-    evt.item!.content.push({type: 'tool_result', call_id: 'c2', output: '中'.repeat(20000)})
+    evt.item!.content.push({ type: 'tool_result', call_id: 'c2', output: '中'.repeat(20000) })
     const result = JSON.parse(capToolResultEvent(evt, JSON.stringify(evt)))
-    expect(result.item.content[0]).toMatchObject({call_id:'c1', is_error:true, output:'bad\uFFFD'})
+    expect(result.item.content[0]).toMatchObject({
+      call_id: 'c1',
+      is_error: true,
+      output: 'bad\uFFFD',
+    })
     expect(result.item.content[1].output).not.toContain('\uFFFD')
     expect(evt.item!.content[0].output).toBe('bad\0')
   })
