@@ -266,7 +266,10 @@ export function createAgentSessionStore(
 
   // `last_active_at` of the active session as of the last syncRemoteTurn — a
   // change means messages were written by someone other than this tab.
-  let remoteSyncMark: { sessionId: string; lastActiveAt: string | undefined } | null = null
+  let remoteSyncMark: {
+    sessionId: string
+    lastActiveAt: string | undefined
+  } | null = null
 
   // cp drains a queued follow-up asynchronously after `session.ended`; these
   // bound the poll that waits for the drained turn to register (~10s total).
@@ -297,7 +300,10 @@ export function createAgentSessionStore(
     for (let attempt = 0; attempt < PENDING_FOLLOW_MAX_ATTEMPTS; attempt++) {
       await new Promise((r) => setTimeout(r, PENDING_FOLLOW_INTERVAL_MS))
       if (version !== switchVersion) return // user navigated away
-      let detail: { chat_status: string; pending_message: PendingMessage | null }
+      let detail: {
+        chat_status: string
+        pending_message: PendingMessage | null
+      }
       try {
         detail = await deps.api.getSession(workspaceId, sessionId)
       } catch {
@@ -311,7 +317,10 @@ export function createAgentSessionStore(
         try {
           const history = await deps.api.getWorkspaceMessages(workspaceId, sessionId)
           if (version !== switchVersion) return
-          store.setState({ messages: history.map(toChatMessage), loadedSessionId: sessionId })
+          store.setState({
+            messages: history.map(toChatMessage),
+            loadedSessionId: sessionId,
+          })
         } catch {
           // History reload failed — startReconnect still attaches live events.
         }
@@ -380,7 +389,10 @@ export function createAgentSessionStore(
         // flash) and lets the drain-time clear, which keys off the real id,
         // actually reach it.
         migrateDraft(workspaceId, undefined, sessionId)
-        store.setState({ activeSessionId: sessionId, loadedSessionId: sessionId })
+        store.setState({
+          activeSessionId: sessionId,
+          loadedSessionId: sessionId,
+        })
         deps.effects.onSessionCreated(sessionId)
         deps.effects.invalidateSessions(workspaceId)
         deps.effects.invalidateWorkspaces()
@@ -481,7 +493,10 @@ export function createAgentSessionStore(
               const blocks = [...m.blocks]
               const last = blocks[blocks.length - 1]
               if (last?.type === 'text') {
-                blocks[blocks.length - 1] = { type: 'text', text: last.text + delta.text }
+                blocks[blocks.length - 1] = {
+                  type: 'text',
+                  text: last.text + delta.text,
+                }
               } else {
                 blocks.push({ type: 'text', text: delta.text })
               }
@@ -758,7 +773,8 @@ export function createAgentSessionStore(
     },
 
     sendMessage(content, images) {
-      if (!content.trim()) return
+      const text = content.trim()
+      if (!text && !images?.length) return
       // A turn is already in flight — promote this to the queued follow-up
       // rather than dropping it or starting a concurrent turn.
       if (store.getState().isLoading) {
@@ -766,16 +782,20 @@ export function createAgentSessionStore(
         return
       }
 
-      const userBlocks: ContentBlock[] = [{ type: 'text', text: content.trim() }]
+      const userBlocks: ContentBlock[] = text ? [{ type: 'text', text }] : []
       if (images?.length) {
         for (const img of images) {
-          userBlocks.push({ type: 'image', data: img.data, media_type: img.media_type })
+          userBlocks.push({
+            type: 'image',
+            data: img.data,
+            media_type: img.media_type,
+          })
         }
       }
       const userMessage: ChatMessage = {
         id: genId(),
         role: 'user',
-        content: content.trim(),
+        content: text,
         blocks: userBlocks,
       }
 
@@ -799,7 +819,7 @@ export function createAgentSessionStore(
       const version = switchVersion
       deps.sse.createAgentChat(
         workspaceId,
-        content.trim(),
+        text || ' ',
         store.getState().activeSessionId,
         {
           ...buildSSEHandlers(assistantId, version),
@@ -829,7 +849,7 @@ export function createAgentSessionStore(
 
     sendMessageToSession(sessionId, content, images) {
       const text = content.trim()
-      if (!text) return
+      if (!text && !images?.length) return
       if (sessionId === store.getState().activeSessionId) {
         store.getState().sendMessage(content, images)
         return
@@ -842,7 +862,7 @@ export function createAgentSessionStore(
       const ac = new AbortController()
       deps.sse.createAgentChat(
         workspaceId,
-        text,
+        text || ' ',
         sessionId,
         {
           onError: (err) =>
@@ -926,7 +946,11 @@ export function createAgentSessionStore(
         const { activeSessionId } = store.getState()
         if (!activeSessionId) return
         await deps.api.deleteSession(workspaceId, activeSessionId)
-        store.setState({ messages: [], error: null, loadedSessionId: undefined })
+        store.setState({
+          messages: [],
+          error: null,
+          loadedSessionId: undefined,
+        })
       } catch (err) {
         store.setState({
           error: err instanceof Error ? err.message : i18n.t('session.errors.deleteFailed'),
