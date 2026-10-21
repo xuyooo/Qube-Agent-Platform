@@ -9,11 +9,10 @@
   <a href="https://xuyooo.github.io/Qube-Agent-Platform/">Docs</a> ·
   <a href="https://xuyooo.github.io/Qube-Agent-Platform">Website</a> ·
   <a href="https://xuyooo.github.io/Qube-Agent-Platform/self-host/">Self-host guide</a> ·
-  <a href="https://discord.gg/MnsQ73d8dq">Discord</a>
+  <a href="https://github.com/xuyooo/Qube-Agent-Platform/discussions">Discussions</a>
 </p>
 
 <p align="center">
-  <a href="https://discord.gg/MnsQ73d8dq"><img alt="Discord" src="https://img.shields.io/badge/Discord-Neutree-5865F2?logo=discord&logoColor=white"></a>
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"></a>
   <a href="CONTRIBUTING.md"><img alt="Contributions welcome" src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg"></a>
 </p>
@@ -77,19 +76,19 @@ QAP is a set of services that share a PostgreSQL control plane. One control plan
 
 | Component | Package | Role |
 | --- | --- | --- |
-| **control-plane** | `@xuyooo/control-plane` | Core API + orchestrator: workspaces, sessions, agents, prompts, templates, skills, providers, credentials, teams. PostgreSQL-backed. |
-| **web** | `@xuyooo/web` | React front-end (Vite + Tailwind + shadcn/ui). |
-| **channel-gateway** | `@xuyooo/channel-gateway` | Bridges external channels into the platform. |
-| **scheduler** | `@xuyooo/scheduler` | Runs scheduled / recurring agent tasks. |
-| **browser-service** | `@xuyooo/browser-service` | Remote browsers agents drive, streamed to users over WebRTC. |
-| **sandbox-service** | `@xuyooo/sandbox-service` | Code sandbox control, backed by [OpenSandbox](https://github.com/alibaba/OpenSandbox). |
-| **skills-content-service** | `@xuyooo/skills-content-service` | Serves agent skill content. |
-| **env-runner-k8s** | `@xuyooo/env-runner-k8s` | Places and supervises workspace containers on Kubernetes. |
+| **control-plane** | `@qap/control-plane` | Core API + orchestrator: workspaces, sessions, agents, prompts, templates, skills, providers, credentials, teams. PostgreSQL-backed. |
+| **web** | `@qap/web` | React front-end (Vite + Tailwind + shadcn/ui). |
+| **channel-gateway** | `@qap/channel-gateway` | Bridges external channels into the platform. |
+| **scheduler** | `@qap/scheduler` | Runs scheduled / recurring agent tasks. |
+| **browser-service** | `@qap/browser-service` | Remote browsers agents drive, streamed to users over WebRTC. |
+| **sandbox-service** | `@qap/sandbox-service` | Code sandbox control, backed by [OpenSandbox](https://github.com/alibaba/OpenSandbox). |
+| **skills-content-service** | `@qap/skills-content-service` | Serves agent skill content. |
+| **env-runner-k8s** | `@qap/env-runner-k8s` | Places and supervises workspace containers on Kubernetes. |
 | **memory-fuse** | — | FUSE layer exposing agent memory as a filesystem. |
 | **agents/** | — | Agent runtime adapters (`claude-code`, `codex`, `goose`). |
-| **internal/** | `@xuyooo/*` | Shared libraries — client, types, ACP adapter, agent skills, OAuth, theme, platform prompt, and the published [`ui-sdk`](internal/ui-sdk). |
-| **packages/sandbox** | `@xuyooo/sandbox` | Published SDK for driving sandboxes from your own code. |
-| **docs-site** | `@xuyooo/docs-site` | The documentation at [xuyooo.github.io/Qube-Agent-Platform](https://xuyooo.github.io/Qube-Agent-Platform/) (Astro + Starlight, en / zh-CN). |
+| **internal/** | `@qap/*` | Shared libraries — client, types, ACP adapter, agent skills, OAuth, theme, platform prompt, and the published [`ui-sdk`](internal/ui-sdk). |
+| **packages/sandbox** | `@qap/sandbox` | Published SDK for driving sandboxes from your own code. |
+| **docs-site** | `@qap/docs-site` | The documentation at [xuyooo.github.io/Qube-Agent-Platform](https://xuyooo.github.io/Qube-Agent-Platform/) (Astro + Starlight, en / zh-CN). |
 
 ### Where to start reading
 
@@ -105,13 +104,11 @@ First-party images are published to GitHub Container Registry under `ghcr.io/xuy
 
 ## Community
 
-[**Discord**](https://discord.gg/MnsQ73d8dq) is where the projects live day to day — questions,
-support, and the people who work on them. It covers everything Qube builds, not just this
-repository, so tag your `#help` post with the product it's about.
+Questions, support and design proposals go in
+[Discussions](https://github.com/xuyooo/Qube-Agent-Platform/discussions).
 
 Bugs and feature requests belong in [Issues](https://github.com/xuyooo/Qube-Agent-Platform/issues),
-where they don't scroll away. Design proposals that need to outlive a conversation go in
-[Discussions](https://github.com/xuyooo/Qube-Agent-Platform/discussions).
+where they don't scroll away.
 
 Most install problems are answered in one round when the question says **which install path**
 (connected or air-gapped), quotes **the error verbatim**, and says **what you already tried**.
@@ -122,4 +119,9 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for th
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Arcfra.
+Licensed under the [Apache License 2.0](LICENSE).
+
+Qube Agent Platform is derived from [Neutree Agent Platform](https://github.com/neutree-ai/agent-platform),
+Copyright 2026 Arcfra, licensed under the Apache License 2.0. Modifications Copyright 2026 xuyooo.
+See [NOTICE](NOTICE) for attribution details. Qube Agent Platform is an independent project and is
+not affiliated with or endorsed by Arcfra or Neutree.

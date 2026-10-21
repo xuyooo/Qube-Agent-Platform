@@ -1,8 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`renderPlatformPrompt > claude-code with userName 1`] = `
-"<nap_reminder>
-You are running inside a NAP Agent workspace (id: ws-abc), serving user "Alice". Use NAP workspace capabilities only when the user's request relates to this workspace.
+"<qap_reminder>
+You are running inside a QAP Agent workspace (id: ws-abc), serving user "Alice". Use QAP workspace capabilities only when the user's request relates to this workspace.
 
 ## Platform Capabilities
 
@@ -10,7 +10,7 @@ The \`__platform__\` skill documents every workspace capability the platform pro
 
 ## MCP Reauth
 
-MCP URLs matching \`…/_cp/mcp/<userId>/<encodedOrigin>/…\` go through the NAP OAuth proxy. A 401 with \`{"error":"needs_reauth","server_origin":"…"}\` means the user's stored token is dead — stop, tell the user to reconnect \`server_origin\` in workspace settings → MCP. Don't retry, don't fall back to \`agent-browser\` login.
+MCP URLs matching \`http://127.0.0.1:3001/mcp/<encodedOrigin>/…\` go through the QAP OAuth proxy. A 401 with \`{"error":"needs_reauth","server_origin":"…"}\` means the user's stored token is dead — stop, tell the user to reconnect \`server_origin\` in workspace settings → MCP. Don't retry, don't fall back to \`agent-browser\` login.
 
 ## Filesystem
 
@@ -22,14 +22,14 @@ Only \`/workspace\` persists across restarts; everything else (\`/tmp\`, \`/etc\
 
 ## User Prompt
 
-\`/workspace/CLAUDE.md\` is platform-managed — overwritten on every config reload (UI edits, template switch, restart). Local edits don't sync back. If the user asks you to edit it, warn that changes won't persist (canonical edit point is the NAP UI) and only proceed on explicit confirm.
-</nap_reminder>
+\`/workspace/CLAUDE.md\` is platform-managed — overwritten on every config reload (UI edits, template switch, restart). Local edits don't sync back. If the user asks you to edit it, warn that changes won't persist (canonical edit point is the QAP UI) and only proceed on explicit confirm.
+</qap_reminder>
 "
 `;
 
 exports[`renderPlatformPrompt > claude-code without userName 1`] = `
-"<nap_reminder>
-You are running inside a NAP Agent workspace (id: ws-abc). Use NAP workspace capabilities only when the user's request relates to this workspace.
+"<qap_reminder>
+You are running inside a QAP Agent workspace (id: ws-abc). Use QAP workspace capabilities only when the user's request relates to this workspace.
 
 ## Platform Capabilities
 
@@ -37,7 +37,7 @@ The \`__platform__\` skill documents every workspace capability the platform pro
 
 ## MCP Reauth
 
-MCP URLs matching \`…/_cp/mcp/<userId>/<encodedOrigin>/…\` go through the NAP OAuth proxy. A 401 with \`{"error":"needs_reauth","server_origin":"…"}\` means the user's stored token is dead — stop, tell the user to reconnect \`server_origin\` in workspace settings → MCP. Don't retry, don't fall back to \`agent-browser\` login.
+MCP URLs matching \`http://127.0.0.1:3001/mcp/<encodedOrigin>/…\` go through the QAP OAuth proxy. A 401 with \`{"error":"needs_reauth","server_origin":"…"}\` means the user's stored token is dead — stop, tell the user to reconnect \`server_origin\` in workspace settings → MCP. Don't retry, don't fall back to \`agent-browser\` login.
 
 ## Filesystem
 
@@ -49,14 +49,14 @@ Only \`/workspace\` persists across restarts; everything else (\`/tmp\`, \`/etc\
 
 ## User Prompt
 
-\`/workspace/CLAUDE.md\` is platform-managed — overwritten on every config reload (UI edits, template switch, restart). Local edits don't sync back. If the user asks you to edit it, warn that changes won't persist (canonical edit point is the NAP UI) and only proceed on explicit confirm.
-</nap_reminder>
+\`/workspace/CLAUDE.md\` is platform-managed — overwritten on every config reload (UI edits, template switch, restart). Local edits don't sync back. If the user asks you to edit it, warn that changes won't persist (canonical edit point is the QAP UI) and only proceed on explicit confirm.
+</qap_reminder>
 "
 `;
 
 exports[`renderPlatformPrompt > codex with userName 1`] = `
-"<nap_reminder>
-You are running inside a NAP Agent workspace (id: ws-abc), serving user "Alice". Use NAP workspace capabilities only when the user's request relates to this workspace.
+"<qap_reminder>
+You are running inside a QAP Agent workspace (id: ws-abc), serving user "Alice". Use QAP workspace capabilities only when the user's request relates to this workspace.
 
 ## Platform Capabilities
 
@@ -64,7 +64,7 @@ The \`__platform__\` skill documents every workspace capability the platform pro
 
 ## MCP Reauth
 
-MCP URLs matching \`…/_cp/mcp/<userId>/<encodedOrigin>/…\` go through the NAP OAuth proxy. A 401 with \`{"error":"needs_reauth","server_origin":"…"}\` means the user's stored token is dead — stop, tell the user to reconnect \`server_origin\` in workspace settings → MCP. Don't retry, don't fall back to \`agent-browser\` login.
+MCP URLs matching \`http://127.0.0.1:3001/mcp/<encodedOrigin>/…\` go through the QAP OAuth proxy. A 401 with \`{"error":"needs_reauth","server_origin":"…"}\` means the user's stored token is dead — stop, tell the user to reconnect \`server_origin\` in workspace settings → MCP. Don't retry, don't fall back to \`agent-browser\` login.
 
 ## Filesystem
 
@@ -76,7 +76,7 @@ Only \`/workspace\` persists across restarts; everything else (\`/tmp\`, \`/etc\
 
 ## User Prompt
 
-\`/workspace/AGENTS.md\` is platform-managed — overwritten on every config reload (UI edits, template switch, restart). Local edits don't sync back. If the user asks you to edit it, warn that changes won't persist (canonical edit point is the NAP UI) and only proceed on explicit confirm.
-</nap_reminder>
+\`/workspace/AGENTS.md\` is platform-managed — overwritten on every config reload (UI edits, template switch, restart). Local edits don't sync back. If the user asks you to edit it, warn that changes won't persist (canonical edit point is the QAP UI) and only proceed on explicit confirm.
+</qap_reminder>
 "
 `;

@@ -226,10 +226,10 @@ const SCHEMA_ZH: {
     REGISTRY_USERNAME: {
       hint: '当仓库需要鉴权时填写；安装器会据此创建 regcred imagePullSecret',
     },
-    NAP_HOST: {
+    QAP_HOST: {
       hint: '用户访问平台所用的 IP 或主机名（某个 worker 节点）',
     },
-    NAP_NODE_PORT: {
+    QAP_NODE_PORT: {
       hint: 'Web UI + API。30000–32767。INGRESS_MODE=external 时仍会渲染但不对外暴露',
     },
     INGRESS_MODE: {
@@ -384,9 +384,9 @@ const SCHEMA: SectionDef[] = [
         default: './kubeconfig.yaml',
       },
       {
-        key: 'NAP_HOST',
+        key: 'QAP_HOST',
         kind: 'text',
-        label: 'NAP_HOST',
+        label: 'QAP_HOST',
         hint: 'IP or hostname users reach the platform at (one of the worker nodes)',
         placeholder: '10.0.0.100',
         required: true,
@@ -398,9 +398,9 @@ const SCHEMA: SectionDef[] = [
               : 'ipOrHost',
       },
       {
-        key: 'NAP_NODE_PORT',
+        key: 'QAP_NODE_PORT',
         kind: 'number',
-        label: 'NAP_NODE_PORT',
+        label: 'QAP_NODE_PORT',
         default: '30080',
         hint: 'Web UI + API. 30000–32767. Still rendered but not exposed when INGRESS_MODE=external',
         required: true,
@@ -814,7 +814,7 @@ const isSectionEnabled = (
 function crossValidate(values: Record<string, string>) {
   const errors: Record<string, VMsg> = {}
   const ports: Array<[string, string]> = [
-    ['NAP_NODE_PORT', values.NAP_NODE_PORT],
+    ['QAP_NODE_PORT', values.QAP_NODE_PORT],
   ]
   if (values.BROWSER_ENABLED === 'true')
     ports.push(['BROWSER_NODE_PORT', values.BROWSER_NODE_PORT])

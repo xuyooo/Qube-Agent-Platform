@@ -1,10 +1,25 @@
 Qube Agent Platform
-Copyright 2026 Arcfra
-
-This product includes software developed at Arcfra.
+Modifications Copyright 2026 xuyooo
 
 Licensed under the Apache License, Version 2.0. See the LICENSE file for the
 full license text.
+
+--------------------------------------------------------------------------------
+
+Qube Agent Platform is derived from Neutree Agent Platform
+(https://github.com/neutree-ai/agent-platform). The original NOTICE is
+retained below as required by Section 4(d) of the Apache License 2.0:
+
+  Neutree Agent Platform
+  Copyright 2026 Arcfra
+
+  This product includes software developed at Arcfra.
+
+  Licensed under the Apache License, Version 2.0.
+
+The source has been modified, including renaming and rebranding. "Neutree" and
+"Arcfra" are names of their respective owners; this project is not affiliated
+with or endorsed by them.
 
 --------------------------------------------------------------------------------
 

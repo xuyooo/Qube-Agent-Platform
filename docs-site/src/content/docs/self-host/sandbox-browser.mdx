@@ -37,7 +37,7 @@ TURN_AUTH_SECRET=        # openssl rand -hex 32
 
 ## Installing OpenSandbox
 
-Code Sandbox is powered by **OpenSandbox** ([github.com/alibaba/OpenSandbox](https://github.com/alibaba/OpenSandbox)), a **third-party** component the platform installer does **not** install for you. When `SANDBOX_ENABLED=true`, `install.sh` deploys `nap-sandbox` and assumes OpenSandbox is already installed and reachable at `OPENSANDBOX_URL`.
+Code Sandbox is powered by **OpenSandbox** ([github.com/alibaba/OpenSandbox](https://github.com/alibaba/OpenSandbox)), a **third-party** component the platform installer does **not** install for you. When `SANDBOX_ENABLED=true`, `install.sh` deploys `qap-sandbox` and assumes OpenSandbox is already installed and reachable at `OPENSANDBOX_URL`.
 
 Install OpenSandbox (controller + server) from its upstream Helm charts, then point the platform at it:
 
@@ -55,12 +55,12 @@ Running OpenSandbox in the `qap` namespace lets the platform's default `OPENSAND
 
 Both services log in via the platform OAuth flow with fixed `client_id`s (`sandbox-service` / `browser-service`) — they are PKCE public clients with no `client_secret`. These clients must exist in the control plane's `oauth_clients` table, or `GET /api/oauth/authorize` returns `400 invalid_client` at login.
 
-After seeding the admin, `install.sh` runs a `nap-seed-oauth-clients` Job that **auto-registers** these two rows based on the enabled modules — no manual creation on the "applications" page. The registered `redirect_uri` is the same origin the service computes its own callback from, so they don't drift:
+After seeding the admin, `install.sh` runs a `qap-seed-oauth-clients` Job that **auto-registers** these two rows based on the enabled modules — no manual creation on the "applications" page. The registered `redirect_uri` is the same origin the service computes its own callback from, so they don't drift:
 
 | client_id | Default redirect_uri |
 | --- | --- |
-| `sandbox-service` | `http://<NAP_HOST>:<SANDBOX_NODE_PORT>/api/auth/callback` |
-| `browser-service` | `http://<NAP_HOST>:<BROWSER_NODE_PORT>/api/auth/callback` |
+| `sandbox-service` | `http://<QAP_HOST>:<SANDBOX_NODE_PORT>/api/auth/callback` |
+| `browser-service` | `http://<QAP_HOST>:<BROWSER_NODE_PORT>/api/auth/callback` |
 
 The Job is idempotent: after changing a NodePort or public URL, re-running `install.sh` (or `install.sh --seed-only`) syncs the `redirect_uris` automatically.
 
@@ -77,7 +77,7 @@ The override feeds **both** the service's own callback address and the registere
 
 ## Debugging
 
-- Login redirect reports `400 invalid_client` — the matching row is missing in `oauth_clients`. Confirm the seed Job ran and succeeded: `kubectl -n <ns> logs job/nap-seed-oauth-clients`; the log prints `registered "sandbox-service" → ...`. Re-run manually: `install.sh --seed-only`.
+- Login redirect reports `400 invalid_client` — the matching row is missing in `oauth_clients`. Confirm the seed Job ran and succeeded: `kubectl -n <ns> logs job/qap-seed-oauth-clients`; the log prints `registered "sandbox-service" → ...`. Re-run manually: `install.sh --seed-only`.
 - Login callback reports `400 invalid_redirect_uri` — the registered `redirect_uri` doesn't match the service's actual callback address. Common when external ingress is configured but `*_PUBLIC_URL` isn't set, or a NodePort changed without re-seeding. Set `*_PUBLIC_URL` and re-run `install.sh --seed-only`.
 - Browser shows no video / black screen — usually TURN can't be reached. Verify `TURN_HOST` is an IP the browser side can actually reach (kubelet auto-detect is unreliable on multi-NIC nodes, so set it explicitly), and that coturn is ready: `kubectl -n <ns> get pod -l app=coturn`.
 - Sandbox won't start — first check whether OpenSandbox is installed: `kubectl -n <ns> get pod -l app.kubernetes.io/name=opensandbox`.

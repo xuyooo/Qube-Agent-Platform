@@ -26,7 +26,7 @@ Common overrides:
 ```bash
 # choose the host IP / admin password yourself
 curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh \
-  | sudo NAP_HOST=192.168.1.10 NAP_ADMIN_PASSWORD=your-password sh -
+  | sudo QAP_HOST=192.168.1.10 QAP_ADMIN_PASSWORD=your-password sh -
 
 # generate values.env only — review/edit it, then re-run without the flag to install
 curl -sfL https://xuyooo.github.io/Qube-Agent-Platform/get.sh \
@@ -68,19 +68,19 @@ Copy the `self-host/` directory (with `offline/qap-images.tar.gz` inside) and th
 ```bash
 cp values.env.single-node.example values.env
 ./gen-secrets.sh        # fills random JWT / PG / TURN / SANDBOX secrets
-vi values.env           # set NAP_HOST + ADMIN_PASSWORD
+vi values.env           # set QAP_HOST + ADMIN_PASSWORD
 ```
 
 `values.env.single-node.example` already has single-node defaults baked in, so you only need to change two things:
 
-- `NAP_HOST` — the node's externally reachable IP; pods and the login entry both use it
+- `QAP_HOST` — the node's externally reachable IP; pods and the login entry both use it
 - `ADMIN_PASSWORD` — the initial admin password
 
 Everything else (PG replica count, storage classes, NFS backend) is preset for the single-node shape.
 
-<AirgapBlock client:load locale="en" summary="NAP_HOST must be set before the next step">
+<AirgapBlock client:load locale="en" summary="QAP_HOST must be set before the next step">
 
-Set `NAP_HOST` **before** step 3 — `preinstall.sh` writes the containerd config that lets the node reach the in-cluster registry over HTTP, and it needs the host.
+Set `QAP_HOST` **before** step 3 — `preinstall.sh` writes the containerd config that lets the node reach the in-cluster registry over HTTP, and it needs the host.
 
 </AirgapBlock>
 
@@ -112,22 +112,22 @@ This installs k3s from the bundle, drops in `helm` / `envsubst` / `crane`, impor
 ./install.sh --profile=single-node
 ```
 
-`install.sh` first brings up the in-cluster NFS server (`nap-nfs-server` pod, backed by `local-path`), installs the CloudNativePG operator and the NFS subdir provisioner, renders and applies the manifests, then seeds the admin user, OAuth clients, and the MCP catalog. Connected, all images are pulled from the public registry.
+`install.sh` first brings up the in-cluster NFS server (`qap-nfs-server` pod, backed by `local-path`), installs the CloudNativePG operator and the NFS subdir provisioner, renders and applies the manifests, then seeds the admin user, OAuth clients, and the MCP catalog. Connected, all images are pulled from the public registry.
 
 <AirgapBlock client:load locale="en" summary="the image bundle switches install.sh to the in-cluster registry">
 
-Because `offline/qap-images.tar.gz` is present, `install.sh` brings up the in-cluster `nap-registry`, seeds it from the bundle, and points every workload at it — no external registry, no internet. Everything else matches the connected flow.
+Because `offline/qap-images.tar.gz` is present, `install.sh` brings up the in-cluster `qap-registry`, seeds it from the bundle, and points every workload at it — no external registry, no internet. Everything else matches the connected flow.
 
 </AirgapBlock>
 
 ### 5. Log in
 
 ```
-http://<NAP_HOST>:30080
+http://<QAP_HOST>:30080
 admin / <ADMIN_PASSWORD>
 ```
 
-`30080` is the `NAP_NODE_PORT` default baked into `values.env.single-node.example`.
+`30080` is the `QAP_NODE_PORT` default baked into `values.env.single-node.example`.
 
 ## Key differences from the standard deploy
 
@@ -139,12 +139,12 @@ Only the values that differ from the [deployment guide](/self-host/) defaults ar
 | `PG_INSTANCES` | 3 | 1 |
 | `PG_STORAGE_CLASS` | any RWO CSI | `local-path` |
 | `AGENT_STORAGE_CLASS` | NFS / RWX CSI | `local-path` |
-| `NFS_SERVER` / `NFS_PATH` | external NFS | in-cluster NFS pod (`nap-nfs-server`), computed by `install.sh` |
+| `NFS_SERVER` / `NFS_PATH` | external NFS | in-cluster NFS pod (`qap-nfs-server`), computed by `install.sh` |
 
 All of these are already written into `values.env.single-node.example`, so you don't fill them by hand.
 
 :::caution[NFS kernel modules must be enabled on the host]
-The in-cluster NFS uses the host kernel: the `nap-nfs-server` pod mounts `nfsd` on startup, and the nfs-subdir provisioner needs the `nfs` client module to mount. If the modules are missing, the `nap-nfs-server` pod won't come up and the AFS PVC stays `Pending`.
+The in-cluster NFS uses the host kernel: the `qap-nfs-server` pod mounts `nfsd` on startup, and the nfs-subdir provisioner needs the `nfs` client module to mount. If the modules are missing, the `qap-nfs-server` pod won't come up and the AFS PVC stays `Pending`.
 
 Check whether they're loaded:
 
