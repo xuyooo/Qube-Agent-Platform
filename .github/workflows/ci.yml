@@ -38,7 +38,7 @@ jobs:
           # with the app's date-fns@3 (pinned via react-day-picker/@tremor).
           - { ws: web, test: npm test, install: npm ci --legacy-peer-deps }
           - { ws: channel-gateway }
-          - { ws: scheduler }
+          - { ws: scheduler, test: npm test }
           - { ws: sandbox-service }
           - { ws: browser-service }
           - { ws: skills-content-service, test: npm test }
