@@ -31,7 +31,6 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AskUserQuestionPanel } from '@/components/workspace/AskUserQuestionPanel'
 import { useAgentMention, useSlashCommands } from '@/components/workspace/CommandTrigger'
 import { useFileMention } from '@/components/workspace/FileMention'
 import { ShareSessionButton } from '@/components/workspace/ShareSessionButton'
@@ -54,7 +53,7 @@ import { useAgentSessionActions, useAgentSessionStore } from '@/stores/AgentSess
 import type { ChatMessage as ChatMessageType } from '@/stores/agent-session-store'
 import { useComposerInsertRequests } from '@/stores/composer-store'
 import { useDraft } from '@/stores/draft-store'
-import { MessageBubble, TranscriptI18nProvider, TurnStatsBar } from '@qap/ui-sdk'
+import { AskUserQuestionPanel, WaitingOnAgentsNotice, MessageBubble, TranscriptI18nProvider, TurnStatsBar } from '@qap/ui-sdk'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   Bot,
@@ -222,16 +221,6 @@ function HintBar({ visible, hints }: { visible: boolean; hints: string[] }) {
       >
         {hints[index]}
       </div>
-    </div>
-  )
-}
-
-function WaitingOnAgentsNotice({ count }: { count: number }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center justify-center gap-1.5 px-3 pb-1 text-tiny text-muted-foreground">
-      <span className="inline-flex h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-info" />
-      <span>{t('components.workspaceChat.waitingOnAgents', { count })}</span>
     </div>
   )
 }

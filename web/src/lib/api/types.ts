@@ -440,19 +440,4 @@ export type {
 
 // ── AskUserQuestion types ──
 
-interface AskUserQuestionOption {
-  label: string
-  description: string
-}
-
-export interface AskUserQuestionItem {
-  question: string
-  header: string
-  options: AskUserQuestionOption[]
-  multiSelect: boolean
-}
-
-export interface AskUserRequest {
-  requestId: string
-  questions: AskUserQuestionItem[]
-}
+export type { AskUserQuestionOption, AskUserQuestionItem, AskUserRequest } from '@qap/ui-sdk'

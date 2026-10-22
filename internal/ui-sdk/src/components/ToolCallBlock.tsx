@@ -38,15 +38,24 @@ function getToolDuration(tool: ToolCall): number | null {
 
 // ── Main component ──
 
-function ToolCallBlockImpl({ tool }: { tool: ToolCall }) {
+function ToolCallBlockImpl({
+  tool,
+  followedByActivity = false,
+}: {
+  tool: ToolCall
+  /**
+   * Later activity makes this failure less prominent, without claiming recovery.
+   */
+  followedByActivity?: boolean
+}) {
   const { t } = useTranslation()
   const agentType = useAgentType()
   const lazy = useLazyToolRenderers()
   // Re-render when a host registers a renderer (via registerToolRenderer) — or
   // when the lazy-descriptor registry changes — so a card swaps from skeleton /
   // default to the real renderer the moment it lands.
-  useSyncExternalStore(subscribeToolRenderers, getToolRenderersVersion)
-  useSyncExternalStore(lazy?.subscribe ?? NOOP_SUBSCRIBE, lazy?.getVersion ?? ZERO)
+  useSyncExternalStore(subscribeToolRenderers, getToolRenderersVersion, getToolRenderersVersion)
+  useSyncExternalStore(lazy?.subscribe ?? NOOP_SUBSCRIBE, lazy?.getVersion ?? ZERO, lazy?.getVersion ?? ZERO)
   const effectiveName = unwrapExecuteDispatchName(tool.name, tool.input)
   const renderer = resolveRenderer(tool, agentType)
   // No synchronous renderer yet — if a host-provided lazy source owns this tool,
@@ -100,19 +109,14 @@ function ToolCallBlockImpl({ tool }: { tool: ToolCall }) {
                     {formatDuration(duration)}
                   </span>
                 )}
-                <span
-                  aria-label={
-                    tool.isError
-                      ? t('components.chat.toolCallBlock.status.error')
-                      : t('components.chat.toolCallBlock.status.done')
-                  }
-                  title={
-                    tool.isError
-                      ? t('components.chat.toolCallBlock.status.error')
-                      : t('components.chat.toolCallBlock.status.done')
-                  }
-                  className={`h-1.5 w-1.5 rounded-full ${tool.isError ? 'bg-destructive' : 'bg-success'}`}
-                />
+                {/* Success is the default and goes unmarked. */}
+                {tool.isError && (
+                  <span
+                    aria-label={t('components.chat.toolCallBlock.status.error')}
+                    title={t('components.chat.toolCallBlock.status.error')}
+                    className={`h-1.5 w-1.5 rounded-full ${followedByActivity ? 'bg-muted-foreground/60' : 'bg-destructive'}`}
+                  />
+                )}
               </span>
             )}
             {tool.result === undefined && <Spinner size="sm" className="ml-auto shrink-0" />}

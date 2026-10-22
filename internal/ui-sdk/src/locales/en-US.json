@@ -234,6 +234,19 @@
     },
     "markdown": {
       "systemMessage": "System message"
+    },
+    "askUserQuestion": {
+      "actions": {
+        "customReplyPlaceholder": "Or type a custom reply...",
+        "confirm": "Confirm"
+      },
+      "hints": {
+        "selectAllThatApply": "Select all that apply"
+      }
+    },
+    "workspaceChat": {
+      "waitingOnAgents_one": "Waiting for {{count}} agent — results will continue this conversation automatically",
+      "waitingOnAgents_other": "Waiting for {{count}} agents — results will continue this conversation automatically"
     }
   }
 }

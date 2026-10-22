@@ -51,3 +51,7 @@ export {
   unwrapMcpInput,
   jsonPreview,
 } from './tool-renderers/types'
+
+export { AskUserQuestionPanel } from './components/AskUserQuestionPanel'
+export { WaitingOnAgentsNotice } from './components/WaitingOnAgentsNotice'
+export type { AskUserRequest, AskUserQuestionItem, AskUserQuestionOption } from './question-types'
