@@ -7,7 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { RESERVED_COMMAND_NAMES } from '@/components/workspace/CommandTrigger'
+import { QAP_BUILTIN_COMMAND_NAMES } from '@/lib/composer/preset'
+const RESERVED_COMMAND_NAMES = new Set<string>(QAP_BUILTIN_COMMAND_NAMES)
 import { PromptField } from '@/components/workspace/PromptField'
 import { useTranslation } from 'react-i18next'
 

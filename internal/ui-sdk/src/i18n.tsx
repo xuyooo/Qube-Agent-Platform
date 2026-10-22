@@ -7,8 +7,8 @@
 // Strings keep their original `components.chat.*` key paths so the moved
 // components need no key rewrites; the bundle below is just that subtree.
 import i18next, { type i18n as I18nInstance } from 'i18next'
-import { type ReactNode, useEffect } from 'react'
-import { I18nextProvider, getI18n, initReactI18next, setI18n } from 'react-i18next'
+import { type ReactNode, useEffect, useMemo, createContext, useContext } from 'react'
+import { I18nextProvider, getI18n, initReactI18next, setI18n, useTranslation } from 'react-i18next'
 import enUS from './locales/en-US.json'
 import zhCN from './locales/zh-CN.json'
 
@@ -52,4 +52,13 @@ export function TranscriptI18nProvider({ locale, children }: TranscriptI18nProvi
     if (transcriptI18n.language !== target) void transcriptI18n.changeLanguage(target)
   }, [target])
   return <I18nextProvider i18n={transcriptI18n}>{children}</I18nextProvider>
+}
+
+const SdkLocaleContext = createContext<string | undefined>(undefined)
+export function SdkLocaleProvider({ locale, children }: { locale?: string; children: ReactNode }) { return <SdkLocaleContext.Provider value={locale}>{children}</SdkLocaleContext.Provider> }
+export function useSdkTranslation(override?: string) {
+  const inherited = useContext(SdkLocaleContext)
+  const locale = override ?? inherited
+  const instance = useMemo(() => locale ? transcriptI18n.cloneInstance({ lng: normalizeLocale(locale), initImmediate: false }) : transcriptI18n, [locale])
+  return useTranslation(undefined, { i18n: instance })
 }

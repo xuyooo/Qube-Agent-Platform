@@ -55,3 +55,8 @@ export {
 export { AskUserQuestionPanel } from './components/AskUserQuestionPanel'
 export { WaitingOnAgentsNotice } from './components/WaitingOnAgentsNotice'
 export type { AskUserRequest, AskUserQuestionItem, AskUserQuestionOption } from './question-types'
+
+export { Composer } from './composer/Composer'
+export type { ComposerProps, ComposerHandle, ComposerCommand, ComposerTrigger, ComposerTriggerItem, ComposerVoice, ComposerImageAttachment, ComposerAttachments, ComposerPending } from './composer/types'
+export type { ComposerSendKey } from './composer/keys'
+
