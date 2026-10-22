@@ -302,5 +302,37 @@
         }
       }
     }
+  },
+  "session": {
+    "status": {
+      "completed": "completed",
+      "disconnected": "disconnected"
+    },
+    "errors": {
+      "cpReconnectFailed": "CP reconnect failed",
+      "sessionBusy": "Another turn is running in this session. Your message was not sent.",
+      "deleteFailed": "Failed to delete session",
+      "interruptFailed": "Failed to interrupt",
+      "interruptNotReady": "Can't stop yet — the turn is still starting up. It's still running; try again in a moment.",
+      "loadHistoryFailed": "Failed to load history",
+      "reconnectFailed": "Reconnect failed",
+      "respondFailed": "Failed to respond",
+      "respondQuestionFailed": "Failed to respond to question"
+    }
+  },
+  "common": {
+    "errors": {
+      "authProviderRequired": "useAuth must be used within an AuthProvider",
+      "agentSessionProviderRequired": "useAgentSessionStore must be used within AgentSessionProvider",
+      "connectionFailed": "Connection failed",
+      "dialogStackProviderRequired": "useDialogStack must be used within DialogStackProvider",
+      "fileOverlayProviderRequired": "useFileOverlay must be used within FileOverlayProvider",
+      "noResponseBody": "No response body",
+      "requestFailed": "Request failed",
+      "sessionExpired": "Session expired",
+      "sidebarProviderRequired": "useSidebar must be used within a SidebarProvider",
+      "themeProviderRequired": "useTheme must be used within ThemeProvider",
+      "unknown": "Unknown error"
+    }
   }
 }

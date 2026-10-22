@@ -4,18 +4,19 @@
   "description": "Qube Agent Platform shared UI SDK — reusable React components for embedding platform UI in third-party apps. First module: agent session transcript rendering (messages, tool calls) from the platform's wire message format. Host-agnostic: drop in with a locale, inject your own markdown if you have one.",
   "type": "module",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/types/ui-sdk/src/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+      "types": "./dist/types/ui-sdk/src/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/build.mjs",
     "prepublishOnly": "npm run build"
   },
   "license": "Apache-2.0",
@@ -50,5 +51,8 @@
     "tailwindcss": "3.4.19",
     "tailwindcss-animate": "1.0.7",
     "typescript": "~5.6.2"
-  }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

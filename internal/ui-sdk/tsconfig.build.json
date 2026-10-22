@@ -9,8 +9,9 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "outDir": "dist",
-    "rootDir": "src"
+    "outDir": "dist/types",
+    "rootDir": "..",
+    "emitDeclarationOnly": true
   },
   "include": [
     "src/**/*"
