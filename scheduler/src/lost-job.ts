@@ -13,7 +13,7 @@
 import type { JobWithMetadata, PgBoss } from 'pg-boss'
 import { type JobData, sendReply } from './handler'
 
-export const AGENT_SESSION_DEAD_LETTER_QUEUE = 'agent-session-dead-letter'
+const AGENT_SESSION_DEAD_LETTER_QUEUE = 'agent-session-dead-letter'
 
 /** Failure messages pg-boss's monitor writes into a job's output. */
 const MONITOR_FAILURES = new Set(['job heartbeat timeout', 'job timed out'])
@@ -23,7 +23,7 @@ const LOST_JOB_REPLY =
 
 /** Idempotently create the agent-session dead-letter queue. Must exist before
  *  the agent-session queue references it. */
-export async function ensureLostJobQueue(boss: PgBoss): Promise<void> {
+async function ensureLostJobQueue(boss: PgBoss): Promise<void> {
   const options = { retryLimit: 2, retentionSeconds: 7 * 24 * 3600 }
   await boss.createQueue(AGENT_SESSION_DEAD_LETTER_QUEUE, options)
   await boss.updateQueue(AGENT_SESSION_DEAD_LETTER_QUEUE, options)

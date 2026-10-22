@@ -567,6 +567,7 @@ export function WorkspaceChatPanel({
   }, [])
 
   // Restore textarea height and cursor position when draft changes (e.g. session switch)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeSessionId is the trigger — re-run on session switch
   useEffect(() => {
     adjustTextareaHeight()
     const el = inputRef.current
