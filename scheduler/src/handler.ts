@@ -113,12 +113,18 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
         console.error(
           `[Scheduler] No platform token for user=${schedule.user_id} schedule=${scheduleId}`,
         )
-        return { session_id: '', error: 'No platform token for schedule owner' }
+        return {
+          session_id: '',
+          error: 'No platform token for schedule owner',
+        }
       }
       job.data.workspace_id = schedule.workspace_id
       job.data.prompt = schedule.prompt
       job.data.service_token = platformToken
-      job.data.trigger.payload = { schedule_id: schedule.id, schedule_name: schedule.name }
+      job.data.trigger.payload = {
+        schedule_id: schedule.id,
+        schedule_name: schedule.name,
+      }
       await db.updateScheduleLastRun(scheduleId)
       // One-time schedule fires exactly once. Mark completed before executing
       // so a run-now button click or pg-boss replay can't double-fire it.
@@ -136,7 +142,9 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
   if (!service_token) throw new Error(`Job missing service_token: ${job.id}`)
 
   const chatEndpoint = getChatEndpoint(workspace_id)
-  const authHeaders: Record<string, string> = { Authorization: `Bearer ${service_token}` }
+  const authHeaders: Record<string, string> = {
+    Authorization: `Bearer ${service_token}`,
+  }
 
   // Look up existing thread session for multi-turn conversations
   const triggerPayload = trigger.payload as Record<string, unknown> | undefined
@@ -180,7 +188,12 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
     )
     const finalPrompt =
       threadContext || promptTemplate
-        ? buildPrompt({ message: prompt, threadContext, promptTemplate, templateVars })
+        ? buildPrompt({
+            message: prompt,
+            threadContext,
+            promptTemplate,
+            templateVars,
+          })
         : prompt
 
     // Build status callback for Slack triggers
@@ -394,7 +407,11 @@ function buildStreamSink(trigger: JobData['trigger']): StreamSink | null {
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ route_id: routeId, reply_to: replyContext, stream }),
+      body: JSON.stringify({
+        route_id: routeId,
+        reply_to: replyContext,
+        stream,
+      }),
     })
     if (!resp.ok) {
       const err = await resp.text().catch(() => '')
@@ -429,12 +446,13 @@ function buildStreamSink(trigger: JobData['trigger']): StreamSink | null {
   }
 }
 
-async function sendReply(trigger: JobData['trigger'], text: string) {
+export async function sendReply(trigger: JobData['trigger'], text: string): Promise<boolean> {
   const payload = trigger.payload as Record<string, unknown> | undefined
-  if (!payload?.connector_id || !payload?.route_id) return
+  if (!payload?.connector_id || !payload?.route_id) return false
 
   const resp = await fetch(`${CG_API_URL}/internal/connectors/${payload.connector_id}/send`, {
     method: 'POST',
+    signal: AbortSignal.timeout(30_000),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       route_id: payload.route_id,
@@ -444,11 +462,12 @@ async function sendReply(trigger: JobData['trigger'], text: string) {
   })
 
   if (!resp.ok) {
-    const err = await resp.text().catch(() => '')
-    console.error(`[Scheduler] Failed to send reply: ${resp.status} ${err}`)
-  } else {
-    console.log(`[Scheduler] Reply sent via connector=${payload.connector_id}`)
+    await resp.body?.cancel().catch(() => {})
+    console.error(`[Scheduler] Failed to send reply: ${resp.status}`)
+    return false
   }
+  console.log(`[Scheduler] Reply sent via connector=${payload.connector_id}`)
+  return true
 }
 
 function isTransientFetchError(e: unknown): boolean {
@@ -491,7 +510,11 @@ function buildStatusCallback(trigger: JobData['trigger']): StatusCallback {
     fetch(`${CG_API_URL}/internal/connectors/${connectorId}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ channel_id: channelId, thread_ts: threadTs, status }),
+      body: JSON.stringify({
+        channel_id: channelId,
+        thread_ts: threadTs,
+        status,
+      }),
     }).catch((e) => console.warn('[Scheduler] Failed to set status:', e))
   }
 }

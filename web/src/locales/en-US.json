@@ -1515,7 +1515,9 @@
         "unsavedChanges": "Unsaved changes",
         "composerHint": "Agent is busy — send to queue"
       },
-      "attachmentAlt": "attachment"
+      "attachmentAlt": "attachment",
+      "waitingOnAgents_one": "Waiting for {{count}} agent — results will continue this conversation automatically",
+      "waitingOnAgents_other": "Waiting for {{count}} agents — results will continue this conversation automatically"
     },
     "workspaceSandbox": {
       "empty": {
@@ -3690,7 +3692,9 @@
       "status": {
         "needsYou": "Needs you",
         "running": "Running",
-        "error": "Error"
+        "error": "Error",
+        "waiting_one": "Waiting for {{count}} agent",
+        "waiting_other": "Waiting for {{count}} agents"
       },
       "source": {
         "web": "Manual",

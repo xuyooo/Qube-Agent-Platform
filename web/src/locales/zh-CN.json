@@ -1540,7 +1540,8 @@
         "unsavedChanges": "有改动",
         "composerHint": "Agent 忙碌中，发送即加入待发"
       },
-      "attachmentAlt": "附件"
+      "attachmentAlt": "附件",
+      "waitingOnAgents": "正在等待 {{count}} 个 Agent，结果返回后会自动继续对话"
     },
     "workspaceSandbox": {
       "empty": {
@@ -3714,7 +3715,8 @@
       "status": {
         "needsYou": "待你回复",
         "running": "运行中",
-        "error": "出错"
+        "error": "出错",
+        "waiting": "等待 {{count}} 个 Agent"
       },
       "source": {
         "web": "手动创建",

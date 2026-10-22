@@ -9,6 +9,7 @@ import {
 } from './db'
 import { registerDeadLetterWorker } from './dead-letter'
 import { type JobData, handleJob } from './handler'
+import { configureAgentSessionQueue, registerLostJobWorker } from './lost-job'
 import { registerNotificationWorker } from './notifications'
 import { registerSkillReloadWorker } from './skill-reload'
 import { registerTitleGenWorker } from './title-gen'
@@ -23,7 +24,9 @@ process.on('unhandledRejection', (reason) => {
 const QUEUE_NAME = 'agent-session'
 
 const boss = new PgBoss({
-  db: { executeSql: async (text: string, values?: unknown[]) => pool.query(text, values) },
+  db: {
+    executeSql: async (text: string, values?: unknown[]) => pool.query(text, values),
+  },
 })
 
 boss.on('error', (err: Error) => console.error('[Scheduler] pg-boss error:', err))
@@ -46,9 +49,7 @@ const queueOptions = {
   // runTurn's idle timeout's job.
   heartbeatSeconds: 120,
 }
-await boss.createQueue(QUEUE_NAME, queueOptions).catch(() => {})
-// Ensure config is up-to-date for existing queues
-await boss.updateQueue(QUEUE_NAME, queueOptions)
+await configureAgentSessionQueue(boss, QUEUE_NAME, queueOptions)
 
 // Clean up stale concurrency slots from previous crashes
 const cleaned = await cleanupStaleWsSlots()
@@ -101,6 +102,8 @@ await boss.work<JobData>(
     }
   },
 )
+
+await registerLostJobWorker(boss)
 
 // Register notification delivery worker
 await registerNotificationWorker(boss)

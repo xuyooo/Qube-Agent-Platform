@@ -226,6 +226,16 @@ function HintBar({ visible, hints }: { visible: boolean; hints: string[] }) {
   )
 }
 
+function WaitingOnAgentsNotice({ count }: { count: number }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-center justify-center gap-1.5 px-3 pb-1 text-tiny text-muted-foreground">
+      <span className="inline-flex h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-info" />
+      <span>{t('components.workspaceChat.waitingOnAgents', { count })}</span>
+    </div>
+  )
+}
+
 interface WorkspaceChatPanelProps {
   workspace: Workspace
   /**
@@ -295,23 +305,34 @@ export function WorkspaceChatPanel({
   const lastTurnStats = useAgentSessionStore((s) => s.lastTurnStats)
   const actions = useAgentSessionActions()
 
-  // Other people's turns in a shared workspace don't reach this tab's stream;
-  // poll the active session to pick them up while the tab is visible.
-  useEffect(() => {
-    if (!multiAuthor || readonly) return
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') void actions.syncRemoteTurn()
-    }, REMOTE_TURN_POLL_MS)
-    return () => clearInterval(timer)
-  }, [multiAuthor, readonly, actions])
-
-  const isChatBusy = isLoading || isDeleting
-  const isSessionLocked = isDeleting || isSwitching
-
-  // ── Session list ──
   const { data: sessions = [], fetchNextPage, hasNextPage } = useSessions(workspace.id)
   const invalidateSessions = useInvalidateSessions()
   const markSeen = useMarkSeen()
+  const activeSession = sessions.find((session) => session.id === activeSessionId)
+  const pendingAgentCalls = activeSession?.pending_agent_calls ?? 0
+  const waitingOnAgents = pendingAgentCalls > 0
+
+  // Follow server-started turns, including a delivery that finished before the
+  // next poll, or a child that resumed after human input. Poll the active
+  // session even when its previous pending count was zero.
+  useEffect(() => {
+    if (readonly || !activeSessionId) return
+    const sync = () => {
+      if (document.visibilityState !== 'visible') return
+      void actions.syncRemoteTurn()
+      invalidateSessions(workspace.id)
+    }
+    sync()
+    document.addEventListener('visibilitychange', sync)
+    const timer = setInterval(sync, REMOTE_TURN_POLL_MS)
+    return () => {
+      if (timer !== undefined) clearInterval(timer)
+      document.removeEventListener('visibilitychange', sync)
+    }
+  }, [readonly, actions, invalidateSessions, workspace.id, activeSessionId])
+
+  const isChatBusy = isLoading || isDeleting
+  const isSessionLocked = isDeleting || isSwitching
 
   // Auto-mark `human` sessions as seen once the user opens them. Guard with a
   // ref so we only fire once per (session, status) pair — repeated renders or
@@ -546,6 +567,7 @@ export function WorkspaceChatPanel({
   }, [])
 
   // Restore textarea height and cursor position when draft changes (e.g. session switch)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeSessionId is the trigger — re-run on session switch
   useEffect(() => {
     adjustTextareaHeight()
     const el = inputRef.current
@@ -988,6 +1010,9 @@ export function WorkspaceChatPanel({
           )}
 
           {!readonly && <HintBar visible={isLoading} hints={hints} />}
+          {!readonly && waitingOnAgents && !isLoading && (
+            <WaitingOnAgentsNotice count={pendingAgentCalls} />
+          )}
           {!readonly && (
             <form
               onSubmit={handleSubmit}

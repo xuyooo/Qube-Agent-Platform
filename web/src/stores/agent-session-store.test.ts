@@ -111,7 +111,9 @@ describe('createAgentSessionStore', () => {
   describe('switchSession', () => {
     test('switching to a session loads history', async () => {
       const history = [dbMessage(1, 'user', 'hello'), dbMessage(2, 'assistant', 'hi there')]
-      const deps = makeDeps({ api: { getWorkspaceMessages: vi.fn().mockResolvedValue(history) } })
+      const deps = makeDeps({
+        api: { getWorkspaceMessages: vi.fn().mockResolvedValue(history) },
+      })
       const { s } = make('ws-1', deps)
 
       await s.switchSession('session-1')
@@ -127,7 +129,9 @@ describe('createAgentSessionStore', () => {
 
     test('switching to undefined clears messages (new session mode)', async () => {
       const deps = makeDeps({
-        api: { getWorkspaceMessages: vi.fn().mockResolvedValue([dbMessage(1, 'user', 'hi')]) },
+        api: {
+          getWorkspaceMessages: vi.fn().mockResolvedValue([dbMessage(1, 'user', 'hi')]),
+        },
       })
       const { s } = make('ws-1', deps)
 
@@ -208,7 +212,11 @@ describe('createAgentSessionStore', () => {
     })
 
     test('restores lastTurnStats from context', async () => {
-      const stats: ContextGauge = { numTurns: 2, contextTokens: 100, contextWindow: 200 }
+      const stats: ContextGauge = {
+        numTurns: 2,
+        contextTokens: 100,
+        contextWindow: 200,
+      }
       const deps = makeDeps()
       const { s } = make('ws-1', deps)
 
@@ -219,7 +227,9 @@ describe('createAgentSessionStore', () => {
 
     test('sets error on history load failure', async () => {
       const deps = makeDeps({
-        api: { getWorkspaceMessages: vi.fn().mockRejectedValue(new Error('Network error')) },
+        api: {
+          getWorkspaceMessages: vi.fn().mockRejectedValue(new Error('Network error')),
+        },
       })
       const { s } = make('ws-1', deps)
 
@@ -339,7 +349,9 @@ describe('createAgentSessionStore', () => {
       // we already hold consistent state, no need to abort the live stream
       // or refetch history.
       const deps = makeDeps({
-        api: { getWorkspaceMessages: vi.fn().mockResolvedValue([dbMessage(1, 'user', 'hi')]) },
+        api: {
+          getWorkspaceMessages: vi.fn().mockResolvedValue([dbMessage(1, 'user', 'hi')]),
+        },
       })
       const { s } = make('ws-1', deps)
 
@@ -535,7 +547,10 @@ describe('createAgentSessionStore', () => {
       const { s } = make('ws-1', deps)
       await s.switchSession('session-1')
       // Someone else started a turn this tab has not seen yet.
-      getSession.mockResolvedValue({ chat_status: 'agent', pending_message: null })
+      getSession.mockResolvedValue({
+        chat_status: 'agent',
+        pending_message: null,
+      })
       getWorkspaceMessages.mockResolvedValue([dbMessage(1, 'user', 'theirs')])
 
       s.sendMessage('mine')
@@ -605,6 +620,66 @@ describe('createAgentSessionStore', () => {
       expect(s.messages).toEqual([])
     })
 
+    test('queues image-only messages without losing their attachments', async () => {
+      const deps = makeDeps()
+      const { s } = make('ws-1', deps)
+      await s.switchSession('session-1')
+      s.sendMessage('working')
+      const images = [
+        { data: 'one', media_type: 'image/png' },
+        { data: 'two', media_type: 'image/png' },
+      ]
+      s.sendMessage('', images)
+      expect(s.pendingMessage).toEqual({ content: '', images })
+      expect(deps.sse.createAgentChat).toHaveBeenCalledTimes(1)
+    })
+    test('returns image attachments on session_busy and can resend them', () => {
+      const deps = makeDeps()
+      const { s } = make('ws-1', deps)
+      const images = [{ data: 'one', media_type: 'image/png' }]
+      s.sendMessage('', images)
+      vi.mocked(deps.sse.createAgentChat).mock.calls[0][3].onSessionBusy?.('busy')
+      expect(s.returnedDraft).toEqual({ content: '', images })
+      s.sendMessage(s.returnedDraft!.content, s.returnedDraft!.images)
+      expect(deps.sse.createAgentChat).toHaveBeenCalledTimes(2)
+      expect(s.messages[0].blocks).toEqual([{ type: 'image', ...images[0] }])
+    })
+    test('dispatches image-only messages to an off-screen session', () => {
+      const deps = makeDeps()
+      const { s } = make('ws-1', deps)
+      const images = [{ data: 'one', media_type: 'image/png' }]
+      s.sendMessageToSession('other', '', images)
+      expect(deps.sse.createAgentChat).toHaveBeenCalledWith(
+        'ws-1',
+        ' ',
+        'other',
+        expect.any(Object),
+        expect.any(AbortSignal),
+        images,
+      )
+    })
+    test('sends an image-only message with a single-space text', () => {
+      const deps = makeDeps()
+      const { s } = make('ws-1', deps)
+      const images = [{ data: 'base64data', media_type: 'image/png' }]
+
+      s.sendMessage(' ', images)
+
+      expect(deps.sse.createAgentChat).toHaveBeenCalledWith(
+        'ws-1',
+        ' ',
+        undefined,
+        expect.any(Object),
+        expect.any(AbortSignal),
+        images,
+      )
+      expect(s.messages[0]).toMatchObject({
+        role: 'user',
+        content: '',
+        blocks: [{ type: 'image', data: 'base64data', media_type: 'image/png' }],
+      })
+    })
+
     test('SSE session.started updates activeSessionId and skips history reload', async () => {
       const deps = makeDeps({
         sse: {
@@ -661,7 +736,14 @@ describe('createAgentSessionStore', () => {
               kind: 'tool_call',
               role: null,
               status: 'in_progress',
-              content: [{ type: 'tool_call', call_id: 'call-1', name: 'read_file', arguments: '' }],
+              content: [
+                {
+                  type: 'tool_call',
+                  call_id: 'call-1',
+                  name: 'read_file',
+                  arguments: '',
+                },
+              ],
             } as UniversalItem)
             handlers.onItemCompleted?.({
               item_id: 'tc-1',
@@ -688,7 +770,9 @@ describe('createAgentSessionStore', () => {
       const toolBlock = assistant.blocks.find((b) => b.type === 'tool')
       expect(toolBlock).toBeDefined()
       expect(toolBlock!.type === 'tool' && toolBlock!.tool.name).toBe('read_file')
-      expect(toolBlock!.type === 'tool' && toolBlock!.tool.input).toEqual({ path: '/a.ts' })
+      expect(toolBlock!.type === 'tool' && toolBlock!.tool.input).toEqual({
+        path: '/a.ts',
+      })
     })
 
     test('SSE tool_call populates input from start-event args (no completion event)', () => {
@@ -754,7 +838,13 @@ describe('createAgentSessionStore', () => {
               kind: 'tool_result',
               role: 'tool',
               status: 'completed',
-              content: [{ type: 'tool_result', call_id: 'call-1', output: 'file contents here' }],
+              content: [
+                {
+                  type: 'tool_result',
+                  call_id: 'call-1',
+                  output: 'file contents here',
+                },
+              ],
             } as UniversalItem)
           }),
         },
@@ -791,7 +881,11 @@ describe('createAgentSessionStore', () => {
               role: null,
               status: 'in_progress',
               content: [
-                { type: 'tool_call', call_id: 'call-1', name: 'batch_submit_review_chunks' },
+                {
+                  type: 'tool_call',
+                  call_id: 'call-1',
+                  name: 'batch_submit_review_chunks',
+                },
               ],
             } as UniversalItem)
             handlers.onItemCompleted?.({
@@ -948,7 +1042,9 @@ describe('createAgentSessionStore', () => {
     test('keeps the stream alive when the interrupt missed (turn still starting)', async () => {
       const abortSignals: AbortSignal[] = []
       const deps = makeDeps({
-        api: { interruptSession: vi.fn().mockResolvedValue({ success: true, interrupted: false }) },
+        api: {
+          interruptSession: vi.fn().mockResolvedValue({ success: true, interrupted: false }),
+        },
         sse: {
           createAgentChat: vi.fn((_wid, _msg, _sid, _h, signal) => {
             abortSignals.push(signal)
@@ -1046,7 +1142,9 @@ describe('createAgentSessionStore', () => {
 
     test('reuses last assistant message for streaming', async () => {
       const history = [dbMessage(1, 'user', 'hi'), dbMessage(2, 'assistant', 'hello')]
-      const deps = makeDeps({ api: { getWorkspaceMessages: vi.fn().mockResolvedValue(history) } })
+      const deps = makeDeps({
+        api: { getWorkspaceMessages: vi.fn().mockResolvedValue(history) },
+      })
       const { s } = make('ws-1', deps)
       await s.switchSession('session-1')
 
@@ -1059,7 +1157,9 @@ describe('createAgentSessionStore', () => {
 
     test('creates placeholder when last message is from user', async () => {
       const history = [dbMessage(1, 'user', 'hi')]
-      const deps = makeDeps({ api: { getWorkspaceMessages: vi.fn().mockResolvedValue(history) } })
+      const deps = makeDeps({
+        api: { getWorkspaceMessages: vi.fn().mockResolvedValue(history) },
+      })
       const { s } = make('ws-1', deps)
       await s.switchSession('session-1')
 
@@ -1081,7 +1181,10 @@ describe('createAgentSessionStore', () => {
     test('first check after a switch reloads history', async () => {
       const getWorkspaceMessages = vi.fn().mockResolvedValue([dbMessage(1, 'user', 'mine')])
       const deps = makeDeps({
-        api: { getWorkspaceMessages, getSession: vi.fn().mockResolvedValue(idleAt('t1')) },
+        api: {
+          getWorkspaceMessages,
+          getSession: vi.fn().mockResolvedValue(idleAt('t1')),
+        },
       })
       const { s } = make('ws-1', deps)
       await s.switchSession('session-1')
@@ -1100,7 +1203,10 @@ describe('createAgentSessionStore', () => {
     test('first check after this tab was busy reloads history', async () => {
       const getWorkspaceMessages = vi.fn().mockResolvedValue([dbMessage(1, 'user', 'mine')])
       const deps = makeDeps({
-        api: { getWorkspaceMessages, getSession: vi.fn().mockResolvedValue(idleAt('t1')) },
+        api: {
+          getWorkspaceMessages,
+          getSession: vi.fn().mockResolvedValue(idleAt('t1')),
+        },
       })
       const { raw, s } = make('ws-1', deps)
       await s.switchSession('session-1')
@@ -1122,7 +1228,10 @@ describe('createAgentSessionStore', () => {
     test('an unchanged session is not reloaded again', async () => {
       const getWorkspaceMessages = vi.fn().mockResolvedValue([dbMessage(1, 'user', 'mine')])
       const deps = makeDeps({
-        api: { getWorkspaceMessages, getSession: vi.fn().mockResolvedValue(idleAt('t1')) },
+        api: {
+          getWorkspaceMessages,
+          getSession: vi.fn().mockResolvedValue(idleAt('t1')),
+        },
       })
       const { s } = make('ws-1', deps)
       await s.switchSession('session-1')
@@ -1196,7 +1305,10 @@ describe('createAgentSessionStore', () => {
       const deps = makeDeps({
         sse: {
           createAgentChat: vi.fn((_wid, _msg, _sid, handlers: SSEHandlers) => {
-            handlers.onItemDelta?.('item-1', { type: 'text', text: 'partial...' })
+            handlers.onItemDelta?.('item-1', {
+              type: 'text',
+              text: 'partial...',
+            })
             handlers.onItemCompleted?.({
               item_id: 'item-1',
               kind: 'message',

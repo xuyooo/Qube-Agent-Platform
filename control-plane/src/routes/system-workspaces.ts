@@ -4,6 +4,7 @@ import { ensureTokenForSession, mintToken } from '../lib/session-token'
 import { createInterceptedSSEResponse } from '../lib/sse'
 import type { AppEnv } from '../lib/types'
 import { resolveAgentAddress } from '../lib/workspace-address'
+import { chatTurnHooks } from '../services/chat/executeChat'
 import { buildUserMessageBlocks } from '../services/chat/request'
 import { addMessage, getMessagesWithBlocks, insertUserMessageBlocks } from '../services/db/messages'
 import { getSession, listSessionsByCaller, transitionSessionStatus } from '../services/db/sessions'
@@ -169,6 +170,7 @@ systemWorkspaces.post('/:id/chat', async (c) => {
     userImages: requestImages,
     callerUserId: userId, // set on new sessions
     source: 'web',
+    turnHooks: chatTurnHooks(workspace.id),
     // Reconnect factory: if the primary stream dies before `session.ended`,
     // re-open the agent's buffered sink via `/sessions/:id/reconnect`.
     reconnectFactory: async (sid) => {
@@ -207,6 +209,7 @@ function toApiSession(s: any): ApiSession {
     caller_agent: s.caller_agent_name
       ? { name: s.caller_agent_name, slug: s.caller_agent_slug ?? null }
       : null,
+    pending_agent_calls: s.pending_agent_calls ?? 0,
   }
 }
 

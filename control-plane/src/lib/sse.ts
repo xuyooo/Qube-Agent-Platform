@@ -1,5 +1,6 @@
 import { type TurnPlugin, runTurn } from '../../../internal/sse-consumer/src'
 import type { TurnStats, UniversalEvent } from '../../../internal/types/events'
+import { countOpenAgentCalls } from '../services/db/agent-calls'
 import {
   addMessage,
   insertEvent,
@@ -20,7 +21,7 @@ import { notify } from '../services/notifications'
 import { pullWorkspaceUsage } from '../services/usage/pull'
 import { setSseStreamCountProvider, sseStreamDuration } from './metrics'
 import { bindSession as bindSessionToken } from './session-token'
-import { truncateToolOutput } from './truncate-tool-output'
+import { capToolResultEvent, truncateToolOutput } from './truncate-tool-output'
 
 // ── Active SSE stream tracking for client reconnect ──
 
@@ -410,6 +411,26 @@ interface InterceptedSSEOptions {
    * another replica to recover.
    */
   onSessionSettled?: () => void | Promise<void>
+  /** What the turn's dispatcher does as the turn moves on; see `TurnHooks`. */
+  turnHooks: TurnHooks
+}
+
+/**
+ * Follow-up work that belongs to whoever dispatched the turn. This module
+ * intercepts a turn's stream and knows when the turn changes state; starting
+ * further turns is chat dispatch's business, so it is handed in here rather
+ * than reached for.
+ */
+export interface TurnHooks {
+  /**
+   * The turn is over and the session is free for its next one. `reason` is the
+   * `session.ended` reason, or null when the stream was lost before it. Not
+   * called when this process shuts down mid-turn: the turn lives on for
+   * another replica to recover.
+   */
+  afterTurn(sessionId: string, reason: string | null): Promise<void>
+  /** The turn parked on a question to its user. */
+  onInputRequested(sessionId: string): Promise<void>
 }
 
 export function createInterceptedSSEResponse(
@@ -430,6 +451,7 @@ export function createInterceptedSSEResponse(
     replicaId,
     onTurnEnd,
     onSessionSettled,
+    turnHooks,
   } = opts
   if (!response.body) {
     // No stream to intercept — the turn is over before it began. Fire the
@@ -469,8 +491,10 @@ export function createInterceptedSSEResponse(
     queue,
   )
 
-  if (onSessionSettled) {
-    activeStream.onReplaced = () => {
+  let superseded = false
+  activeStream.onReplaced = () => {
+    superseded = true
+    if (onSessionSettled) {
       void Promise.resolve(onSessionSettled()).catch((e) =>
         console.error(`[SSE] session settle failed on replacement ${workspaceId}:`, e),
       )
@@ -495,6 +519,7 @@ export function createInterceptedSSEResponse(
   console.log(`[SSE] Start intercepting ${tag} existingSession=${existingSessionId}`)
 
   const persistPlugin = createPersistMainTurnPlugin({
+    isSuperseded: () => superseded,
     workspaceId,
     userMessageText,
     userImages,
@@ -509,6 +534,7 @@ export function createInterceptedSSEResponse(
     onNewSession,
     replicaId,
     onSessionSettled,
+    onInputRequested: turnHooks.onInputRequested,
   })
   const broadcastPlugin = createBroadcastPlugin({
     workspaceId,
@@ -597,6 +623,7 @@ export function createInterceptedSSEResponse(
       // pod death). Release the admission slot exactly once — before the drain
       // below, whose dispatched follow-up acquires its own slot.
       onTurnEnd?.()
+      if (superseded) return
       // CP is shutting down mid-turn: the turn is still alive on the agent
       // and startup recovery on the next pod takes it from here, so the
       // session is not free.
@@ -606,23 +633,18 @@ export function createInterceptedSSEResponse(
       } catch (e) {
         console.error(`[SSE] session settle failed ${tag}:`, e)
       }
-      // After a cleanly-completed turn, dispatch any follow-up the user
-      // queued mid-turn. This runs once `runTurn` has fully resolved — both
-      // plugins' `onEnd` are done and `activeStreams` is cleaned up — so the
-      // drained turn registers its own stream without racing this teardown,
-      // and after the session is settled, so it finds the session free.
-      // A turn that errored or was interrupted does not drain: the draft is
-      // left in place for the user to decide. Skip while CP is shutting
-      // down — startup recovery on the next pod owns the drain instead.
+      // Hand over to the dispatcher for whatever follows the turn. This runs
+      // once `runTurn` has fully resolved — both plugins' `onEnd` are done and
+      // `activeStreams` is cleaned up — so a turn it starts registers its own
+      // stream without racing this teardown, and after the session is
+      // settled, so it finds the session free. Skip while CP is shutting
+      // down — startup recovery on the next pod owns the follow-up instead.
       const sid = state.sessionId
-      if (!sid || state.endReason !== 'completed' || isDraining()) return
+      if (!sid || isDraining()) return
       try {
-        // Dynamic import: executeChat statically imports this module, so a
-        // static import here would form an initialization cycle.
-        const { drainPendingMessage } = await import('../services/chat/executeChat')
-        await drainPendingMessage(workspaceId, sid)
+        await turnHooks.afterTurn(sid, state.endReason)
       } catch (e) {
-        console.error(`[SSE] pending drain failed ${tag} session=${sid}:`, e)
+        console.error(`[SSE] after-turn hook failed ${tag} session=${sid}:`, e)
       }
     })
 
@@ -700,6 +722,7 @@ export class SerialQueue {
 // ── Persist plugin ──
 
 interface PersistPluginCtx {
+  isSuperseded: () => boolean
   workspaceId: string
   userMessageText: string | null
   userImages?: Array<{ data: string; media_type: string }> | null
@@ -742,6 +765,7 @@ interface PersistPluginCtx {
     blocks: InterceptContentPart[]
   }
   onSessionSettled?: () => void | Promise<void>
+  onInputRequested: TurnHooks['onInputRequested']
 }
 
 function createPersistMainTurnPlugin(ctx: PersistPluginCtx): TurnPlugin {
@@ -1038,10 +1062,17 @@ function createPersistMainTurnPlugin(ctx: PersistPluginCtx): TurnPlugin {
             const muted = await getWorkspaceConfig(workspaceId)
               .then((cfg) => cfg?.muted === true)
               .catch(() => false)
-            await transitionSessionStatus(sessionId, muted ? 'idle' : 'human')
+            // A session still waiting on agent calls it made has not given its
+            // answer yet: their results start a further turn. It settles the
+            // same quiet way until a turn ends with nothing outstanding.
+            const waiting = await countOpenAgentCalls(sessionId)
+              .then((n) => n > 0)
+              .catch(() => false)
+            const quiet = muted || waiting
+            await transitionSessionStatus(sessionId, quiet ? 'idle' : 'human')
             console.log(`[SSE] Stored assistant message ${tag} session=${sessionId}`)
             await ctx.onSessionSettled?.()
-            if (muted) return
+            if (quiet) return
             // Summarize the agent's final answer, not the head of the whole
             // turn. 500 chars keeps the WeChat Work markdown message (2048
             // bytes) under budget for CJK text plus the trailing link.
@@ -1184,6 +1215,7 @@ function createPersistMainTurnPlugin(ctx: PersistPluginCtx): TurnPlugin {
           queue.run(async () => {
             if (state.sessionId) {
               await transitionSessionStatus(state.sessionId, 'human')
+              await ctx.onInputRequested(state.sessionId)
             }
           }, logError('transition to human (question)'))
           break
@@ -1202,7 +1234,7 @@ function createPersistMainTurnPlugin(ctx: PersistPluginCtx): TurnPlugin {
       // waits for the final payload to commit (pending timers wouldn't).
       flushPendingToolResults()
       await queue.flush()
-      if (!state.sessionEndedSeen && state.sessionId) {
+      if (!ctx.isSuperseded() && !state.sessionEndedSeen && state.sessionId) {
         try {
           await transitionSessionStatus(state.sessionId, 'idle')
         } catch (e) {
@@ -1294,7 +1326,7 @@ export function createBroadcastPlugin(ctx: BroadcastPluginCtx): TurnPlugin {
           // output — also re-arms `turnActive` when a turn resumes after a
           // `question.requested` handoff (no fresh `session.started` fires).
           activeStream.turnActive = true
-          emitNow(rawData)
+          emitNow(capToolResultEvent(evt, rawData))
       }
     },
 

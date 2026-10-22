@@ -5,6 +5,6 @@ import { defineConfig } from 'vitest/config'
 // reach out to a cluster by accident.
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', '../internal/sse-consumer/src/read-sse.test.ts'],
   },
 })

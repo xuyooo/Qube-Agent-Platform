@@ -35,6 +35,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
+import { fileInstanceLabel } from './file-instance-label'
 
 /**
  * Resolves the AppDefinition list for a workspace. Built-ins come first;
@@ -207,12 +208,7 @@ export function useWsApps(workspaceId: string | undefined): AppDefinition[] {
       Component: FileApp,
       disabled: notRunning,
       hidden: true,
-      instanceLabel: (p) => {
-        const path = typeof p.viewingPath === 'string' ? p.viewingPath : ''
-        if (!path) return null
-        const stripped = path.endsWith('/') ? path.slice(0, -1) : path
-        return decodeURIComponent(stripped.split('/').pop() || stripped)
-      },
+      instanceLabel: fileInstanceLabel,
     })
 
     // Extensions — user-installed plugin apps (MCP-driven)
