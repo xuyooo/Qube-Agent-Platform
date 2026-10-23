@@ -31,3 +31,7 @@ SDK 构建为 dist/index.js ESM，React/i18next 等宿主依赖保持 external�
 独立宿主安装包后显式 import '@qap/ui-sdk/styles.css'。CSS 包含设计 tokens 与 SDK 源码扫描生成的 Tailwind utilities，不需要扫描 Web 源码。样式带有 Tailwind base reset，宿主应显式决定载入顺序及主题覆盖；可覆盖同名设计变量。不需要安装 QAP Web。
 
 原 web/src/stores/agent-session-store.ts 仅重导出 SDK API；SSE 原路径是配置 SDK 实例的 Host Adapter，不保留第二份解析器或状态机。Host Provider 负责认证、草稿、Plugin Dispatcher、缓存和通知音。没有 Kanban 业务逻辑。
+
+## 多实例与质量门禁
+
+Composer、Question、Waiting 支持 locale；Transcript Provider 使用实例语言副本，不改其他宿主的语言。Web 文件/Agent 查询与内置命令只存在 Host Adapter。SDK 公共入口作为 Knip entry；Web 对 @qap/ui-sdk 的忽略只用于其源码 alias 的依赖识别，SDK 的源文件和公共导出仍单独分析。Composer 的纯函数测试由 Web Vitest 执行，因此 SDK Knip 忽略 vitest 的未列依赖提示。独立宿主使用 npm pack 的 tarball 在系统临时目录安装、类型检查、Vite 构建和 JSDOM 执行，不从 Web 导入源码。CI 增加独立打包宿主任务及 SDK Diff Biome。

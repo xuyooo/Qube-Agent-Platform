@@ -15,4 +15,4 @@ BROWSER_BACKEND 默认 qap；BROWSER_SERVICE_URL 默认 http://qap-browser:3005�
 
 Provider 原始异常体可能含凭据，因此返回统一 MCP isError，不回显服务端错误体。CDP / Live View 和 QAP 下载链接仍包含访问浏览器所必需的会话凭据，延续原有连接语义；不返回 Hosted 平台 API Key。
 
-未修改 Browser Web Panel、原管理 API、services/browser 或数据库。Hosted 浏览器不会出现在原 Web Panel。真实 Hosted tag 行为、Live View、CDP 和下载尚需配置服务后验收；本地单测不能替代外部验收。
+未修改 Browser Web Panel、原管理 API 或数据库；services/browser 只移除已由 Provider 替代且无调用者的 CDP/文件辅助函数，Panel 使用的管理方法保留。Hosted 浏览器不会出现在原 Web Panel。真实 Hosted tag 行为、Live View、CDP 和下载尚需配置服务后验收；本地单测不能替代外部验收。
