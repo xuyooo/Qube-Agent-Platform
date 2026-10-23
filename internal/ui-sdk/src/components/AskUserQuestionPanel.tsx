@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button'
-import type { AskUserRequest } from '@/lib/api/types'
 import { Check } from 'lucide-react'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useSdkTranslation } from '../i18n'
+import type { AskUserRequest } from '../question-types'
+import { Button } from '../ui/button'
 
 // The agent looks each answer up by the question's full text, and reads a
 // multi-select answer as its option labels joined by ", ". Keeping selections
@@ -12,11 +12,13 @@ const ANSWER_SEPARATOR = ', '
 export function AskUserQuestionPanel({
   request,
   onRespond,
+  locale,
 }: {
   request: AskUserRequest
+  locale?: string
   onRespond: (answers: Record<string, string>) => void
 }) {
-  const { t } = useTranslation()
+  const { t } = useSdkTranslation(locale)
   const [selections, setSelections] = useState<Record<string, string[]>>({})
   const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
 

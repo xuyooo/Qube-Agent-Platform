@@ -234,6 +234,107 @@
     },
     "markdown": {
       "systemMessage": "系统消息"
+    },
+    "askUserQuestion": {
+      "actions": {
+        "customReplyPlaceholder": "或者输入自定义回复...",
+        "confirm": "确认"
+      },
+      "hints": {
+        "selectAllThatApply": "可多选"
+      }
+    },
+    "workspaceChat": {
+      "waitingOnAgents": "正在等待 {{count}} 个 Agent，结果返回后会自动继续对话"
+    },
+    "composer": {
+      "placeholders": {
+        "modEnter": "输入消息...（{{modifier}}+Enter）",
+        "enter": "输入消息...（Enter 发送，Shift+Enter 换行）",
+        "touch": "输入消息..."
+      },
+      "actions": {
+        "send": "发送",
+        "sendShortcutModEnter": "发送（{{modifier}}+Enter）",
+        "sendShortcutEnter": "发送（Enter）",
+        "queue": "加入待发",
+        "stop": "停止",
+        "attachImage": "添加图片",
+        "removeAttachment": "移除图片"
+      },
+      "pending": {
+        "label": "待发送",
+        "autoSendHint": "Agent 完成后自动发送",
+        "discard": "清除",
+        "queueHint": "Agent 忙碌中，将加入待发",
+        "unsavedChanges": "有改动",
+        "busyHint": "Agent 忙碌中，发送即加入待发"
+      },
+      "attachmentAlt": "附件",
+      "menu": {
+        "label": "候选项"
+      },
+      "commands": {
+        "loading": "正在加载命令…",
+        "loadFailed": "命令加载失败",
+        "retry": "重试",
+        "types": {
+          "plain": "纯文本",
+          "struct": "模板"
+        },
+        "send": "发送",
+        "cancel": "取消",
+        "close": "关闭"
+      },
+      "voice": {
+        "actions": {
+          "start": "语音输入",
+          "startWithShortcut": "语音输入（{{modifier}}+Shift+M）",
+          "stopAndTranscribe": "停止并转写",
+          "cancel": "取消"
+        },
+        "states": {
+          "listening": "聆听中…",
+          "transcribing": "转写中…"
+        },
+        "errors": {
+          "unsupported": "当前浏览器不支持语音输入。",
+          "permissionDenied": "麦克风权限被拒绝。",
+          "failed": "转写失败"
+        }
+      }
+    }
+  },
+  "session": {
+    "status": {
+      "completed": "已完成",
+      "disconnected": "已断开连接"
+    },
+    "errors": {
+      "cpReconnectFailed": "恢复工作空间连接失败",
+      "sessionBusy": "这个会话里有另一轮对话正在进行，你的消息没有发出。",
+      "deleteFailed": "删除会话失败",
+      "interruptFailed": "中断失败",
+      "interruptNotReady": "当前还无法终止，对话正在准备中，仍在进行，请稍后再试",
+      "loadHistoryFailed": "加载历史记录失败",
+      "reconnectFailed": "恢复连接失败",
+      "respondFailed": "提交回复失败",
+      "respondQuestionFailed": "提交问题回复失败"
+    }
+  },
+  "common": {
+    "errors": {
+      "authProviderRequired": "useAuth 必须在 AuthProvider 内使用",
+      "agentSessionProviderRequired": "useAgentSessionStore 必须在 AgentSessionProvider 内使用",
+      "connectionFailed": "连接失败",
+      "dialogStackProviderRequired": "useDialogStack 必须在 DialogStackProvider 内使用",
+      "noResponseBody": "未收到响应内容",
+      "requestFailed": "请求失败",
+      "sessionExpired": "登录已过期",
+      "sidebarProviderRequired": "useSidebar 必须在 SidebarProvider 内使用",
+      "themeProviderRequired": "useTheme 必须在 ThemeProvider 内使用",
+      "unknown": "未知错误",
+      "fileOverlayProviderRequired": "useFileOverlay 必须在 FileOverlayProvider 内使用"
     }
   }
 }

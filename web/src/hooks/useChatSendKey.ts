@@ -1,4 +1,3 @@
-import { isComposing } from '@/lib/keyboard'
 import { FLEET_PROFILE_ID } from '@/stores/fleet-profile'
 import { useWorkspaceProfile, useWorkspaceProfileStore } from '@/stores/workspace-profile-store'
 import { useCallback } from 'react'
@@ -31,25 +30,4 @@ export function useChatSendKey(): {
   }, [])
 
   return { mode, setMode }
-}
-
-/**
- * Returns true when the given keydown event should submit the chat input
- * under the supplied mode. Always returns false during IME composition so
- * Enter selecting a candidate (e.g. Chinese pinyin) never sends.
- */
-export function shouldSubmitOnKey(
-  e: React.KeyboardEvent | KeyboardEvent,
-  mode: ChatSendKey,
-): boolean {
-  if (e.key !== 'Enter' || isComposing(e)) return false
-
-  const withMod = e.metaKey || e.ctrlKey
-  const withShift = e.shiftKey
-
-  if (mode === 'mod-enter') {
-    return withMod && !withShift
-  }
-  // mode === 'enter': plain Enter sends; Shift+Enter and Cmd/Ctrl+Enter insert newline.
-  return !withMod && !withShift
 }

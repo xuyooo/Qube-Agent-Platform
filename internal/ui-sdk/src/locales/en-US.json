@@ -234,6 +234,108 @@
     },
     "markdown": {
       "systemMessage": "System message"
+    },
+    "askUserQuestion": {
+      "actions": {
+        "customReplyPlaceholder": "Or type a custom reply...",
+        "confirm": "Confirm"
+      },
+      "hints": {
+        "selectAllThatApply": "Select all that apply"
+      }
+    },
+    "workspaceChat": {
+      "waitingOnAgents_one": "Waiting for {{count}} agent — results will continue this conversation automatically",
+      "waitingOnAgents_other": "Waiting for {{count}} agents — results will continue this conversation automatically"
+    },
+    "composer": {
+      "placeholders": {
+        "modEnter": "Message... ({{modifier}}+Enter)",
+        "enter": "Message... (Enter to send, Shift+Enter for newline)",
+        "touch": "Message..."
+      },
+      "actions": {
+        "send": "Send",
+        "sendShortcutModEnter": "Send ({{modifier}}+Enter)",
+        "sendShortcutEnter": "Send (Enter)",
+        "queue": "Queue",
+        "stop": "Stop",
+        "attachImage": "Attach image",
+        "removeAttachment": "Remove image"
+      },
+      "pending": {
+        "label": "Queued",
+        "autoSendHint": "Sends when the agent finishes",
+        "discard": "Discard",
+        "queueHint": "Agent is busy — will be queued",
+        "unsavedChanges": "Unsaved changes",
+        "busyHint": "Agent is busy — send to queue"
+      },
+      "attachmentAlt": "attachment",
+      "menu": {
+        "label": "Suggestions"
+      },
+      "commands": {
+        "loading": "Loading commands…",
+        "loadFailed": "Could not load commands",
+        "retry": "Retry",
+        "types": {
+          "plain": "Plain",
+          "struct": "Struct"
+        },
+        "send": "Send",
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "voice": {
+        "actions": {
+          "start": "Voice input",
+          "startWithShortcut": "Voice input ({{modifier}}+Shift+M)",
+          "stopAndTranscribe": "Stop and transcribe",
+          "cancel": "Cancel"
+        },
+        "states": {
+          "listening": "Listening…",
+          "transcribing": "Transcribing…"
+        },
+        "errors": {
+          "unsupported": "Voice input is not supported in this browser.",
+          "permissionDenied": "Microphone access was denied.",
+          "failed": "Transcription failed"
+        }
+      }
+    }
+  },
+  "session": {
+    "status": {
+      "completed": "completed",
+      "disconnected": "disconnected"
+    },
+    "errors": {
+      "cpReconnectFailed": "CP reconnect failed",
+      "sessionBusy": "Another turn is running in this session. Your message was not sent.",
+      "deleteFailed": "Failed to delete session",
+      "interruptFailed": "Failed to interrupt",
+      "interruptNotReady": "Can't stop yet — the turn is still starting up. It's still running; try again in a moment.",
+      "loadHistoryFailed": "Failed to load history",
+      "reconnectFailed": "Reconnect failed",
+      "respondFailed": "Failed to respond",
+      "respondQuestionFailed": "Failed to respond to question"
+    }
+  },
+  "common": {
+    "errors": {
+      "authProviderRequired": "useAuth must be used within an AuthProvider",
+      "agentSessionProviderRequired": "useAgentSessionStore must be used within AgentSessionProvider",
+      "connectionFailed": "Connection failed",
+      "dialogStackProviderRequired": "useDialogStack must be used within DialogStackProvider",
+      "fileOverlayProviderRequired": "useFileOverlay must be used within FileOverlayProvider",
+      "noResponseBody": "No response body",
+      "requestFailed": "Request failed",
+      "sessionExpired": "Session expired",
+      "sidebarProviderRequired": "useSidebar must be used within a SidebarProvider",
+      "themeProviderRequired": "useTheme must be used within ThemeProvider",
+      "unknown": "Unknown error"
     }
   }
 }

@@ -1,5 +1,4 @@
 import { TranscriptProviders } from '@/components/chat/TranscriptProviders'
-import { VoiceInputButton, type VoiceInputHandle } from '@/components/chat/VoiceInputButton'
 import { AppHeaderButton } from '@/components/shell/windows/AppHeaderButton'
 import { useAppHeaderSlot } from '@/components/shell/windows/AppWindow'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -29,49 +28,49 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
-import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AskUserQuestionPanel } from '@/components/workspace/AskUserQuestionPanel'
-import { useAgentMention, useSlashCommands } from '@/components/workspace/CommandTrigger'
-import { useFileMention } from '@/components/workspace/FileMention'
 import { ShareSessionButton } from '@/components/workspace/ShareSessionButton'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSlotContext } from '@/contexts/SlotContext'
 import { useAgentInfo } from '@/hooks/useAgentInfo'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import { useChatSearch } from '@/hooks/useChatSearch'
-import { shouldSubmitOnKey, useChatSendKey } from '@/hooks/useChatSendKey'
+import { useChatSendKey } from '@/hooks/useChatSendKey'
 import { useSessionSource } from '@/hooks/useSessionSource'
 import { useInvalidateSessions, useSessions } from '@/hooks/useSessions'
 import { useMarkSeen } from '@/hooks/useUnread'
+import { useWorkspaceComposer } from '@/hooks/useWorkspaceComposer'
 import { api } from '@/lib/api/client'
 import type { ChatImageAttachment, Session, Workspace } from '@/lib/api/types'
 import { i18n as appI18n } from '@/lib/i18n'
 import { isCommitEnter } from '@/lib/keyboard'
 import { cleanSessionPreview } from '@/lib/session-utils'
-import { cn } from '@/lib/utils'
 import { useAgentSessionActions, useAgentSessionStore } from '@/stores/AgentSessionContext'
 import type { ChatMessage as ChatMessageType } from '@/stores/agent-session-store'
 import { useComposerInsertRequests } from '@/stores/composer-store'
 import { useDraft } from '@/stores/draft-store'
-import { MessageBubble, TranscriptI18nProvider, TurnStatsBar } from '@qap/ui-sdk'
+import {
+  AskUserQuestionPanel,
+  Composer,
+  type ComposerHandle,
+  MessageBubble,
+  TranscriptI18nProvider,
+  TurnStatsBar,
+  WaitingOnAgentsNotice,
+  useRemoteTurnSync,
+} from '@qap/ui-sdk'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   Bot,
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  Hourglass,
-  ImagePlus,
-  ListPlus,
   Minus,
   MoreHorizontal,
   Pencil,
   Plus,
   Search,
-  Send,
   Shrink,
-  Square,
   SquarePen,
   Trash2,
   X,
@@ -154,43 +153,6 @@ function formatSessionLabel(
   return time ? `${label} · ${time}` : label
 }
 
-function VoiceCapturePanel({ state }: { state: 'recording' | 'transcribing' }) {
-  const { t } = useTranslation()
-  const label =
-    state === 'recording'
-      ? t('components.voiceInput.states.listening')
-      : t('components.voiceInput.states.transcribing')
-  // Staggered offsets give the equalizer an organic, asymmetric pulse.
-  const eqDelays = ['-0.4s', '-0.1s', '-0.7s', '-0.25s', '-0.55s']
-
-  return (
-    <output
-      aria-live="polite"
-      className={cn(
-        // Overlay fills the Textarea's box exactly so swapping is height-stable.
-        'absolute inset-0 flex items-center gap-2.5 px-3 text-xs',
-        'bg-gradient-to-br from-primary/[0.18] via-info/[0.12] to-primary/[0.06]',
-      )}
-    >
-      {/* Soft radial highlight in the upper-right — gives the gradient depth without animation. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_-30%,oklch(var(--info)/0.22),transparent_55%)]"
-      />
-      <div aria-hidden className="relative flex h-4 items-center gap-[3px]">
-        {eqDelays.map((delay, i) => (
-          <span
-            key={i}
-            style={{ animationDelay: delay }}
-            className="block h-3 w-[2px] origin-center rounded-full bg-primary/80 animate-voice-eq"
-          />
-        ))}
-      </div>
-      <span className="relative font-medium tracking-wide text-foreground/85">{label}</span>
-    </output>
-  )
-}
-
 function HintBar({ visible, hints }: { visible: boolean; hints: string[] }) {
   const [index, setIndex] = useState(0)
   const [fade, setFade] = useState(true)
@@ -226,16 +188,6 @@ function HintBar({ visible, hints }: { visible: boolean; hints: string[] }) {
   )
 }
 
-function WaitingOnAgentsNotice({ count }: { count: number }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center justify-center gap-1.5 px-3 pb-1 text-tiny text-muted-foreground">
-      <span className="inline-flex h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-info" />
-      <span>{t('components.workspaceChat.waitingOnAgents', { count })}</span>
-    </div>
-  )
-}
-
 interface WorkspaceChatPanelProps {
   workspace: Workspace
   /**
@@ -262,7 +214,6 @@ interface WorkspaceChatPanelProps {
 }
 
 /** How often a shared workspace's open session checks for turns started elsewhere. */
-const REMOTE_TURN_POLL_MS = 5000
 
 export function WorkspaceChatPanel({
   workspace,
@@ -308,28 +259,15 @@ export function WorkspaceChatPanel({
   const { data: sessions = [], fetchNextPage, hasNextPage } = useSessions(workspace.id)
   const invalidateSessions = useInvalidateSessions()
   const markSeen = useMarkSeen()
-  const activeSession = sessions.find((session) => session.id === activeSessionId)
-  const pendingAgentCalls = activeSession?.pending_agent_calls ?? 0
+  const pendingAgentCalls = useAgentSessionStore((state) => state.pendingAgentCalls)
   const waitingOnAgents = pendingAgentCalls > 0
 
-  // Follow server-started turns, including a delivery that finished before the
-  // next poll, or a child that resumed after human input. Poll the active
-  // session even when its previous pending count was zero.
-  useEffect(() => {
-    if (readonly || !activeSessionId) return
-    const sync = () => {
-      if (document.visibilityState !== 'visible') return
-      void actions.syncRemoteTurn()
-      invalidateSessions(workspace.id)
-    }
-    sync()
-    document.addEventListener('visibilitychange', sync)
-    const timer = setInterval(sync, REMOTE_TURN_POLL_MS)
-    return () => {
-      if (timer !== undefined) clearInterval(timer)
-      document.removeEventListener('visibilitychange', sync)
-    }
-  }, [readonly, actions, invalidateSessions, workspace.id, activeSessionId])
+  useRemoteTurnSync({
+    enabled: !readonly,
+    sessionId: activeSessionId,
+    sync: actions.syncRemoteTurn,
+    onSync: () => invalidateSessions(workspace.id),
+  })
 
   const isChatBusy = isLoading || isDeleting
   const isSessionLocked = isDeleting || isSwitching
@@ -368,16 +306,23 @@ export function WorkspaceChatPanel({
   // Whether the composer text matches what's currently queued on the session.
   // Drives the pending marker and the "queue" button: a submit only has work
   // to do when the composer differs from the queued draft.
-  const isQueued = !!pendingMessage && input === pendingMessage.content
   const isQueuedDirty = !!pendingMessage && input !== pendingMessage.content
-  const [attachedImages, setAttachedImages] = useState<ChatImageAttachment[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const voiceInputRef = useRef<VoiceInputHandle>(null)
-  const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'transcribing'>('idle')
-  const isVoiceActive = voiceState !== 'idle'
+  const [imageDrafts, setImageDrafts] = useState<Record<string, ChatImageAttachment[]>>({})
+  const imageDraftKey = activeSessionId ?? 'new'
+  const attachedImages = imageDrafts[imageDraftKey] ?? []
+  const setAttachedImages = useCallback(
+    (next: ChatImageAttachment[] | ((current: ChatImageAttachment[]) => ChatImageAttachment[])) => {
+      setImageDrafts((prev) => ({
+        ...prev,
+        [imageDraftKey]: typeof next === 'function' ? next(prev[imageDraftKey] ?? []) : next,
+      }))
+    },
+    [imageDraftKey],
+  )
+  const composerRef = useRef<ComposerHandle>(null)
   const { agentInfo } = useAgentInfo(workspace.id)
   const agentType = agentInfo?.agent_type ?? 'claude-code'
+  const composerSources = useWorkspaceComposer(workspace.id, agentType)
   const headerSlot = useAppHeaderSlot()
   const slotCtx = useSlotContext()
   const sessionsAppOpened = useMemo(
@@ -435,21 +380,6 @@ export function WorkspaceChatPanel({
     })
   }, [])
 
-  const addImageFiles = useCallback((files: FileList | File[]) => {
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) continue
-      const reader = new FileReader()
-      reader.onload = () => {
-        const base64 = (reader.result as string).split(',')[1]
-        if (base64) {
-          setAttachedImages((prev) => [...prev, { data: base64, media_type: file.type }])
-        }
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [])
-
-  // ── Scroll ──
   const {
     scrollRef,
     showScrollBtn,
@@ -498,94 +428,44 @@ export function WorkspaceChatPanel({
     getItemKey: (index) => messages[index]?.id ?? index,
   })
 
-  const {
-    slashVisible,
-    menu: slashMenu,
-    structDialog: slashStructDialog,
-  } = useSlashCommands({
-    workspaceId: workspace.id,
-    input,
-    setInput,
-    sendMessage: (msg) => {
-      actions.sendMessage(msg)
-      markPendingScroll()
-    },
-    inputRef: inputRef as React.RefObject<HTMLElement | null>,
-  })
-
-  const { mentionVisible, mentionMenu } = useAgentMention({
-    workspaceId: workspace.id,
-    input,
-    setInput,
-    inputRef: inputRef as React.RefObject<HTMLElement | null>,
-  })
-
-  const { fileMentionVisible, fileMentionMenu } = useFileMention({
-    workspaceId: workspace.id,
-    input,
-    setInput,
-    inputRef: inputRef as React.RefObject<HTMLElement | null>,
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (slashVisible || mentionVisible || fileMentionVisible) return
-    if (isDeleting) return
-    // Mid-turn, a submit promotes the composer text to the session's queued
-    // follow-up — the text stays in the box (now marked pending) and cp drains
-    // it when the turn ends. Any attached images ride along into the queued
-    // payload and the thumbnails are cleared, matching the immediate-send path
-    // (the agent rejects an empty message, so an image-only queue carries a
-    // single space, just like immediate send).
+  const handleComposerSubmit = (text: string, images: ChatImageAttachment[]) => {
+    if (isDeleting || (!text.trim() && images.length === 0)) return
+    const raw = text.trim() ? text : ' '
     if (isLoading) {
-      const hasImages = attachedImages.length > 0
-      if (input.trim() || hasImages) {
-        const text = input.trim() ? input : hasImages ? ' ' : input
-        actions.updatePendingMessage(text, hasImages ? attachedImages : undefined)
-        setAttachedImages([])
-      }
+      actions.updatePendingMessage(raw, images.length ? images : undefined)
+      setAttachedImages([])
       return
     }
-    if (input.trim() || attachedImages.length > 0) {
-      const raw = input || ' '
-      // transformFirstMessage is for a new session's first message only.
-      const text = !activeSessionId && transformFirstMessage ? transformFirstMessage(raw) : raw
-      actions.sendMessage(text, attachedImages.length > 0 ? attachedImages : undefined)
-      clearDraft()
-      setAttachedImages([])
-      if (inputRef.current) inputRef.current.style.height = 'auto'
-      markPendingScroll()
-    }
+    const message = !activeSessionId && transformFirstMessage ? transformFirstMessage(raw) : raw
+    actions.sendMessage(message, images.length ? images : undefined)
+    clearDraft()
+    setAttachedImages([])
+    markPendingScroll()
   }
 
-  const adjustTextareaHeight = useCallback(() => {
-    const el = inputRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    const max = window.innerHeight * 0.5
-    el.style.height = `${Math.min(el.scrollHeight, max)}px`
-  }, [])
+  // Control commands must not consume unrelated text/images or add Teamwork context.
+  const sendCommand = (text: string) => {
+    if (isDeleting) return
+    actions.sendMessage(text)
+    markPendingScroll()
+  }
 
-  // Restore textarea height and cursor position when draft changes (e.g. session switch)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: activeSessionId is the trigger — re-run on session switch
+  const runSlashCommand = (text: string) => {
+    if (isDeleting) return
+    sendCommand(text)
+    // Keep the queued command visible as its actual payload, not the slash alias.
+    if (isLoading) setInput(text)
+    else clearDraft()
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: restore focus on session switch
   useEffect(() => {
-    adjustTextareaHeight()
-    const el = inputRef.current
-    if (!el) return
-    el.focus()
-    el.setSelectionRange(el.value.length, el.value.length)
-  }, [activeSessionId, adjustTextareaHeight])
-
-  // Let panels outside the chat (e.g. the file browser's "Add to chat" action)
-  // splice an `@file/` reference in at the composer's caret. Declared after the
-  // restore effect above so that, on a fresh mount, the caret is already at the
-  // draft's end before an insert runs.
+    composerRef.current?.focus({ caret: 'end' })
+  }, [activeSessionId])
   useComposerInsertRequests({
     workspaceId: workspace.id,
     enabled: !readonly,
-    inputRef,
-    setInput,
-    onInserted: adjustTextareaHeight,
+    insert: (text) => composerRef.current?.insertAtCaret(text),
   })
 
   // When the session goes idle with a queued message still attached (the turn
@@ -607,49 +487,7 @@ export function WorkspaceChatPanel({
       setAttachedImages((current) => (current.length > 0 ? current : returnedDraft.images))
     }
     actions.clearReturnedDraft()
-  }, [returnedDraft, input, setInput, actions])
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (shouldSubmitOnKey(e, chatSendKeyMode)) {
-      e.preventDefault()
-      handleSubmit(e)
-    }
-  }
-
-  // Global voice toggle: ⌘/Ctrl + Shift + M from anywhere on the page.
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.shiftKey && (e.metaKey || e.ctrlKey) && (e.key === 'M' || e.key === 'm')) {
-        e.preventDefault()
-        if (voiceState === 'recording') {
-          voiceInputRef.current?.stop(false)
-        } else if (voiceState === 'idle' && !isChatBusy) {
-          voiceInputRef.current?.start()
-        }
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [voiceState, isChatBusy])
-
-  const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      const items = e.clipboardData?.items
-      if (!items) return
-      const imageFiles: File[] = []
-      for (const item of Array.from(items)) {
-        if (item.type.startsWith('image/')) {
-          const file = item.getAsFile()
-          if (file) imageFiles.push(file)
-        }
-      }
-      if (imageFiles.length > 0) {
-        e.preventDefault()
-        addImageFiles(imageFiles)
-      }
-    },
-    [addImageFiles],
-  )
+  }, [returnedDraft, input, setInput, actions, setAttachedImages])
 
   const turnCount = useMemo(
     () =>
@@ -1006,267 +844,71 @@ export function WorkspaceChatPanel({
           )}
 
           {pendingQuestion && (
-            <AskUserQuestionPanel request={pendingQuestion} onRespond={actions.respondToQuestion} />
+            <AskUserQuestionPanel
+              key={pendingQuestion.requestId}
+              locale={appI18n.language}
+              request={pendingQuestion}
+              onRespond={actions.respondToQuestion}
+            />
           )}
 
           {!readonly && <HintBar visible={isLoading} hints={hints} />}
           {!readonly && waitingOnAgents && !isLoading && (
-            <WaitingOnAgentsNotice count={pendingAgentCalls} />
+            <WaitingOnAgentsNotice locale={appI18n.language} count={pendingAgentCalls} />
           )}
           {!readonly && (
-            <form
-              onSubmit={handleSubmit}
+            <Composer
+              key={activeSessionId ?? 'new'}
+              ref={composerRef}
               className="shrink-0 border-t border-foreground/[0.06] p-3"
-            >
-              {attachedImages.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pb-2">
-                  {attachedImages.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={`data:${img.media_type};base64,${img.data}`}
-                        alt={t('components.workspaceChat.attachmentAlt')}
-                        className="h-14 w-14 rounded border border-foreground/[0.08] object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setAttachedImages((prev) => prev.filter((_, j) => j !== i))}
-                        className="absolute -top-1.5 -right-1.5 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-mini"
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="relative">
-                {slashMenu}
-                {mentionMenu}
-                {fileMentionMenu}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) addImageFiles(e.target.files)
-                    e.target.value = ''
-                  }}
-                />
-                <div
-                  className={cn(
-                    'relative overflow-hidden rounded-lg border border-foreground/[0.08] bg-background/40 transition-colors',
-                    'focus-within:border-foreground/[0.20] focus-within:bg-background',
-                    // Writing line: a hairline of primary at the bottom edge — fades in on focus,
-                    // and stays steadily lit while the assistant streams (no animation).
-                    'after:pointer-events-none after:absolute after:inset-x-3 after:bottom-0 after:h-px after:rounded-full',
-                    'after:bg-gradient-to-r after:from-transparent after:via-primary/70 after:to-transparent',
-                    'after:opacity-0 after:transition-opacity after:duration-300 focus-within:after:opacity-100',
-                    isLoading && 'after:opacity-100',
-                    // In-pending: the whole composer surface signals the queued
-                    // state — primary tint + solid primary border, held through
-                    // focus so it doesn't flicker back to neutral.
-                    pendingMessage &&
-                      'border-primary/50 bg-primary/[0.06] focus-within:border-primary/60 focus-within:bg-primary/[0.06]',
-                  )}
-                >
-                  {isLoading && (
-                    <div
-                      className={cn(
-                        // Fixed height so the strip doesn't grow when it swaps
-                        // from the plain hint to the taller pending pill + ✕.
-                        'flex h-7 items-center gap-1.5 border-b px-3',
-                        pendingMessage ? 'border-primary/15' : 'border-foreground/[0.06]',
-                      )}
+              value={input}
+              onChange={setInput}
+              onSubmit={handleComposerSubmit}
+              onRunCommand={runSlashCommand}
+              onStop={actions.stop}
+              running={isLoading}
+              disabled={isDeleting}
+              sendKey={chatSendKeyMode}
+              locale={appI18n.language}
+              pending={
+                pendingMessage
+                  ? {
+                      dirty: isQueuedDirty || attachedImages.length > 0,
+                      onDiscard: () => {
+                        actions.clearPendingMessage()
+                        clearDraft()
+                      },
+                    }
+                  : null
+              }
+              attachments={{
+                items: attachedImages,
+                onAdd: (items) => setAttachedImages((prev) => [...prev, ...items]),
+                onRemove: (index) =>
+                  setAttachedImages((prev) => prev.filter((_, i) => i !== index)),
+              }}
+              {...composerSources}
+              toolbar={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      disabled={isChatBusy}
+                      onClick={() => sendCommand('/compact')}
                     >
-                      {pendingMessage ? (
-                        <>
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-1.5 py-0.5 text-mini font-medium text-primary-foreground">
-                            <Hourglass className="h-2.5 w-2.5" />
-                            {t('components.workspaceChat.pending.label')}
-                          </span>
-                          <span className="truncate text-mini text-muted-foreground">
-                            {isQueuedDirty
-                              ? t('components.workspaceChat.pending.unsavedChanges')
-                              : t('components.workspaceChat.pending.autoSendHint')}
-                          </span>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="ml-auto h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground"
-                                onClick={actions.clearPendingMessage}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t('components.workspaceChat.pending.clear')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </>
-                      ) : (
-                        <>
-                          <Hourglass className="h-3 w-3 shrink-0 text-muted-foreground" />
-                          <span className="truncate text-mini text-muted-foreground">
-                            {t('components.workspaceChat.pending.composerHint')}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                  <div className="relative">
-                    <Textarea
-                      ref={inputRef}
-                      value={input}
-                      onChange={(e) => {
-                        setInput(e.target.value)
-                        adjustTextareaHeight()
-                      }}
-                      onKeyDown={handleKeyDown}
-                      onPaste={handlePaste}
-                      readOnly={isVoiceActive}
-                      placeholder={
-                        chatSendKeyMode === 'enter'
-                          ? t('components.workspaceChat.placeholders.messageInputEnter')
-                          : t('components.workspaceChat.placeholders.messageInput', {
-                              modifier: navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl',
-                            })
-                      }
-                      className={cn(
-                        'resize-none text-xs min-h-0 border-0 bg-transparent px-3 pt-2 pb-1 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 overflow-y-auto max-h-[50vh] caret-primary',
-                        isVoiceActive && 'invisible pointer-events-none',
-                      )}
-                      rows={1}
-                    />
-                    {isVoiceActive && <VoiceCapturePanel state={voiceState} />}
-                  </div>
-                  <div className="flex items-center justify-between gap-2 px-2 pb-2 pt-0">
-                    <div className="flex items-center gap-1">
-                      {!isLoading && (
-                        <>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={isChatBusy}
-                                onClick={() => fileInputRef.current?.click()}
-                              >
-                                <ImagePlus className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t('components.workspaceChat.actions.attachImage')}
-                            </TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={isChatBusy}
-                                onClick={() => {
-                                  actions.sendMessage('/compact')
-                                  markPendingScroll()
-                                }}
-                              >
-                                <Shrink className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t('components.workspaceChat.actions.compactConversation')}
-                            </TooltipContent>
-                          </Tooltip>
-                          <VoiceInputButton
-                            ref={voiceInputRef}
-                            disabled={isChatBusy}
-                            onStateChange={setVoiceState}
-                            onTranscribed={(text) => {
-                              setInput(input ? `${input} ${text}` : text)
-                              requestAnimationFrame(() => {
-                                inputRef.current?.focus()
-                                adjustTextareaHeight()
-                              })
-                            }}
-                          />
-                        </>
-                      )}
-                    </div>
-                    {isLoading ? (
-                      <span
-                        key="stop"
-                        className="inline-flex items-center gap-1 animate-in fade-in zoom-in-90 duration-200"
-                      >
-                        {input.trim() && !isQueued && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button type="submit" size="sm" className="h-7 px-3">
-                                <ListPlus className="h-3.5 w-3.5" />
-                                {t('components.workspaceChat.actions.queue')}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t('components.workspaceChat.pending.queueHint')}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={actions.stop}
-                            >
-                              <Square className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t('components.workspaceChat.actions.stop')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </span>
-                    ) : (
-                      <span
-                        key="send"
-                        className="inline-flex animate-in fade-in zoom-in-90 duration-200"
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="submit"
-                              size="sm"
-                              className="h-7 px-3"
-                              disabled={!input.trim() || isChatBusy}
-                            >
-                              <Send className="h-3.5 w-3.5" />
-                              {t('components.workspaceChat.actions.send')}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t(
-                              chatSendKeyMode === 'enter'
-                                ? 'components.workspaceChat.actions.sendShortcutEnter'
-                                : 'components.workspaceChat.actions.sendShortcut',
-                            )}
-                          </TooltipContent>
-                        </Tooltip>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </form>
+                      <Shrink className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('components.workspaceChat.actions.compactConversation')}
+                  </TooltipContent>
+                </Tooltip>
+              }
+            />
           )}
-          {slashStructDialog}
         </div>
         <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
           <DialogContent className="sm:max-w-sm">

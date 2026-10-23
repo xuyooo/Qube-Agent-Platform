@@ -105,10 +105,36 @@ jobs:
           fi
           echo "$changed" | tr '\n' '\0' | xargs -0 npx biome check --no-errors-on-unmatched
 
+      - name: Lint changed UI SDK files
+        if: github.event_name == 'pull_request' && matrix.ws == 'web'
+        working-directory: web
+        run: |
+          changed=$(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- ../internal/ui-sdk | grep -E '\.(ts|tsx|js|jsx|json|jsonc|css|mjs|cjs)$' || true)
+          if [ -n "$changed" ]; then
+            echo "$changed" | sed 's|^|../|' | tr '\n' '\0' | xargs -0 npx biome check --config-path=../biome.base.json --no-errors-on-unmatched
+          fi
+
       - name: Unit tests
         if: matrix.test != ''
         working-directory: ${{ matrix.ws }}
         run: ${{ matrix.test }}
+
+  sdk:
+    name: packed UI SDK host
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: internal/ui-sdk/package-lock.json
+      - run: npm ci
+        working-directory: internal/ui-sdk
+      - run: npm run build
+        working-directory: internal/ui-sdk
+      - run: npm run test:host
+        working-directory: internal/ui-sdk
 
   # The qap-api skill is generated from the control plane's route definitions.
   # Regenerate it here and fail when the result differs from what is committed,
@@ -171,7 +197,7 @@ jobs:
       - name: Install
         run: |
           npm ci
-          for ws in control-plane web browser-service channel-gateway sandbox-service scheduler skills-content-service env-runner-k8s docs-site; do
+          for ws in control-plane web browser-service channel-gateway sandbox-service scheduler skills-content-service env-runner-k8s docs-site internal/ui-sdk; do
             # web needs --legacy-peer-deps for @base-ui/react's date-fns peer (see check job).
             if [ "$ws" = "web" ]; then (cd "$ws" && npm ci --legacy-peer-deps); else (cd "$ws" && npm ci); fi
           done

@@ -1,10 +1,10 @@
-import { Markdown } from '../markdown'
-import { Spinner } from '../ui/spinner'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
-import type { ChatMessage, ContentBlock, ToolCall } from '../types'
 import { ClipboardCheck, Copy, X } from 'lucide-react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Markdown } from '../markdown'
+import type { ChatMessage, ContentBlock, ToolCall } from '../types'
+import { Spinner } from '../ui/spinner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { Foldable } from './Foldable'
 import { ToolCallGroup } from './ToolCallGroup'
 
@@ -21,7 +21,12 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
     >
       <button
         type="button"
@@ -34,7 +39,6 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
         src={src}
         alt={alt}
         className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       />
     </div>
   )
@@ -117,6 +121,7 @@ function MessageBubbleImpl({
   const [copied, setCopied] = useState(false)
   const [zoomedSrc, setZoomedSrc] = useState<string | null>(null)
   const segments = useMemo(() => toSegments(message.blocks), [message.blocks])
+  const lastToolsIdx = segments.map((segment) => segment.type).lastIndexOf('tools')
   const wholeTextIdx =
     isLatest || message.isStreaming ? message.blocks.map((b) => b.type).lastIndexOf('text') : -1
 
@@ -143,36 +148,41 @@ function MessageBubbleImpl({
         </div>
       ) : isUser ? (
         <>
-        {showAuthor && message.author && (
-          <div className="mb-1 px-1 text-mini text-muted-foreground">{message.author.name}</div>
-        )}
-        <div className="max-w-[70%] overflow-hidden break-words rounded-2xl rounded-tr-md bg-primary/90 px-3.5 py-2 text-primary-foreground shadow-sm">
-          <Foldable
-            foldKey={`${message.id}:content`}
-            disabled={expandAll}
-            toggleClassName="text-primary-foreground/80 hover:text-primary-foreground"
-          >
-            <div className="whitespace-pre-wrap break-words text-[1em]">{message.content}</div>
-          </Foldable>
-          {message.blocks
-            .filter((b) => b.type === 'image')
-            .map((block, idx) =>
-              block.type === 'image' ? (
-                <img
-                  key={idx}
-                  src={imageSrc(block)}
-                  loading="lazy"
-                  alt={t('components.chat.messageBubble.alts.attachment')}
-                  className="mt-2 max-w-full max-h-48 cursor-zoom-in rounded-md border border-primary-foreground/20"
-                  onClick={() => setZoomedSrc(imageSrc(block))}
-                />
-              ) : null,
-            )}
-        </div>
+          {showAuthor && message.author && (
+            <div className="mb-1 px-1 text-mini text-muted-foreground">{message.author.name}</div>
+          )}
+          <div className="max-w-[70%] overflow-hidden break-words rounded-2xl rounded-tr-md bg-primary/90 px-3.5 py-2 text-primary-foreground shadow-sm">
+            <Foldable
+              foldKey={`${message.id}:content`}
+              disabled={expandAll}
+              toggleClassName="text-primary-foreground/80 hover:text-primary-foreground"
+            >
+              <div className="whitespace-pre-wrap break-words text-[1em]">{message.content}</div>
+            </Foldable>
+            {message.blocks
+              .filter((b) => b.type === 'image')
+              .map((block, idx) =>
+                block.type === 'image' ? (
+                  <button
+                    type="button"
+                    key={`${message.id}:image:${idx}`}
+                    className="block max-w-full"
+                    onClick={() => setZoomedSrc(imageSrc(block))}
+                  >
+                    <img
+                      src={imageSrc(block)}
+                      loading="lazy"
+                      alt={t('components.chat.messageBubble.alts.attachment')}
+                      className="mt-2 max-w-full max-h-48 cursor-zoom-in rounded-md border border-primary-foreground/20"
+                    />
+                  </button>
+                ) : null,
+              )}
+          </div>
         </>
       ) : (
         <div className="w-full min-w-0 break-words">
-          {segments.map((segment) => {
+          {segments.map((segment, segmentIdx) => {
             if (segment.type === 'tools') {
               return (
                 <ToolCallGroup
@@ -180,6 +190,7 @@ function MessageBubbleImpl({
                   tools={segment.tools}
                   foldKey={message.id}
                   expandAll={expandAll}
+                  followed={message.isStreaming || segmentIdx !== lastToolsIdx}
                 />
               )
             }
@@ -226,14 +237,19 @@ function MessageBubbleImpl({
                 {block.detail && <span className="opacity-70">{block.detail}</span>}
               </div>
             ) : (
-              <img
+              <button
+                type="button"
                 key={idx}
-                src={imageSrc(block)}
-                loading="lazy"
-                alt={t('components.chat.messageBubble.alts.content')}
-                className="my-2 max-w-full max-h-96 cursor-zoom-in rounded-md border border-foreground/[0.08]"
+                className="block max-w-full"
                 onClick={() => setZoomedSrc(imageSrc(block))}
-              />
+              >
+                <img
+                  src={imageSrc(block)}
+                  loading="lazy"
+                  alt={t('components.chat.messageBubble.alts.content')}
+                  className="my-2 max-w-full max-h-96 cursor-zoom-in rounded-md border border-foreground/[0.08]"
+                />
+              </button>
             )
           })}
           {message.isStreaming && message.blocks.length === 0 && (

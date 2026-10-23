@@ -51,3 +51,42 @@ export {
   unwrapMcpInput,
   jsonPreview,
 } from './tool-renderers/types'
+
+export { AskUserQuestionPanel } from './components/AskUserQuestionPanel'
+export { WaitingOnAgentsNotice } from './components/WaitingOnAgentsNotice'
+export type { AskUserRequest, AskUserQuestionItem, AskUserQuestionOption } from './question-types'
+
+export { Composer } from './composer/Composer'
+export type {
+  ComposerProps,
+  ComposerHandle,
+  ComposerCommand,
+  ComposerTrigger,
+  ComposerTriggerItem,
+  ComposerVoice,
+  ComposerImageAttachment,
+  ComposerAttachments,
+  ComposerPending,
+} from './composer/types'
+export type { ComposerSendKey } from './composer/keys'
+
+export { createAgentSessionStore } from './session/agent-session-store'
+export type {
+  AgentSessionApi,
+  AgentSessionSSE,
+  AgentSessionEffects,
+  AgentSessionDeps,
+  AgentSessionSlice,
+  SSEHandlers,
+} from './session/agent-session-store'
+export { createSessionSSEClient } from './session/sse'
+export type { SessionSSEClientOptions, ContentDelta, UniversalItem } from './session/sse'
+export type {
+  SessionDrafts,
+  SessionToolResults,
+  ChatImageAttachment,
+  PendingMessage,
+  ContextGauge,
+  TurnStats,
+} from './session/types'
+export { useRemoteTurnSync } from './session/use-remote-turn-sync'

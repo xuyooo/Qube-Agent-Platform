@@ -438,6 +438,7 @@ class ApiClient {
     last_active_at: string
     preview: string
     pending_message: PendingMessage | null
+    pending_agent_calls: number
   }> {
     return this.request(`/workspaces/${workspaceId}/sessions/${sessionId}`)
   }

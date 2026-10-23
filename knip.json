@@ -1,9 +1,21 @@
 {
   "workspaces": {
     "control-plane": {
-      "entry": ["scripts/*.ts", "src/services/db/mcp-catalog.ts", "e2e/global-setup.ts", "e2e/setup.ts"],
-      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "e2e/**/*.ts"],
-      "ignoreDependencies": ["tsx", "multiplex"]
+      "entry": [
+        "scripts/*.ts",
+        "src/services/db/mcp-catalog.ts",
+        "e2e/global-setup.ts",
+        "e2e/setup.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.ts",
+        "e2e/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "tsx",
+        "multiplex"
+      ]
     },
     "web": {
       "entry": [
@@ -11,27 +23,47 @@
         "src/components/workspace/file-preview/extend/**/*.{ts,tsx}",
         "src/**/*.test.{ts,tsx}"
       ],
-      "project": ["src/**/*.{ts,tsx,mdx}"],
-      "ignoreDependencies": ["@qap/theme"]
+      "project": [
+        "src/**/*.{ts,tsx,mdx}"
+      ],
+      "ignoreDependencies": [
+        "@qap/theme",
+        "@qap/ui-sdk"
+      ]
     },
     "browser-service": {
-      "project": ["src/**/*.ts"]
+      "project": [
+        "src/**/*.ts"
+      ]
     },
     "channel-gateway": {
-      "project": ["src/**/*.ts"]
+      "project": [
+        "src/**/*.ts"
+      ]
     },
     "sandbox-service": {
-      "project": ["src/**/*.ts"]
+      "project": [
+        "src/**/*.ts"
+      ]
     },
     "scheduler": {
-      "project": ["src/**/*.ts"]
+      "project": [
+        "src/**/*.ts"
+      ]
     },
     "env-runner-k8s": {
-      "project": ["src/**/*.ts"],
-      "ignoreDependencies": ["@kubernetes/client-node", "multiplex"]
+      "project": [
+        "src/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@kubernetes/client-node",
+        "multiplex"
+      ]
     },
     "skills-content-service": {
-      "project": ["src/**/*.ts"]
+      "project": [
+        "src/**/*.ts"
+      ]
     },
     "docs-site": {
       "entry": [
@@ -39,13 +71,46 @@
         "src/content/**/*.{md,mdx}",
         "src/components/**/*.{astro,ts,tsx}"
       ],
-      "project": ["src/**/*.{ts,tsx,astro,mjs}"]
+      "project": [
+        "src/**/*.{ts,tsx,astro,mjs}"
+      ]
+    },
+    "internal/ui-sdk": {
+      "entry": [
+        "src/index.ts",
+        "scripts/*.mjs",
+        "tailwind.config.cjs"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/*.mjs"
+      ],
+      "ignoreDependencies": [
+        "vitest"
+      ]
     }
   },
   "ignore": [
     "agents/**",
-    "internal/**",
-    "packages/**"
+    "packages/**",
+    "internal/acp-adapter/**",
+    "internal/agent-skills/**",
+    "internal/agent-usage/**",
+    "internal/client/**",
+    "internal/dsh-adapter/**",
+    "internal/env-runner-core/**",
+    "internal/env-tunnel/**",
+    "internal/k8s-provider/**",
+    "internal/mcp-forward/**",
+    "internal/oauth-client/**",
+    "internal/platform-prompt/**",
+    "internal/sse-consumer/**",
+    "internal/theme/**",
+    "internal/titlegen/**",
+    "internal/types/**"
   ],
-  "ignoreBinaries": ["wait", "tsc"]
+  "ignoreBinaries": [
+    "wait",
+    "tsc"
+  ]
 }
