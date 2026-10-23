@@ -11,10 +11,10 @@ export function useWorkspaceComposer(workspaceId: string, agentType: string) {
   const client = useMemo<QapComposerClient>(
     () => ({
       listCommands: () =>
-        queryClient.ensureQueryData({
+        queryClient.fetchQuery({
           queryKey: ['commands', workspaceId],
           queryFn: () => api.listCommands(workspaceId),
-          revalidateIfStale: true,
+          staleTime: 0,
         }),
       listCallableAgents: () =>
         queryClient.ensureQueryData({

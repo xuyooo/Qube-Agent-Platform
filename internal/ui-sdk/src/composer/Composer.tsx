@@ -185,29 +185,41 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
   }, [slashQuery])
   const slashOpen = menusEnabled && slashQuery !== null && !slashDismissed
 
-  const [loadedCommands, setLoadedCommands] = useState<ComposerCommand[]>([])
+  const [commandLoad, setCommandLoad] = useState<{
+    source: NonNullable<ComposerProps['loadCommands']>
+    items: ComposerCommand[]
+    failed: boolean
+  } | null>(null)
+  const [commandRetry, setCommandRetry] = useState(0)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retry explicitly starts a new request
   useEffect(() => {
-    if (!slashOpen) return
-    const load = latest.current.loadCommands
-    if (!load) return
+    setCommandLoad(null)
+    if (!slashOpen || !loadCommands) return
     let cancelled = false
-    load().then(
-      (items) => {
-        if (!cancelled) setLoadedCommands(items)
-      },
-      () => {},
-    )
+    Promise.resolve()
+      .then(loadCommands)
+      .then(
+        (items) => {
+          if (!cancelled) setCommandLoad({ source: loadCommands, items, failed: false })
+        },
+        () => {
+          if (!cancelled) setCommandLoad({ source: loadCommands, items: [], failed: true })
+        },
+      )
     return () => {
       cancelled = true
     }
-  }, [slashOpen])
+  }, [slashOpen, loadCommands, commandRetry])
 
+  const currentCommandLoad = commandLoad?.source === loadCommands ? commandLoad : null
+  const commandLoading = slashOpen && !!loadCommands && !currentCommandLoad
+  const commandFailed = slashOpen && !!currentCommandLoad?.failed
   const slashItems = useMemo(() => {
     if (!slashOpen || slashQuery === null) return []
-    return [...(commands ?? []), ...loadedCommands].filter((c) =>
+    return [...(commands ?? []), ...(currentCommandLoad?.items ?? [])].filter((c) =>
       c.name.toLowerCase().includes(slashQuery),
     )
-  }, [slashOpen, slashQuery, commands, loadedCommands])
+  }, [slashOpen, slashQuery, commands, currentCommandLoad])
   const slashActive = slashItems.length > 0
 
   const [dismissedValue, setDismissedValue] = useState<string | null>(null)
@@ -323,7 +335,7 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
   const hasContent = value.trim() !== '' || attachmentItems.length > 0
 
   const submit = () => {
-    if (readOnly || disabled || menuKind !== null) return
+    if (readOnly || disabled || menuKind !== null || commandLoading || commandFailed) return
     if (!hasContent) return
     if (running && !allowQueue) return
     onSubmit(value, attachmentItems)
@@ -333,6 +345,11 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
     // Composition keys (e.g. Enter confirming an IME candidate) never reach
     // the menu or submit.
     if (composingRef.current || isComposingKey(e)) return
+    if (slashOpen && e.key === 'Escape') {
+      e.preventDefault()
+      setSlashDismissed(true)
+      return
+    }
     if (menuKind !== null) {
       if (e.key === 'ArrowUp') {
         e.preventDefault()
@@ -483,6 +500,28 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
             </div>
           ))}
         </div>
+      )}
+      {(commandLoading || commandFailed) && (
+        <output className="flex items-center gap-2 pb-2 text-xs text-muted-foreground">
+          {t(
+            commandFailed
+              ? 'components.composer.commands.loadFailed'
+              : 'components.composer.commands.loading',
+          )}
+          {commandFailed && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setCommandLoad(null)
+                setCommandRetry((attempt) => attempt + 1)
+              }}
+            >
+              {t('components.composer.commands.retry')}
+            </Button>
+          )}
+        </output>
       )}
       <div className="relative">
         {menuKind !== null && (
