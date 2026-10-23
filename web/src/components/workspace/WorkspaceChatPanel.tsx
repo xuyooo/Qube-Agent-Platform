@@ -443,6 +443,21 @@ export function WorkspaceChatPanel({
     markPendingScroll()
   }
 
+  // Control commands must not consume unrelated text/images or add Teamwork context.
+  const sendCommand = (text: string) => {
+    if (isDeleting) return
+    actions.sendMessage(text)
+    markPendingScroll()
+  }
+
+  const runSlashCommand = (text: string) => {
+    if (isDeleting) return
+    sendCommand(text)
+    // Keep the queued command visible as its actual payload, not the slash alias.
+    if (isLoading) setInput(text)
+    else clearDraft()
+  }
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: restore focus on session switch
   useEffect(() => {
     composerRef.current?.focus({ caret: 'end' })
@@ -849,7 +864,7 @@ export function WorkspaceChatPanel({
               value={input}
               onChange={setInput}
               onSubmit={handleComposerSubmit}
-              onRunCommand={(text) => handleComposerSubmit(text, [])}
+              onRunCommand={runSlashCommand}
               onStop={actions.stop}
               running={isLoading}
               disabled={isDeleting}
@@ -882,7 +897,7 @@ export function WorkspaceChatPanel({
                       size="icon"
                       className="h-7 w-7"
                       disabled={isChatBusy}
-                      onClick={() => handleComposerSubmit('/compact', [])}
+                      onClick={() => sendCommand('/compact')}
                     >
                       <Shrink className="h-4 w-4" />
                     </Button>
