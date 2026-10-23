@@ -206,3 +206,84 @@ describe('SDK interaction boundaries', () => {
     }
   })
 })
+
+describe('dynamic command refresh', () => {
+  const oldCommand = { name: 'old', type: 'plain' as const, content: 'old payload' }
+  const newCommand = { name: 'new', type: 'plain' as const, content: 'new payload' }
+
+  it('removes previous commands while reopening and waits for fresh results', async () => {
+    let resolve!: (items: (typeof oldCommand)[]) => void
+    const loadCommands = vi
+      .fn()
+      .mockResolvedValueOnce([oldCommand])
+      .mockImplementationOnce(
+        () =>
+          new Promise<(typeof oldCommand)[]>((done) => {
+            resolve = done
+          }),
+      )
+    const onRunCommand = vi.fn()
+    await act(async () => {
+      mount({ value: '/', loadCommands, onRunCommand })
+    })
+    expect(container.textContent).toContain('/old')
+    act(() => {
+      mount({ value: '', loadCommands, onRunCommand })
+    })
+    await act(async () => {
+      mount({ value: '/', loadCommands, onRunCommand })
+    })
+    expect(container.textContent).not.toContain('/old')
+    act(() => Simulate.keyDown(container.querySelector('textarea')!, { key: 'Enter' }))
+    expect(onRunCommand).not.toHaveBeenCalled()
+    await act(async () => {
+      resolve([newCommand])
+    })
+    expect(container.textContent).toContain('/new')
+    act(() => Simulate.keyDown(container.querySelector('textarea')!, { key: 'Enter' }))
+    expect(onRunCommand).toHaveBeenCalledWith('new payload', newCommand)
+  })
+
+  it('shows failure, blocks raw submission and retries without stale commands', async () => {
+    const loadCommands = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce([newCommand])
+    const onSubmit = vi.fn()
+    await act(async () => {
+      mount({ value: '/', locale: 'en-US', loadCommands, onSubmit })
+    })
+    expect(container.querySelector('output')?.textContent).toContain('Could not load commands')
+    act(() => Simulate.submit(container.querySelector('form')!))
+    expect(onSubmit).not.toHaveBeenCalled()
+    const retry = [...container.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Retry',
+    )!
+    await act(async () => {
+      Simulate.click(retry)
+    })
+    expect(loadCommands).toHaveBeenCalledTimes(2)
+    expect(container.textContent).toContain('/new')
+    expect(container.querySelector('output')).toBeNull()
+  })
+
+  it('ignores a previous data source resolving after its replacement', async () => {
+    let resolveOld!: (items: (typeof oldCommand)[]) => void
+    const oldSource = () =>
+      new Promise<(typeof oldCommand)[]>((resolve) => {
+        resolveOld = resolve
+      })
+    const newSource = vi.fn().mockResolvedValue([newCommand])
+    await act(async () => {
+      mount({ value: '/', loadCommands: oldSource })
+    })
+    await act(async () => {
+      mount({ value: '/', loadCommands: newSource })
+    })
+    await act(async () => {
+      resolveOld([oldCommand])
+    })
+    expect(container.textContent).toContain('/new')
+    expect(container.textContent).not.toContain('/old')
+  })
+})

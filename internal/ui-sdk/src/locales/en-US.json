@@ -276,6 +276,9 @@
         "label": "Suggestions"
       },
       "commands": {
+        "loading": "Loading commands…",
+        "loadFailed": "Could not load commands",
+        "retry": "Retry",
         "types": {
           "plain": "Plain",
           "struct": "Struct"

@@ -275,6 +275,9 @@
         "label": "候选项"
       },
       "commands": {
+        "loading": "正在加载命令…",
+        "loadFailed": "命令加载失败",
+        "retry": "重试",
         "types": {
           "plain": "纯文本",
           "struct": "模板"
