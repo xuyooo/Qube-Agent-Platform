@@ -2,8 +2,8 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { memo, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLazyToolRenderers } from '../lazy'
-import { getToolRenderersVersion, subscribeToolRenderers } from '../tool-renderers/plugin-registry'
 import { DefaultInput, DefaultResult } from '../tool-renderers/defaults'
+import { getToolRenderersVersion, subscribeToolRenderers } from '../tool-renderers/plugin-registry'
 import {
   getToolDisplayName,
   resolveRenderer,
@@ -55,13 +55,19 @@ function ToolCallBlockImpl({
   // when the lazy-descriptor registry changes — so a card swaps from skeleton /
   // default to the real renderer the moment it lands.
   useSyncExternalStore(subscribeToolRenderers, getToolRenderersVersion, getToolRenderersVersion)
-  useSyncExternalStore(lazy?.subscribe ?? NOOP_SUBSCRIBE, lazy?.getVersion ?? ZERO, lazy?.getVersion ?? ZERO)
+  useSyncExternalStore(
+    lazy?.subscribe ?? NOOP_SUBSCRIBE,
+    lazy?.getVersion ?? ZERO,
+    lazy?.getVersion ?? ZERO,
+  )
   const effectiveName = unwrapExecuteDispatchName(tool.name, tool.input)
   const renderer = resolveRenderer(tool, agentType)
   // No synchronous renderer yet — if a host-provided lazy source owns this tool,
   // show a skeleton and kick off the bundle load; the subscriptions above
   // re-render once it registers.
-  const lazyPluginId = renderer ? null : (lazy?.getPluginId(getToolDisplayName(effectiveName)) ?? null)
+  const lazyPluginId = renderer
+    ? null
+    : (lazy?.getPluginId(getToolDisplayName(effectiveName)) ?? null)
   useEffect(() => {
     if (lazyPluginId && lazy) lazy.load(lazyPluginId).catch(() => {})
   }, [lazyPluginId, lazy])

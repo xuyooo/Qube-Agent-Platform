@@ -32,7 +32,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ShareSessionButton } from '@/components/workspace/ShareSessionButton'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSlotContext } from '@/contexts/SlotContext'
-import { useWorkspaceComposer } from '@/hooks/useWorkspaceComposer'
 import { useAgentInfo } from '@/hooks/useAgentInfo'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import { useChatSearch } from '@/hooks/useChatSearch'
@@ -40,6 +39,7 @@ import { useChatSendKey } from '@/hooks/useChatSendKey'
 import { useSessionSource } from '@/hooks/useSessionSource'
 import { useInvalidateSessions, useSessions } from '@/hooks/useSessions'
 import { useMarkSeen } from '@/hooks/useUnread'
+import { useWorkspaceComposer } from '@/hooks/useWorkspaceComposer'
 import { api } from '@/lib/api/client'
 import type { ChatImageAttachment, Session, Workspace } from '@/lib/api/types'
 import { i18n as appI18n } from '@/lib/i18n'
@@ -49,7 +49,16 @@ import { useAgentSessionActions, useAgentSessionStore } from '@/stores/AgentSess
 import type { ChatMessage as ChatMessageType } from '@/stores/agent-session-store'
 import { useComposerInsertRequests } from '@/stores/composer-store'
 import { useDraft } from '@/stores/draft-store'
-import { Composer, type ComposerHandle, AskUserQuestionPanel, WaitingOnAgentsNotice, MessageBubble, TranscriptI18nProvider, TurnStatsBar } from '@qap/ui-sdk'
+import {
+  AskUserQuestionPanel,
+  Composer,
+  type ComposerHandle,
+  MessageBubble,
+  TranscriptI18nProvider,
+  TurnStatsBar,
+  WaitingOnAgentsNotice,
+  useRemoteTurnSync,
+} from '@qap/ui-sdk'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   Bot,
@@ -205,7 +214,6 @@ interface WorkspaceChatPanelProps {
 }
 
 /** How often a shared workspace's open session checks for turns started elsewhere. */
-const REMOTE_TURN_POLL_MS = 5000
 
 export function WorkspaceChatPanel({
   workspace,
@@ -251,28 +259,15 @@ export function WorkspaceChatPanel({
   const { data: sessions = [], fetchNextPage, hasNextPage } = useSessions(workspace.id)
   const invalidateSessions = useInvalidateSessions()
   const markSeen = useMarkSeen()
-  const activeSession = sessions.find((session) => session.id === activeSessionId)
-  const pendingAgentCalls = activeSession?.pending_agent_calls ?? 0
+  const pendingAgentCalls = useAgentSessionStore((state) => state.pendingAgentCalls)
   const waitingOnAgents = pendingAgentCalls > 0
 
-  // Follow server-started turns, including a delivery that finished before the
-  // next poll, or a child that resumed after human input. Poll the active
-  // session even when its previous pending count was zero.
-  useEffect(() => {
-    if (readonly || !activeSessionId) return
-    const sync = () => {
-      if (document.visibilityState !== 'visible') return
-      void actions.syncRemoteTurn()
-      invalidateSessions(workspace.id)
-    }
-    sync()
-    document.addEventListener('visibilitychange', sync)
-    const timer = setInterval(sync, REMOTE_TURN_POLL_MS)
-    return () => {
-      if (timer !== undefined) clearInterval(timer)
-      document.removeEventListener('visibilitychange', sync)
-    }
-  }, [readonly, actions, invalidateSessions, workspace.id, activeSessionId])
+  useRemoteTurnSync({
+    enabled: !readonly,
+    sessionId: activeSessionId,
+    sync: actions.syncRemoteTurn,
+    onSync: () => invalidateSessions(workspace.id),
+  })
 
   const isChatBusy = isLoading || isDeleting
   const isSessionLocked = isDeleting || isSwitching
@@ -315,7 +310,15 @@ export function WorkspaceChatPanel({
   const [imageDrafts, setImageDrafts] = useState<Record<string, ChatImageAttachment[]>>({})
   const imageDraftKey = activeSessionId ?? 'new'
   const attachedImages = imageDrafts[imageDraftKey] ?? []
-  const setAttachedImages = (next: ChatImageAttachment[] | ((current: ChatImageAttachment[]) => ChatImageAttachment[])) => setImageDrafts(prev => ({ ...prev, [imageDraftKey]: typeof next === 'function' ? next(prev[imageDraftKey] ?? []) : next }))
+  const setAttachedImages = useCallback(
+    (next: ChatImageAttachment[] | ((current: ChatImageAttachment[]) => ChatImageAttachment[])) => {
+      setImageDrafts((prev) => ({
+        ...prev,
+        [imageDraftKey]: typeof next === 'function' ? next(prev[imageDraftKey] ?? []) : next,
+      }))
+    },
+    [imageDraftKey],
+  )
   const composerRef = useRef<ComposerHandle>(null)
   const { agentInfo } = useAgentInfo(workspace.id)
   const agentType = agentInfo?.agent_type ?? 'claude-code'
@@ -441,8 +444,14 @@ export function WorkspaceChatPanel({
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: restore focus on session switch
-  useEffect(() => { composerRef.current?.focus({ caret: 'end' }) }, [activeSessionId])
-  useComposerInsertRequests({ workspaceId: workspace.id, enabled: !readonly, insert: text => composerRef.current?.insertAtCaret(text) })
+  useEffect(() => {
+    composerRef.current?.focus({ caret: 'end' })
+  }, [activeSessionId])
+  useComposerInsertRequests({
+    workspaceId: workspace.id,
+    enabled: !readonly,
+    insert: (text) => composerRef.current?.insertAtCaret(text),
+  })
 
   // When the session goes idle with a queued message still attached (the turn
   // errored / was interrupted / never drained), drop the server-side pending.
@@ -463,7 +472,7 @@ export function WorkspaceChatPanel({
       setAttachedImages((current) => (current.length > 0 ? current : returnedDraft.images))
     }
     actions.clearReturnedDraft()
-  }, [returnedDraft, input, setInput, actions])
+  }, [returnedDraft, input, setInput, actions, setAttachedImages])
 
   const turnCount = useMemo(
     () =>
@@ -820,25 +829,69 @@ export function WorkspaceChatPanel({
           )}
 
           {pendingQuestion && (
-            <AskUserQuestionPanel request={pendingQuestion} onRespond={actions.respondToQuestion} />
+            <AskUserQuestionPanel
+              key={pendingQuestion.requestId}
+              locale={appI18n.language}
+              request={pendingQuestion}
+              onRespond={actions.respondToQuestion}
+            />
           )}
 
           {!readonly && <HintBar visible={isLoading} hints={hints} />}
           {!readonly && waitingOnAgents && !isLoading && (
-            <WaitingOnAgentsNotice count={pendingAgentCalls} />
+            <WaitingOnAgentsNotice locale={appI18n.language} count={pendingAgentCalls} />
           )}
           {!readonly && (
             <Composer
-              key={activeSessionId ?? 'new'} ref={composerRef}
+              key={activeSessionId ?? 'new'}
+              ref={composerRef}
               className="shrink-0 border-t border-foreground/[0.06] p-3"
-              value={input} onChange={setInput} onSubmit={handleComposerSubmit}
-              onRunCommand={text => handleComposerSubmit(text, [])}
-              onStop={actions.stop} running={isLoading} disabled={isDeleting}
-              sendKey={chatSendKeyMode} locale={appI18n.language}
-              pending={pendingMessage ? { dirty: isQueuedDirty || attachedImages.length > 0, onDiscard: () => { actions.clearPendingMessage(); clearDraft() } } : null}
-              attachments={{ items: attachedImages, onAdd: items => setAttachedImages(prev => [...prev, ...items]), onRemove: index => setAttachedImages(prev => prev.filter((_, i) => i !== index)) }}
+              value={input}
+              onChange={setInput}
+              onSubmit={handleComposerSubmit}
+              onRunCommand={(text) => handleComposerSubmit(text, [])}
+              onStop={actions.stop}
+              running={isLoading}
+              disabled={isDeleting}
+              sendKey={chatSendKeyMode}
+              locale={appI18n.language}
+              pending={
+                pendingMessage
+                  ? {
+                      dirty: isQueuedDirty || attachedImages.length > 0,
+                      onDiscard: () => {
+                        actions.clearPendingMessage()
+                        clearDraft()
+                      },
+                    }
+                  : null
+              }
+              attachments={{
+                items: attachedImages,
+                onAdd: (items) => setAttachedImages((prev) => [...prev, ...items]),
+                onRemove: (index) =>
+                  setAttachedImages((prev) => prev.filter((_, i) => i !== index)),
+              }}
               {...composerSources}
-              toolbar={<Tooltip><TooltipTrigger asChild><Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled={isChatBusy} onClick={() => handleComposerSubmit('/compact', [])}><Shrink className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>{t('components.workspaceChat.actions.compactConversation')}</TooltipContent></Tooltip>}
+              toolbar={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      disabled={isChatBusy}
+                      onClick={() => handleComposerSubmit('/compact', [])}
+                    >
+                      <Shrink className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('components.workspaceChat.actions.compactConversation')}
+                  </TooltipContent>
+                </Tooltip>
+              }
             />
           )}
         </div>

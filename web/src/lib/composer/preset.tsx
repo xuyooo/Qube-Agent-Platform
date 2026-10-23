@@ -1,11 +1,12 @@
-import { Bot, File as FileIcon, Folder, Library } from 'lucide-react'
-import { useMemo, useRef } from 'react'
+import CREATE_SKILL_PROMPT from '@/docs/create-skill-prompt.md?raw'
 import type {
   ComposerCommand,
   ComposerTrigger,
   ComposerTriggerItem,
   ComposerVoice,
 } from '@qap/ui-sdk'
+import { Bot, File as FileIcon, Folder, Library } from 'lucide-react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
   QapCallableAgent,
@@ -13,11 +14,10 @@ import type {
   QapDirEntry,
   QapTranscribeOptions,
 } from './types'
-import CREATE_SKILL_PROMPT from '@/docs/create-skill-prompt.md?raw'
 
 // ─── Built-in commands ──────────────────────────────────────────────
 
-export type QapBuiltinCommandName = 'compact' | 'create-skill' | 'goal'
+type QapBuiltinCommandName = 'compact' | 'create-skill' | 'goal'
 
 /** Names reserved by the built-in commands; workspace commands may not reuse them. */
 export const QAP_BUILTIN_COMMAND_NAMES: readonly QapBuiltinCommandName[] = [
@@ -44,7 +44,7 @@ function builtinCommand(name: QapBuiltinCommandName): ComposerCommand {
  * is an ordinary prompt driving the platform's skill tools and works anywhere.
  * An unknown or missing agent type is assumed to support everything.
  */
-export function isQapBuiltinCommandSupported(
+function isQapBuiltinCommandSupported(
   name: QapBuiltinCommandName,
   agentType: string | undefined,
 ): boolean {
@@ -198,7 +198,7 @@ function sortAndFilterEntries(entries: QapDirEntry[], query: string): QapDirEntr
 
 // ─── Preset ─────────────────────────────────────────────────────────
 
-export interface QapComposerInclude {
+interface QapComposerInclude {
   /** All built-ins (`true`/`false`) or per command. Default: all on. */
   builtinCommands?: boolean | Partial<Record<QapBuiltinCommandName, boolean>>
   /** The workspace's own slash commands (needs `client.listCommands`). Default on. */
@@ -211,7 +211,7 @@ export interface QapComposerInclude {
   voice?: boolean
 }
 
-export interface QapComposerOptions {
+interface QapComposerOptions {
   client: QapComposerClient
   /** The workspace's agent core; built-ins it can't run are left out. */
   agentType?: string
@@ -228,7 +228,7 @@ export interface QapComposerOptions {
 }
 
 /** The subset of `ComposerProps` the preset fills in; spread it onto `<Composer>`. */
-export interface QapComposerPreset {
+interface QapComposerPreset {
   commands: ComposerCommand[]
   loadCommands?: () => Promise<ComposerCommand[]>
   triggers: ComposerTrigger[]
@@ -245,7 +245,7 @@ const FILES_CACHE_MAX = 50
  * switched off through `include`. Not a hook — see {@link useQapComposer}
  * for the memoized React form.
  */
-export function createQapComposerPreset(options: QapComposerOptions): QapComposerPreset {
+function createQapComposerPreset(options: QapComposerOptions): QapComposerPreset {
   const { client, agentType, workspaceId, include = {} } = options
 
   const builtinFlags = include.builtinCommands ?? true

@@ -21,6 +21,10 @@ export default defineConfig({
   },
   test: {
     server: { deps: { inline: [/react-i18next/, /@radix-ui/] } },
-    include: ['src/**/*.test.ts', '../internal/sse-consumer/src/**/*.test.ts', '../internal/ui-sdk/src/composer/**/*.test.ts'],
+    include: [
+      'src/**/*.test.ts',
+      '../internal/sse-consumer/src/**/*.test.ts',
+      '../internal/ui-sdk/src/composer/**/*.test.ts',
+    ],
   },
 })

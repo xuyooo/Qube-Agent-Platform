@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { matchTrigger } from '../../../../internal/ui-sdk/src/composer/text'
-const getFileMention = (text: string, caret: number) => { const match = matchTrigger(/@file\/([^@\n]*)$/, text, caret); return match ? { path: match.query, start: match.start, end: match.end } : null }
+const getFileMention = (text: string, caret: number) => {
+  const match = matchTrigger(/@file\/([^@\n]*)$/, text, caret)
+  return match ? { path: match.query, start: match.start, end: match.end } : null
+}
 
 describe('getFileMention', () => {
   it('matches a bare trigger', () => {

@@ -3,7 +3,7 @@
 // proxies a pinned workspace.
 
 /** A workspace slash command as the platform lists it. */
-export interface QapWorkspaceCommand {
+interface QapWorkspaceCommand {
   name: string
   type: 'plain' | 'struct'
   content: string
@@ -57,4 +57,3 @@ export interface QapComposerClient {
   /** Speech to text (`POST /asr/transcribe`). Reject with a user-facing message (empty falls back to a generic one). */
   transcribe?: (audio: Blob, options?: QapTranscribeOptions) => Promise<string>
 }
-

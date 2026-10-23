@@ -3,6 +3,7 @@ import { api } from '@/lib/api/client'
 import { createAgentChat, createCPReconnectStream } from '@/lib/api/sse'
 import { i18n } from '@/lib/i18n'
 import { playNotifySound } from '@/lib/sound'
+import { createToolResultDispatcher } from '@/plugins/registry'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useStore } from 'zustand'
@@ -13,6 +14,7 @@ import {
   type AgentSessionSlice,
   createAgentSessionStore,
 } from './agent-session-store'
+import { clearDraftFor, getDraftFor, migrateDraft } from './draft-store'
 
 // ── Context ──
 
@@ -67,6 +69,9 @@ export function AgentSessionProvider({
 
   const [store] = useState(() => {
     const deps: AgentSessionDeps = {
+      drafts: { get: getDraftFor, clear: clearDraftFor, migrate: migrateDraft },
+      toolResults: createToolResultDispatcher(),
+      translate: (key) => i18n.t(key),
       api: {
         getWorkspaceMessages: (wid, sid) => api.getWorkspaceMessages(wid, sid),
         getSession: (wid, sid) => api.getSession(wid, sid),

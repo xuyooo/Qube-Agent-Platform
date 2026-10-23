@@ -440,4 +440,4 @@ export type {
 
 // ── AskUserQuestion types ──
 
-export type { AskUserQuestionOption, AskUserQuestionItem, AskUserRequest } from '@qap/ui-sdk'
+export type { AskUserRequest } from '@qap/ui-sdk'

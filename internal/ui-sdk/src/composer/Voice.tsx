@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { modifierLabel } from './keys'
 import type { ComposerVoice } from './types'
 
-export type VoiceState = 'idle' | 'recording' | 'transcribing'
+type VoiceState = 'idle' | 'recording' | 'transcribing'
 
 function fmtTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -34,6 +34,7 @@ export function useVoiceRecorder({
   latest.current = { voice, onText, t }
 
   const mounted = useRef(true)
+  const starting = useRef(false)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
@@ -71,37 +72,53 @@ export function useVoiceRecorder({
   }, [clearTimer, stopStream])
 
   const reportError = useCallback((message: string) => {
+    if (!mounted.current) return
     const onError = latest.current.voice?.onError
     if (onError) onError(message)
     else window.alert(message)
   }, [])
 
   const start = useCallback(async () => {
-    if (stateRef.current !== 'idle') return
+    if (stateRef.current !== 'idle' || starting.current || !mounted.current) return
     const { t } = latest.current
     if (!navigator.mediaDevices?.getUserMedia) {
       reportError(t('components.composer.voice.errors.unsupported'))
       return
     }
     let stream: MediaStream
+    starting.current = true
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     } catch {
+      starting.current = false
       reportError(t('components.composer.voice.errors.permissionDenied'))
       return
     }
-    if (!mounted.current) { for (const track of stream.getTracks()) track.stop(); return }
+    starting.current = false
+    if (!mounted.current) {
+      for (const track of stream.getTracks()) track.stop()
+      return
+    }
     streamRef.current = stream
     chunksRef.current = []
     cancelledRef.current = false
 
-    const recorder = new MediaRecorder(stream)
+    let recorder: MediaRecorder
+    try {
+      recorder = new MediaRecorder(stream)
+      recorder.start()
+    } catch {
+      stopStream()
+      reportError(t('components.composer.voice.errors.failed'))
+      return
+    }
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data)
     }
     recorder.onstop = async () => {
       stopStream()
       clearTimer()
+      if (!mounted.current) return
       if (cancelledRef.current) {
         setState('idle')
         return
@@ -119,11 +136,10 @@ export function useVoiceRecorder({
           (e as Error)?.message || latest.current.t('components.composer.voice.errors.failed'),
         )
       } finally {
-        setState('idle')
+        if (mounted.current) setState('idle')
       }
     }
 
-    recorder.start()
     recorderRef.current = recorder
     setSeconds(0)
     setState('recording')
@@ -139,7 +155,7 @@ export function useVoiceRecorder({
         recorderRef.current?.stop()
       } catch {
         stopStream()
-        setState('idle')
+        if (mounted.current) setState('idle')
       }
     },
     [clearTimer, stopStream],

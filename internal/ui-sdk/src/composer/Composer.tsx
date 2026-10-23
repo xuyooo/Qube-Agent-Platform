@@ -16,7 +16,7 @@ import { SdkLocaleProvider, useSdkTranslation } from '../i18n'
 import { cn } from '../lib/utils'
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 import { CommandDialog } from './CommandDialog'
 import { TriggerMenu, type TriggerMenuRow, triggerOptionId } from './TriggerMenu'
 import { VoiceCapturePanel, VoiceControl, useVoiceRecorder } from './Voice'
@@ -176,7 +176,7 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
   // ── Menus ──
   // Slash: dismissal lasts while the input stays a `/…` line. Triggers:
   // dismissal lasts until the text changes.
-  const menusEnabled = !readOnly && !voiceActive
+  const menusEnabled = !disabled && !readOnly && !voiceActive && (!running || allowQueue)
   const hasCommands = (commands?.length ?? 0) > 0 || !!loadCommands
   const slashQuery = hasCommands ? getSlashQuery(value) : null
   const [slashDismissed, setSlashDismissed] = useState(false)
@@ -278,7 +278,15 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
   const [structCommand, setStructCommand] = useState<ComposerCommand | null>(null)
 
   const runCommand = useCallback((text: string, command: ComposerCommand) => {
-    const { onRunCommand, onSubmit } = latest.current
+    const {
+      onRunCommand,
+      onSubmit,
+      disabled,
+      readOnly,
+      running,
+      allowQueue = true,
+    } = latest.current
+    if (disabled || readOnly || (running && !allowQueue)) return
     if (onRunCommand) onRunCommand(text, command)
     else onSubmit(text, [])
   }, [])
@@ -645,7 +653,7 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
                   key="stop"
                   className="inline-flex items-center gap-1 duration-200 animate-in fade-in zoom-in-90"
                 >
-                  {allowQueue && value.trim() && !isQueuedClean && (
+                  {allowQueue && (value.trim() || attachmentItems.length > 0) && !isQueuedClean && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button type="submit" size="sm" className="h-7 px-3">
@@ -715,4 +723,12 @@ const ComposerImpl = forwardRef<ComposerHandle, ComposerProps>(function Composer
   )
 })
 
-export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer(props, ref) { return <SdkLocaleProvider locale={props.locale}><TooltipProvider><ComposerImpl {...props} ref={ref} /></TooltipProvider></SdkLocaleProvider> })
+export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Composer(props, ref) {
+  return (
+    <SdkLocaleProvider locale={props.locale}>
+      <TooltipProvider>
+        <ComposerImpl {...props} ref={ref} />
+      </TooltipProvider>
+    </SdkLocaleProvider>
+  )
+})

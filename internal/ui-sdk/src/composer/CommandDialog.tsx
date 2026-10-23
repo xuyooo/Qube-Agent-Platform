@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useSdkTranslation } from '../i18n'
 import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -17,6 +17,7 @@ export function CommandDialog({
   onSend: (text: string) => void
 }) {
   const { t } = useSdkTranslation()
+  const formId = useId()
   const variables = parseTemplateVariables(command.content)
   const [values, setValues] = useState<Record<string, string>>({})
   const allFilled = variables.every((v) => values[v]?.trim())
@@ -42,11 +43,11 @@ export function CommandDialog({
         >
           {variables.map((v) => (
             <div key={v} className="space-y-1">
-              <label htmlFor={`composer-var-${v}`} className="text-xs font-medium leading-none">
+              <label htmlFor={`${formId}-${v}`} className="text-xs font-medium leading-none">
                 {v}
               </label>
               <Input
-                id={`composer-var-${v}`}
+                id={`${formId}-${v}`}
                 value={values[v] ?? ''}
                 onChange={(e) => setValues((prev) => ({ ...prev, [v]: e.target.value }))}
                 className="h-8 text-xs"

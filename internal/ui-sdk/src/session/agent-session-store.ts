@@ -10,28 +10,27 @@
  * Built on zustand/vanilla createStore for React-compatible subscribe/getSnapshot.
  */
 
+import { type StoreApi, createStore } from 'zustand/vanilla'
+import { transcriptI18n } from '../i18n'
+import { toChatMessage } from '../to-chat-message'
+// Render types + the static normalizer now live in the shared UI SDK.
+import type { ChatMessage, ContentBlock, ToolCall } from '../types'
 import type { ContentDelta, UniversalItem } from './sse'
 import type {
   ApiMessage,
-  SessionDrafts,
-  SessionToolResults,
   AskUserRequest,
   ChatImageAttachment,
   ContextGauge,
   PendingMessage,
+  SessionDrafts,
+  SessionToolResults,
   TurnStats,
 } from './types'
-// Render types + the static normalizer now live in the shared UI SDK.
-import type { ChatMessage, ContentBlock, ToolCall } from '../types'
-import { toChatMessage } from '../to-chat-message'
-import { transcriptI18n } from '../i18n'
-import { type StoreApi, createStore } from 'zustand/vanilla'
 
 // ── UI types ──
 // Re-exported from the UI SDK so existing importers of this module keep working.
 // (ContentBlock/toChatMessage are used internally below but not re-imported by
 // other modules, so they are not re-exported.)
-export type { ChatMessage, ToolCall }
 
 // ── Injectable dependencies ──
 
@@ -342,8 +341,8 @@ export function createAgentSessionStore(
         loadedSessionId: sessionId,
         pendingMessage: latest.pending_message,
         isLoading: false,
-        pendingAgentCalls: 0,
-    isBusy: false,
+        pendingAgentCalls: latest.pending_agent_calls,
+        isBusy: false,
       })
     } catch {
       if (version === switchVersion) store.setState({ isLoading: false, isBusy: false })
@@ -469,9 +468,7 @@ export function createAgentSessionStore(
                           type: 'tool' as const,
                           tool: {
                             id: tc.call_id!,
-                            name:
-                              tc.name ??
-                              t('components.chat.toolRenderers.labels.unknown'),
+                            name: tc.name ?? t('components.chat.toolRenderers.labels.unknown'),
                             input,
                             startedAt: Date.now(),
                             parentToolUseId: item.parent_tool_use_id ?? null,
@@ -573,9 +570,7 @@ export function createAgentSessionStore(
                       type: 'tool' as const,
                       tool: {
                         id: tc.call_id!,
-                        name:
-                          tc.name ??
-                          t('components.chat.toolRenderers.labels.unknown'),
+                        name: tc.name ?? t('components.chat.toolRenderers.labels.unknown'),
                         input,
                         completedAt: Date.now(),
                         parentToolUseId: item.parent_tool_use_id ?? null,
@@ -755,7 +750,8 @@ export function createAgentSessionStore(
         pendingQuestion: questionResult.status === 'fulfilled' ? questionResult.value : null,
         pendingMessage:
           sessionResult.status === 'fulfilled' ? sessionResult.value.pending_message : null,
-        pendingAgentCalls: sessionResult.status === 'fulfilled' ? sessionResult.value.pending_agent_calls : 0,
+        pendingAgentCalls:
+          sessionResult.status === 'fulfilled' ? sessionResult.value.pending_agent_calls : 0,
         isSwitching: false,
         loadedSessionId: sessionId,
       })

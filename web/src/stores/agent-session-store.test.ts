@@ -1,5 +1,7 @@
 import type { UniversalItem } from '@/lib/api/sse'
 import type { ApiMessage, AskUserRequest, ContextGauge, TurnStats } from '@/lib/api/types'
+import { i18n } from '@/lib/i18n'
+import { createToolResultDispatcher } from '@/plugins/registry'
 import { _resetPluginsForTests, registerPlugin } from '@/plugins/registry'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { StoreApi } from 'zustand/vanilla'
@@ -12,6 +14,7 @@ import type {
   SSEHandlers,
 } from './agent-session-store'
 import { createAgentSessionStore } from './agent-session-store'
+import { clearDraftFor, getDraftFor, migrateDraft } from './draft-store'
 
 // ── Test helpers ──
 
@@ -27,7 +30,9 @@ function unwrap(store: StoreApi<AgentSessionSlice>): AgentSessionSlice {
 function makeApi(overrides?: Partial<AgentSessionApi>): AgentSessionApi {
   return {
     getWorkspaceMessages: vi.fn().mockResolvedValue([]),
-    getSession: vi.fn().mockResolvedValue({ chat_status: 'idle', pending_message: null }),
+    getSession: vi
+      .fn()
+      .mockResolvedValue({ chat_status: 'idle', pending_message: null, pending_agent_calls: 0 }),
     setPendingMessage: vi.fn().mockResolvedValue(undefined),
     clearPendingMessage: vi.fn().mockResolvedValue(undefined),
     getPendingQuestion: vi.fn().mockResolvedValue(null),
@@ -62,6 +67,9 @@ function makeDeps(overrides?: {
   effects?: Partial<AgentSessionEffects>
 }): AgentSessionDeps {
   return {
+    drafts: { get: getDraftFor, clear: clearDraftFor, migrate: migrateDraft },
+    toolResults: createToolResultDispatcher(),
+    translate: (key) => i18n.t(key),
     api: makeApi(overrides?.api),
     sse: makeSSE(overrides?.sse),
     effects: makeEffects(overrides?.effects),
@@ -146,7 +154,11 @@ describe('createAgentSessionStore', () => {
     test('reconnects SSE when session is active (chat_status=agent)', async () => {
       const deps = makeDeps({
         api: {
-          getSession: vi.fn().mockResolvedValue({ chat_status: 'agent', pending_message: null }),
+          getSession: vi.fn().mockResolvedValue({
+            chat_status: 'agent',
+            pending_message: null,
+            pending_agent_calls: 0,
+          }),
         },
       })
       const { s } = make('ws-1', deps)
@@ -179,7 +191,11 @@ describe('createAgentSessionStore', () => {
       // looking idle. The decision must follow the freshly fetched status.
       const deps = makeDeps({
         api: {
-          getSession: vi.fn().mockResolvedValue({ chat_status: 'agent', pending_message: null }),
+          getSession: vi.fn().mockResolvedValue({
+            chat_status: 'agent',
+            pending_message: null,
+            pending_agent_calls: 0,
+          }),
         },
       })
       const { s } = make('ws-1', deps)
@@ -194,7 +210,11 @@ describe('createAgentSessionStore', () => {
       const abortSignals: AbortSignal[] = []
       const deps = makeDeps({
         api: {
-          getSession: vi.fn().mockResolvedValue({ chat_status: 'agent', pending_message: null }),
+          getSession: vi.fn().mockResolvedValue({
+            chat_status: 'agent',
+            pending_message: null,
+            pending_agent_calls: 0,
+          }),
         },
         sse: {
           createCPReconnectStream: vi.fn((_wid, _h, signal) => {
@@ -535,7 +555,9 @@ describe('createAgentSessionStore', () => {
     test('a send refused as session-busy is taken back and returned to the composer', async () => {
       let handlers: SSEHandlers = {}
       const getWorkspaceMessages = vi.fn().mockResolvedValue([])
-      const getSession = vi.fn().mockResolvedValue({ chat_status: 'idle', pending_message: null })
+      const getSession = vi
+        .fn()
+        .mockResolvedValue({ chat_status: 'idle', pending_message: null, pending_agent_calls: 0 })
       const deps = makeDeps({
         api: { getWorkspaceMessages, getSession },
         sse: {
@@ -550,6 +572,7 @@ describe('createAgentSessionStore', () => {
       getSession.mockResolvedValue({
         chat_status: 'agent',
         pending_message: null,
+        pending_agent_calls: 0,
       })
       getWorkspaceMessages.mockResolvedValue([dbMessage(1, 'user', 'theirs')])
 
@@ -1175,6 +1198,7 @@ describe('createAgentSessionStore', () => {
     const idleAt = (lastActiveAt: string) => ({
       chat_status: 'idle',
       pending_message: null,
+      pending_agent_calls: 0,
       last_active_at: lastActiveAt,
     })
 

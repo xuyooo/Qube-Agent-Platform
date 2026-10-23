@@ -1,0 +1,23 @@
+{
+  "name": "qap-sdk-independent-host",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build"
+  },
+  "dependencies": {
+    "@qap/ui-sdk": "file:..",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "i18next": "25.4.1",
+    "react-i18next": "15.7.3",
+    "lucide-react": "0.468.0"
+  },
+  "devDependencies": {
+    "vite": "6.4.2",
+    "typescript": "5.6.3",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "jsdom": "26.1.0"
+  }
+}
