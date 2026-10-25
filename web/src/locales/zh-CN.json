@@ -439,7 +439,8 @@
           "ops": {
             "in": "包含于",
             "contains": "包含",
-            "exists": "存在"
+            "exists": "存在",
+            "arrayContains": "数组包含"
           },
           "valuePlaceholders": {
             "in": "值1, 值2",
@@ -448,7 +449,8 @@
           "boolean": {
             "true": "是",
             "false": "否"
-          }
+          },
+          "itemField": "元素字段（可选，如 title）"
         },
         "secretTypes": {
           "plain": "明文"
