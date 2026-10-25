@@ -439,7 +439,8 @@
           "ops": {
             "in": "in",
             "contains": "contains",
-            "exists": "exists"
+            "exists": "exists",
+            "arrayContains": "Array contains"
           },
           "valuePlaceholders": {
             "in": "val1, val2",
@@ -448,7 +449,8 @@
           "boolean": {
             "true": "true",
             "false": "false"
-          }
+          },
+          "itemField": "Element field (optional, e.g. title)"
         },
         "secretTypes": {
           "plain": "Plain"
