@@ -2184,6 +2184,7 @@
         "description": "描述",
         "homepageUrl": "主页地址",
         "redirectUris": "回调地址",
+        "mcpOrigins": "MCP 服务地址",
         "customId": "Client ID（可选）",
         "clientId": "Client ID",
         "clientSecret": "Client Secret"
@@ -2196,9 +2197,11 @@
         "customId": "留空则自动生成"
       },
       "help": {
-        "redirectUrisHint": "每行一个 URL，必须是 http(s)",
+        "redirectUrisHint": "每行一个 URL，必须是 http(s)。只代自己开通的用户调用 API 的应用可以留空",
+        "mcpOriginsHint": "由应用的 spec 声明。Agent 调用它们时经平台转发，并附上平台签名的调用方身份",
         "storeSecurely": "Client secret 仅显示这一次，请在关闭前妥善保存",
-        "rotateWarning": "轮换会使旧 secret 失效，已签发的 refresh token 不受影响"
+        "rotateWarning": "轮换会使旧 secret 失效，已签发的 refresh token 不受影响",
+        "team": "把模型供应商、Skill、Prompt、环境分享给团队「{{name}}」，这个应用的用户就能使用它们"
       },
       "actions": {
         "create": "创建",
@@ -2210,7 +2213,6 @@
       },
       "errors": {
         "nameRequired": "请填写名称",
-        "redirectUrisRequired": "至少需要一个回调地址",
         "invalidUrl": "URL 无效，必须是 http(s)",
         "createFailed": "创建应用失败",
         "saveFailed": "保存失败",
@@ -2438,7 +2440,8 @@
         "noInvites": "暂无有效的邀请链接，可以新建一个邀请他人加入。",
         "inviteHelp": "任何持有该链接的用户都可以加入团队，直至链接过期。",
         "expiresAt": "{{value}} 过期",
-        "createdBy": "由 {{name}} 创建"
+        "createdBy": "由 {{name}} 创建",
+        "appTeam": "这是应用的团队，名称跟随应用，应用的用户会自动加入。把模型供应商、Skill、Prompt、环境分享给这个团队，应用的用户就能使用它们。"
       },
       "dialogs": {
         "createTitle": "新建团队",
@@ -3342,7 +3345,8 @@
           "roleAdmin": "管理员",
           "authSource": {
             "password": "密码",
-            "ldap": "LDAP"
+            "ldap": "LDAP",
+            "app": "应用"
           }
         },
         "toasts": {
@@ -3596,6 +3600,7 @@
           "unknownOwner": "未知",
           "redirectUris": "回调地址",
           "createdAt": "创建于 {{value}}",
+          "users": "{{count}} 个用户",
           "adminOnly": "仅管理员"
         },
         "toasts": {

@@ -1,6 +1,19 @@
 import { generateId, pool } from './pool'
 import type { User } from './types'
 
+/** How the user signs in: an application acts for it, or a local password, or LDAP. */
+export function authSource(
+  user: Pick<User, 'managed_by' | 'password_hash'>,
+): 'app' | 'password' | 'ldap' {
+  if (user.managed_by) return 'app'
+  return user.password_hash ? 'password' : 'ldap'
+}
+
+/** System users and users an application manages never sign in to NAP itself. */
+export function canSignIn(user: Pick<User, 'role' | 'managed_by'>): boolean {
+  return user.role !== 'system' && !user.managed_by
+}
+
 export async function upsertUser(
   username: string,
   displayName: string,
@@ -54,9 +67,22 @@ export async function setUserPassword(userId: string, passwordHash: string): Pro
   await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId])
 }
 
+// One transaction: if the user still owns rows that block the delete (e.g.
+// workspaces), its tokens and identity bindings stay as they were.
 export async function deleteUser(userId: string): Promise<void> {
-  await pool.query('DELETE FROM service_tokens WHERE created_by = $1', [userId])
-  await pool.query('DELETE FROM users WHERE id = $1', [userId])
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query('DELETE FROM service_tokens WHERE created_by = $1', [userId])
+    await client.query('DELETE FROM user_identities WHERE user_id = $1', [userId])
+    await client.query('DELETE FROM users WHERE id = $1', [userId])
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
 }
 
 export async function setUserDefaultPrompt(userId: string, promptId: string | null): Promise<void> {

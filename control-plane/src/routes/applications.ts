@@ -6,6 +6,8 @@ import {
   ApplicationUpdateBodySchema,
 } from '../../../internal/types/api'
 import type { AppEnv } from '../lib/types'
+import { deleteAppContent } from '../services/app-content'
+import { createAppAccounts, renameAppTeam } from '../services/db/app-users'
 import { generateId, pool } from '../services/db/pool'
 
 const applications = new Hono<AppEnv>()
@@ -36,6 +38,8 @@ function sanitizeHttpUrl(input: unknown): { ok: true; value: string | null } | {
   return { ok: true, value: trimmed }
 }
 
+// An empty list is valid: an application that only acts for the users it
+// provisions (/apps/v1) never runs the authorization-code flow.
 function sanitizeRedirectUris(input: unknown): string[] | null {
   if (!Array.isArray(input)) return null
   const uris: string[] = []
@@ -51,7 +55,6 @@ function sanitizeRedirectUris(input: unknown): string[] | null {
     }
     uris.push(trimmed)
   }
-  if (uris.length === 0) return null
   return uris
 }
 
@@ -60,7 +63,12 @@ applications.get('/', async (c) => {
   const { rows } = await pool.query<ApiApplication>(
     `SELECT c.id, c.name, c.description, c.homepage_url, c.redirect_uris,
             c.created_by, c.created_at, c.updated_at,
-            u.display_name AS owner_display_name, u.username AS owner_username
+            u.display_name AS owner_display_name, u.username AS owner_username,
+            (SELECT t.id FROM teams t WHERE t.app_id = c.id) AS team_id,
+            coalesce((SELECT array_agg(o.origin ORDER BY o.origin)
+                        FROM oauth_client_mcp_origins o WHERE o.client_id = c.id), '{}') AS mcp_origins,
+            (SELECT count(*)::int FROM users m
+              WHERE m.managed_by = c.id AND m.role <> 'system') AS user_count
        FROM oauth_clients c
        LEFT JOIN users u ON u.id = c.created_by
        ORDER BY c.created_at`,
@@ -84,7 +92,7 @@ applications.post('/', async (c) => {
 
   const redirectUris = sanitizeRedirectUris(body.redirect_uris)
   if (!redirectUris) {
-    return c.json({ error: 'redirect_uris must be a non-empty array of http(s) URLs' }, 400)
+    return c.json({ error: 'redirect_uris must be an array of http(s) URLs' }, 400)
   }
 
   const homepage = sanitizeHttpUrl(body.homepage_url)
@@ -109,17 +117,25 @@ applications.post('/', async (c) => {
   const secret = generateClientSecret()
   const secretHash = hashSecret(secret)
 
+  const client = await pool.connect()
+  let teamId: string
   try {
-    await pool.query(
+    await client.query('BEGIN')
+    await client.query(
       `INSERT INTO oauth_clients (id, name, description, homepage_url, secret_hash, redirect_uris, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [id, name, description, homepage.value, secretHash, redirectUris, user.sub],
     )
+    teamId = await createAppAccounts(client, { id, name, description, createdBy: user.sub })
+    await client.query('COMMIT')
   } catch (err) {
+    await client.query('ROLLBACK')
     if ((err as { code?: string }).code === '23505') {
       return c.json({ error: 'id already exists' }, 409)
     }
     throw err
+  } finally {
+    client.release()
   }
 
   return c.json(
@@ -129,6 +145,7 @@ applications.post('/', async (c) => {
       description,
       homepage_url: homepage.value,
       redirect_uris: redirectUris,
+      team_id: teamId,
       client_secret: secret,
     },
     201,
@@ -151,17 +168,20 @@ applications.patch('/:id', async (c) => {
   const values: unknown[] = []
   let i = 1
 
+  const team: { name?: string; description?: string | null } = {}
   if (body.name !== undefined) {
     const name = body.name.trim()
     if (!name) return c.json({ error: 'name cannot be empty' }, 400)
     updates.push(`name = $${i++}`)
     values.push(name)
+    team.name = name
   }
   if (body.description !== undefined) {
     const description =
       typeof body.description === 'string' ? body.description.trim() || null : null
     updates.push(`description = $${i++}`)
     values.push(description)
+    team.description = description
   }
   if (body.homepage_url !== undefined) {
     const homepage = sanitizeHttpUrl(body.homepage_url)
@@ -174,7 +194,7 @@ applications.patch('/:id', async (c) => {
   if (body.redirect_uris !== undefined) {
     const redirectUris = sanitizeRedirectUris(body.redirect_uris)
     if (!redirectUris) {
-      return c.json({ error: 'redirect_uris must be a non-empty array of http(s) URLs' }, 400)
+      return c.json({ error: 'redirect_uris must be an array of http(s) URLs' }, 400)
     }
     updates.push(`redirect_uris = $${i++}`)
     values.push(redirectUris)
@@ -190,6 +210,8 @@ applications.patch('/:id', async (c) => {
     values,
   )
   if (!rowCount) return c.json({ error: 'not found' }, 404)
+
+  await renameAppTeam(id, team)
   return c.json({ success: true })
 })
 
@@ -216,8 +238,19 @@ applications.delete('/:id', async (c) => {
   if (!requireAdmin(user)) return c.json({ error: 'Forbidden' }, 403)
 
   const id = c.req.param('id')
-  const { rowCount } = await pool.query('DELETE FROM oauth_clients WHERE id = $1', [id])
-  if (!rowCount) return c.json({ error: 'not found' }, 404)
+  const { rows } = await pool.query(
+    `SELECT (SELECT count(*)::int FROM users u
+              WHERE u.managed_by = c.id AND u.role <> 'system') AS user_count
+       FROM oauth_clients c WHERE c.id = $1`,
+    [id],
+  )
+  if (!rows[0]) return c.json({ error: 'not found' }, 404)
+  if (rows[0].user_count > 0) {
+    return c.json({ error: 'the application still has users; delete them first' }, 409)
+  }
+  // What it published goes with it; its team goes with the client row.
+  await deleteAppContent(id)
+  await pool.query('DELETE FROM oauth_clients WHERE id = $1', [id])
   return c.json({ success: true })
 })
 

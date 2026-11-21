@@ -32,6 +32,15 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+/** URLs separated by whitespace or commas; null if any of them isn't http(s). */
+function parseUrlList(text: string): string[] | null {
+  const urls = text
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return urls.every(isHttpUrl) ? urls : null
+}
+
 export default function ApplicationDialog({
   open,
   onOpenChange,
@@ -80,15 +89,8 @@ export default function ApplicationDialog({
       setError(t('components.applicationDialog.errors.nameRequired'))
       return
     }
-    const redirectUris = redirectUrisText
-      .split(/[\s,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-    if (redirectUris.length === 0) {
-      setError(t('components.applicationDialog.errors.redirectUrisRequired'))
-      return
-    }
-    if (!redirectUris.every(isHttpUrl)) {
+    const redirectUris = parseUrlList(redirectUrisText)
+    if (!redirectUris) {
       setError(t('components.applicationDialog.errors.invalidUrl'))
       return
     }
@@ -176,7 +178,7 @@ export default function ApplicationDialog({
             <SaveButton
               isSaving={isSaving}
               onClick={handleSave}
-              disabled={!name.trim() || !redirectUrisText.trim()}
+              disabled={!name.trim()}
               label={
                 isEdit
                   ? t('components.applicationDialog.actions.save')
@@ -268,6 +270,23 @@ export default function ApplicationDialog({
               placeholder={t('components.applicationDialog.placeholders.redirectUris')}
             />
           </Field>
+          {application && application.mcp_origins.length > 0 && (
+            <Field
+              label={t('components.applicationDialog.fields.mcpOrigins')}
+              help={t('components.applicationDialog.help.mcpOriginsHint')}
+            >
+              <div className="space-y-0.5 font-mono text-sm">
+                {application.mcp_origins.map((origin) => (
+                  <div key={origin}>{origin}</div>
+                ))}
+              </div>
+            </Field>
+          )}
+          {application && (
+            <p className="text-tiny text-muted-foreground">
+              {t('components.applicationDialog.help.team', { name: application.name })}
+            </p>
+          )}
           {error && <div className="text-xs text-destructive">{error}</div>}
         </div>
       )}

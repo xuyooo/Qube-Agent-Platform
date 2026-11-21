@@ -7,7 +7,7 @@ export interface ApiUser {
   id: string
   username: string
   role: 'user' | 'admin' | 'system'
-  auth_source: 'password' | 'ldap'
+  auth_source: 'password' | 'ldap' | 'app'
   default_prompt_id: string | null
   default_prompt_name: string | null
   auto_evolution: boolean
@@ -1869,6 +1869,19 @@ export const ApiApplicationSchema = z.object({
   description: z.string().nullable(),
   homepage_url: z.string().nullable(),
   redirect_uris: z.array(z.string()),
+  /**
+   * The application's own team. Its users are members; what is shared with
+   * the team is available to them.
+   */
+  team_id: z.string(),
+  /**
+   * Origins of the MCP servers the application runs, as its spec declares
+   * them. Workspace calls to them go through the platform, which attaches a
+   * signed caller statement.
+   */
+  mcp_origins: z.array(z.string()),
+  /** Users the application provisioned through /apps/v1. */
+  user_count: z.number(),
   created_by: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -1884,6 +1897,7 @@ export const ApiApplicationSecretSchema = z.object({
   description: z.string().nullable().optional(),
   homepage_url: z.string().nullable().optional(),
   redirect_uris: z.array(z.string()).optional(),
+  team_id: z.string().optional(),
   client_secret: z.string(),
 })
 
@@ -1894,7 +1908,8 @@ export const ApplicationCreateBodySchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
   homepage_url: z.string().nullable().optional(),
-  redirect_uris: z.array(z.string()).min(1),
+  /** Empty for an application that only acts for the users it provisions. */
+  redirect_uris: z.array(z.string()).default([]),
 })
 
 export const ApplicationUpdateBodySchema = z
@@ -1902,7 +1917,7 @@ export const ApplicationUpdateBodySchema = z
     name: z.string().min(1),
     description: z.string().nullable(),
     homepage_url: z.string().nullable(),
-    redirect_uris: z.array(z.string()).min(1),
+    redirect_uris: z.array(z.string()),
   })
   .partial()
 
@@ -1920,6 +1935,11 @@ export const ApiTeamSchema = z.object({
   updated_at: z.string(),
   my_role: TeamRoleSchema,
   member_count: z.number().int(),
+  /**
+   * Set on an application's own team: its name follows the application and
+   * the application's users are members of it by the platform's doing.
+   */
+  app_id: z.string().nullable(),
 })
 export type ApiTeam = z.infer<typeof ApiTeamSchema>
 

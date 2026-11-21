@@ -16,9 +16,9 @@ This API documentation is split into multiple files for on-demand loading.
 **Directory structure:**
 ```
 references/
-├── resources/      # 17 resource index files
-├── operations/     # 193 operation detail files
-└── schemas/        # 7 schema groups, 12 schema files
+├── resources/      # 18 resource index files
+├── operations/     # 208 operation detail files
+└── schemas/        # 8 schema groups, 20 schema files
 ```
 
 **Navigation flow:**
@@ -33,7 +33,7 @@ references/
 
 ## Authentication
 
-Supported methods: **bearerAuth**. See `references/authentication.md` for details.
+Supported methods: **bearerAuth**, **appClientAuth**. See `references/authentication.md` for details.
 
 ## Conventions
 
@@ -129,6 +129,7 @@ The poll loop treats any non-`agent` `chat_status` as the turn handing back (idl
 
 - **workspaces** → `references/resources/workspaces.md` (50 ops)
 - **skills** → `references/resources/skills.md` (36 ops)
+- **apps** → `references/resources/apps.md` (15 ops)
 - **teams** → `references/resources/teams.md` (12 ops)
 - **agent-files** → `references/resources/agent-files.md` (11 ops)
 - **templates** → `references/resources/templates.md` (11 ops)

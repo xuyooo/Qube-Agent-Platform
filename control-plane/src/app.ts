@@ -15,6 +15,7 @@ import type { AppEnv } from './lib/types'
 import { handleMcpRequest } from './mcp/server'
 import adminRoutes from './routes/admin'
 import applicationsRoutes from './routes/applications'
+import appsProtocolRoutes from './routes/apps'
 import asrRoutes from './routes/asr'
 import authRoutes from './routes/auth'
 import batchRunRoutes from './routes/batch-runs'
@@ -75,6 +76,7 @@ import workspacesTransferRoutes from './routes/workspaces/transfer'
 import workspacesUsageRoutes from './routes/workspaces/usage'
 import workspacesWriteRoutes from './routes/workspaces/write'
 import { renewToken, shouldRenewToken, verifyToken } from './services/auth'
+import { jwks } from './services/caller-assertion'
 import { getServiceTokenByHash } from './services/db/shares'
 import { getSettings } from './services/db/system-settings'
 
@@ -85,6 +87,11 @@ app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
   type: 'http',
   scheme: 'bearer',
   description: 'Service token issued via /api/service-tokens',
+})
+app.openAPIRegistry.registerComponent('securitySchemes', 'appClientAuth', {
+  type: 'http',
+  scheme: 'basic',
+  description: 'Application client id and secret, registered under /api/applications',
 })
 
 // Response compression (gzip) — automatically skips SSE/streaming (Transfer-Encoding: chunked)
@@ -159,6 +166,7 @@ app.use('/*', async (c, next) => {
     path.startsWith('/s/') ||
     path.startsWith('/sk/') ||
     path.startsWith('/.well-known/agent-skills') ||
+    path === '/.well-known/jwks.json' ||
     path.startsWith('/api/docs') ||
     path === '/healthz' ||
     path.startsWith('/_cg/') ||
@@ -167,6 +175,7 @@ app.use('/*', async (c, next) => {
     // middleware/service-auth), not by user auth — same arrangement as /env/v1.
     path.startsWith('/workspace/v1/') ||
     path.startsWith('/svc/v1/') ||
+    path.startsWith('/apps/v1/') ||
     // Same arrangement: handleMcpRequest authenticates the caller as the
     // workspace itself (Bearer workspace token) before registering any tool.
     path === '/mcp' ||
@@ -254,7 +263,9 @@ app.use('/*', async (c, next) => {
   }
 
   const payload = await verifyToken(token)
-  if (!payload) {
+  // A token an application obtained for its user is Bearer-only; those users
+  // don't sign in to NAP, so it is never a session cookie.
+  if (!payload || payload.app) {
     deleteCookie(c, 'token', { path: '/' })
     if (isApiRequest) {
       return c.json({ error: 'Unauthorized' }, 401)
@@ -337,6 +348,7 @@ app.get('/healthz', (c) => c.json({ status: 'ok' }))
 app.route('/env', envProtocolRoutes)
 app.route('/workspace', workspaceProtocolRoutes)
 app.route('/svc', svcProtocolRoutes)
+app.route('/apps', appsProtocolRoutes)
 app.route('/env-gateway', createEnvGatewayRoutes({ upgradeWebSocket }))
 app.route('/api/workspace-layouts', workspaceLayoutsRoutes)
 app.route('/api/prompts', promptsReadRoutes)
@@ -367,6 +379,8 @@ app.route('/api/skills', skillsRoutes)
 // No auth — the share token in the path is the capability.
 app.route('/sk', skillRegistryApp)
 app.route('/.well-known/agent-skills', wellKnownRootApp)
+// Public key for the caller statements the MCP proxy signs (services/caller-assertion).
+app.get('/.well-known/jwks.json', (c) => c.json(jwks()))
 app.route('/api/plugins', pluginsRoutes)
 app.route('/api/mcp-catalog', mcpCatalogRoutes)
 app.route('/api/system-workspaces', systemWorkspacesRoutes)
@@ -493,6 +507,7 @@ app.get('*', async (c) => {
     path.startsWith('/api/') ||
     path.startsWith('/workspace/') ||
     path.startsWith('/svc/') ||
+    path.startsWith('/apps/') ||
     path.startsWith('/_proxy/') ||
     path.startsWith('/_saas/') ||
     path.startsWith('/_cg/')
