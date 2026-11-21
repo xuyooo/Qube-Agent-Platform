@@ -35,6 +35,18 @@ A workspace is an isolated agent environment — its own filesystem, config, and
 | GET | `/api/workspaces/{id}/usage` | Get aggregate token usage for a workspace | [View](../operations/get-api-workspaces-id-usage.md) |
 | GET | `/api/workspaces/{id}/runtime-timeline` | A workspace's runtime state as timeline segments — what it was, for how long, and at which spec. | [View](../operations/get-api-workspaces-id-runtime-timeline.md) |
 | GET | `/api/workspaces/{id}/session-usage` | A workspace's top sessions by token spend over the last `days` days, each with its message count, tool-call count and wall-clock duration. | [View](../operations/get-api-workspaces-id-session-usage.md) |
+| GET | `/api/workspaces/{id}/sandboxes` | List the sandboxes created for a workspace | [View](../operations/get-api-workspaces-id-sandboxes.md) |
+| POST | `/api/workspaces/{id}/sandboxes` | Create a sandbox for a workspace. It runs as the workspace owner. | [View](../operations/post-api-workspaces-id-sandboxes.md) |
+| POST | `/api/workspaces/{id}/sandboxes/{sandboxId}/renew` | Extend a sandbox expiry: adds extend_seconds to the current expiry, or to now if the sandbox has already expired. | [View](../operations/post-api-workspaces-id-sandboxes-sandboxId-renew.md) |
+| GET | `/api/workspaces/{id}/sandboxes/{sandboxId}/endpoint/{port}` | Get the URL of a port exposed by a sandbox | [View](../operations/get-api-workspaces-id-sandboxes-sandboxId-endpoint-port.md) |
+| DELETE | `/api/workspaces/{id}/sandboxes/{sandboxId}` | Kill a workspace sandbox | [View](../operations/delete-api-workspaces-id-sandboxes-sandboxId.md) |
+| POST | `/api/workspaces/{id}/sandboxes/{sandboxId}/commands` | Run a shell command in a sandbox. Foreground returns stdout, stderr and exit_code; with background it returns a command_id to poll. | [View](../operations/post-api-workspaces-id-sandboxes-sandboxId-commands.md) |
+| GET | `/api/workspaces/{id}/sandboxes/{sandboxId}/commands/{commandId}` | Get the status of a background command (running, exit_code, timing) | [View](../operations/get-api-workspaces-id-sandboxes-sandboxId-commands-commandId.md) |
+| GET | `/api/workspaces/{id}/sandboxes/{sandboxId}/commands/{commandId}/logs` | Get output of a background command as { content, cursor }. Pass the returned cursor back to read only newer output. | [View](../operations/get-api-workspaces-id-sandboxes-sandboxId-commands-commandId-logs.md) |
+| POST | `/api/workspaces/{id}/sandboxes/{sandboxId}/commands/{commandId}/interrupt` | Interrupt a running background command | [View](../operations/post-api-workspaces-id-sandboxes-sandboxId-commands-commandId-interrupt.md) |
+| GET | `/api/workspaces/{id}/sandboxes/{sandboxId}/files` | Read a file from a sandbox | [View](../operations/get-api-workspaces-id-sandboxes-sandboxId-files.md) |
+| POST | `/api/workspaces/{id}/sandboxes/{sandboxId}/files` | Write files inside a sandbox. Parent directories are created automatically. | [View](../operations/post-api-workspaces-id-sandboxes-sandboxId-files.md) |
+| GET | `/api/workspaces/{id}/sandboxes/{sandboxId}/directory` | List a directory inside a sandbox | [View](../operations/get-api-workspaces-id-sandboxes-sandboxId-directory.md) |
 | GET | `/api/workspaces/{id}/commands` | List workspace commands | [View](../operations/get-api-workspaces-id-commands.md) |
 | POST | `/api/workspaces/{id}/commands` | Create a command. Either prompt_id or content must be provided. | [View](../operations/post-api-workspaces-id-commands.md) |
 | DELETE | `/api/workspaces/{id}/commands/{cmdId}` | Delete a command | [View](../operations/delete-api-workspaces-id-commands-cmdId.md) |

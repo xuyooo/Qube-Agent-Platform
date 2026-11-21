@@ -17,8 +17,8 @@ This API documentation is split into multiple files for on-demand loading.
 ```
 references/
 ├── resources/      # 17 resource index files
-├── operations/     # 193 operation detail files
-└── schemas/        # 7 schema groups, 12 schema files
+├── operations/     # 205 operation detail files
+└── schemas/        # 8 schema groups, 13 schema files
 ```
 
 **Navigation flow:**
@@ -127,7 +127,7 @@ The poll loop treats any non-`agent` `chat_status` as the turn handing back (idl
 
 ## Resources
 
-- **workspaces** → `references/resources/workspaces.md` (50 ops)
+- **workspaces** → `references/resources/workspaces.md` (62 ops)
 - **skills** → `references/resources/skills.md` (36 ops)
 - **teams** → `references/resources/teams.md` (12 ops)
 - **agent-files** → `references/resources/agent-files.md` (11 ops)
