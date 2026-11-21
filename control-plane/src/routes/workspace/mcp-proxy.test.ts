@@ -144,7 +144,6 @@ describe('MCP proxy', () => {
         token: 't',
         workspaceId: 'ws1',
         sessionId: 's1',
-        reflectStoreId: null,
       })
 
       await call(`/v1/mcp/${encoded}/mcp`, 'ws_good', { 'X-Session-Token': 't' })
@@ -169,7 +168,6 @@ describe('MCP proxy', () => {
         token: 't',
         workspaceId: 'ws-other',
         sessionId: 's-other',
-        reflectStoreId: null,
       })
 
       await call(`/v1/mcp/${encoded}/mcp`, 'ws_good', { 'X-Session-Token': 't' })
