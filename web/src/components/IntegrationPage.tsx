@@ -573,12 +573,15 @@ export function RouteForm({
   )
   // Stored filter values are typed per op (string[] for `in`, boolean for
   // `exists`); the form edits them as strings and re-types them on submit.
-  const [filters, setFilters] = useState<{ field: string; op: string; value: string }[]>(() =>
+  const [filters, setFilters] = useState<
+    { field: string; op: string; value: string; itemField?: string }[]
+  >(() =>
     (
       ((initial?.config as Record<string, unknown>)?.filters as {
         field: string
         op: string
         value: unknown
+        itemField?: string
       }[]) ?? []
     ).map((f) => ({
       ...f,
@@ -674,6 +677,9 @@ export function RouteForm({
                 filters: validFilters.map((f) => ({
                   field: f.field,
                   op: f.op,
+                  ...(f.op === 'array_contains' && f.itemField?.trim()
+                    ? { itemField: f.itemField.trim() }
+                    : {}),
                   value:
                     f.op === 'in'
                       ? f.value.split(',').map((v) => v.trim())
@@ -866,10 +872,26 @@ export function RouteForm({
                 <option value="contains">
                   {t('components.integration.route.filters.ops.contains')}
                 </option>
+                <option value="array_contains">
+                  {t('components.integration.route.filters.ops.arrayContains')}
+                </option>
                 <option value="exists">
                   {t('components.integration.route.filters.ops.exists')}
                 </option>
               </select>
+              {f.op === 'array_contains' && (
+                <Input
+                  value={f.itemField ?? ''}
+                  onChange={(e) => {
+                    const next = [...filters]
+                    next[i] = { ...f, itemField: e.target.value }
+                    setFilters(next)
+                  }}
+                  aria-label={t('components.integration.route.filters.itemField')}
+                  placeholder={t('components.integration.route.filters.itemField')}
+                  className="flex-1 h-8 text-xs font-mono"
+                />
+              )}
               {f.op !== 'exists' ? (
                 <Input
                   value={f.value}
