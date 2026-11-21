@@ -3921,7 +3921,7 @@
         "systemPrompt": "System Prompt",
         "skills": "Skills",
         "mcpConfig": "MCP Config",
-        "agentSettings": "Agent Settings (JSON)",
+        "agentSettings": "Agent Settings",
         "computeResources": "Compute Resources"
       }
     },
@@ -4129,6 +4129,7 @@
       "description": "Hand this workspace over to another user. Once they accept, you lose all access to it.",
       "open": "Transfer",
       "cancel": "Withdraw",
+      "copyLink": "Copy link",
       "pending": "Offered to {{name}}, waiting for them to accept (valid until {{date}}).",
       "submit": "Offer transfer",
       "summary": "Transfer {{workspace}} to {{name}} ({{username}}). Takes effect when they accept:",
@@ -4190,7 +4191,8 @@
       },
       "toasts": {
         "offered": "Offered to {{name}}; waiting for them to accept",
-        "cancelled": "Transfer withdrawn"
+        "cancelled": "Transfer withdrawn",
+        "linkCopied": "Link copied. Send it to {{name}} to open and accept"
       },
       "errors": {
         "plan": "Could not build the transfer plan",

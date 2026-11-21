@@ -5,7 +5,7 @@ import type {
   ComposerTriggerItem,
   ComposerVoice,
 } from '@qap/ui-sdk'
-import { Bot, File as FileIcon, Folder, Library } from 'lucide-react'
+import { Bot, File as FileIcon, Folder, Library, Sparkles } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
@@ -13,6 +13,7 @@ import type {
   QapComposerClient,
   QapDirEntry,
   QapTranscribeOptions,
+  QapWorkspaceSkill,
 } from './types'
 
 // ─── Built-in commands ──────────────────────────────────────────────
@@ -108,6 +109,7 @@ function FileMentionHint() {
 }
 
 const FILE_PREFIX = '@file/'
+const SKILL_PREFIX = '@skill/'
 const AGENT_PREFIX = '@agent/'
 const FILE_LIST_LIMIT = 50
 
@@ -140,6 +142,35 @@ const fileEntryItem: ComposerTriggerItem = {
   // No trailing space: the `@file/` trigger takes over from here.
   insertText: FILE_PREFIX,
   keepOpen: true,
+}
+
+const skillEntryItem: ComposerTriggerItem = {
+  key: '__skill__',
+  icon: <Sparkles className="h-3 w-3 shrink-0 text-muted-foreground" />,
+  label: <span className="font-mono font-medium">{SKILL_PREFIX}</span>,
+  insertText: SKILL_PREFIX,
+  keepOpen: true,
+}
+
+function skillItems(skills: QapWorkspaceSkill[], query: string): ComposerTriggerItem[] {
+  const q = query.toLowerCase()
+  const nameMatch = (skill: QapWorkspaceSkill) => skill.name.toLowerCase().includes(q)
+  return skills
+    .filter((skill) => nameMatch(skill) || skill.description?.toLowerCase().includes(q))
+    .sort((a, b) => Number(nameMatch(b)) - Number(nameMatch(a)) || a.name.localeCompare(b.name))
+    .slice(0, FILE_LIST_LIMIT)
+    .map((skill) => ({
+      key: skill.id,
+      icon: <Sparkles className="h-3 w-3 shrink-0 text-muted-foreground" />,
+      label: (
+        <span className="font-mono font-medium">
+          {SKILL_PREFIX}
+          {skill.name}
+        </span>
+      ),
+      description: skill.description || undefined,
+      insertText: `${SKILL_PREFIX}${skill.name} `,
+    }))
 }
 
 function agentItem(agent: QapCallableAgent): ComposerTriggerItem {
@@ -205,6 +236,7 @@ interface QapComposerInclude {
   workspaceCommands?: boolean
   /** `@file/…` workspace file mentions (needs `client.listDir`). Default on. */
   files?: boolean
+  skills?: boolean
   /** `@agent/…` callable-agent mentions (needs `client.listCallableAgents`). Default on. */
   agents?: boolean
   /** Voice input (needs `client.transcribe`). Default on. */
@@ -277,23 +309,36 @@ function createQapComposerPreset(options: QapComposerOptions): QapComposerPreset
   const listDir = include.files !== false ? client.listDir : undefined
   const listAgents = include.agents !== false ? client.listCallableAgents : undefined
 
-  if (listAgents || listDir) {
+  const listSkills = include.skills !== false ? client.listSkills : undefined
+  const skills = listSkills
+    ? swrCell(() => listSkills().catch((): QapWorkspaceSkill[] => []), AGENTS_TTL_MS)
+    : () => []
+
+  if (listAgents || listDir || listSkills) {
     const agents = listAgents ? swrCell(listAgents, AGENTS_TTL_MS) : () => []
+    const offers = (prefix: string, query: string) => prefix.slice(1).startsWith(query)
     triggers.push({
       id: 'qap-agent',
-      // Bare `@…` or `@agent/…`; `@file/…` belongs to the file trigger.
-      pattern: /@(?!file\/)(?:agent\/)?([a-z0-9/-]*)$/,
-      getItems: (query) =>
-        mapMaybeAsync(agents(), (list) => {
-          const showFileEntry =
-            !!listDir && (query === '' || FILE_PREFIX.slice(1).startsWith(query))
-          return [
-            ...(showFileEntry ? [fileEntryItem] : []),
-            ...list
-              .filter((a) => a.id !== workspaceId && agentRef(a).includes(query))
-              .map(agentItem),
-          ]
-        }),
+      pattern: /@(?!file\/|skill\/)(?:agent\/)?([a-z0-9/-]*)$/,
+      getItems: async (query) => {
+        const [agentList, skillList] = await Promise.all([agents(), query ? skills() : []])
+        return [
+          ...(listDir && offers(FILE_PREFIX, query) ? [fileEntryItem] : []),
+          ...(listSkills && offers(SKILL_PREFIX, query) ? [skillEntryItem] : []),
+          ...agentList
+            .filter((a) => a.id !== workspaceId && agentRef(a).includes(query))
+            .map(agentItem),
+          ...skillItems(skillList, query),
+        ]
+      },
+    })
+  }
+
+  if (listSkills) {
+    triggers.push({
+      id: 'qap-skill',
+      pattern: /@skill\/([\w.-]*)$/,
+      getItems: (query) => mapMaybeAsync(skills(), (list) => skillItems(list, query)),
     })
   }
 

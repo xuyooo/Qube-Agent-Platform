@@ -45,3 +45,35 @@ it('awaits fresh command data instead of returning the invalidated cache', async
     client.clear()
   }
 })
+
+it('offers installed skills and ranks skill-name matches ahead of description matches', async () => {
+  const fetcher = vi.fn().mockResolvedValue(
+    Response.json({
+      skills: [
+        { id: '1', name: 'guide', description: 'Brand conventions' },
+        { id: '2', name: 'brand-check' },
+        { id: '3', name: 'build' },
+      ],
+    }),
+  )
+  vi.stubGlobal('fetch', fetcher)
+  const client = new QueryClient()
+  const root = createRoot(document.createElement('div'))
+  let preset!: ReturnType<typeof useWorkspaceComposer>
+  function Host() {
+    preset = useWorkspaceComposer('w', 'claude-code')
+    return null
+  }
+  try {
+    act(() => root.render(createElement(QueryClientProvider, { client }, createElement(Host))))
+    const trigger = preset.triggers.find((item) => item.id === 'qap-skill')!
+    expect(trigger.pattern.test('@skill/Brand')).toBe(true)
+    const items = await trigger.getItems('Brand', new AbortController().signal)
+    expect(items.map((item) => item.insertText)).toEqual(['@skill/brand-check ', '@skill/guide '])
+    expect(fetcher).toHaveBeenCalledWith('/api/workspaces/w/skills', { credentials: 'include' })
+  } finally {
+    act(() => root.unmount())
+    client.clear()
+    vi.unstubAllGlobals()
+  }
+})
