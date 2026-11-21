@@ -1,6 +1,6 @@
 ---
 name: qap-api
-description: Manage QAP workspaces, prompts, templates, credentials, service tokens, agent files, providers, tags, shares, schedules via REST. Trigger when the user wants to script or automate QAP outside the UI — e.g. "create a workspace", "rotate a token", "bulk-upload prompts", "list agent files in workspace X", CI integration with QAP.
+description: "Manage QAP workspaces, prompts, templates, credentials, service tokens, agent files, providers, tags, shares, schedules via REST. Trigger when the user wants to script or automate QAP outside the UI — e.g. \"create a workspace\", \"rotate a token\", \"bulk-upload prompts\", \"list agent files in workspace X\", CI integration with QAP."
 metadata:
   api-version: "0.1.0"
   openapi-version: "3.1.0"
