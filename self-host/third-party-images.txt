@@ -1,0 +1,15 @@
+# id|upstream image|GHCR suffix
+gotenberg|docker.io/gotenberg/gotenberg:8|gotenberg:8
+coturn|docker.io/coturn/coturn:4.6|coturn:4.6
+postgresql|ghcr.io/cloudnative-pg/postgresql:16|cloudnative-pg-postgresql:16
+cnpg-operator|ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1|cloudnative-pg:1.28.1
+nfs-server|ghcr.io/obeone/nfs-server:2.2.3|nfs-server:2.2.3
+nfs-provisioner|registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2|nfs-subdir-external-provisioner:v4.0.2
+node|docker.io/library/node:22-bookworm|node:22-bookworm
+python|docker.io/library/python:3.12-bookworm|python:3.12-bookworm
+golang|docker.io/library/golang:1.23|golang:1.23
+pause|registry.k8s.io/pause:3.9|pause:3.9
+registry|docker.io/library/registry:2|registry:2
+opensandbox-controller|docker.io/opensandbox/controller:v0.2.0|opensandbox-controller:v0.2.0
+opensandbox-server|docker.io/opensandbox/server:v0.1.14|opensandbox-server:v0.1.14
+opensandbox-execd|docker.io/opensandbox/execd:v1.0.16|opensandbox-execd:v1.0.16
