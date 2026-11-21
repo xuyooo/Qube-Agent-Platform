@@ -1,3 +1,4 @@
+import { removeOwnerAfsGrantsForTeam } from './afs-shares'
 import { generateId, pool } from './pool'
 import { removeOwnerSharesForTeam } from './workspace-shares'
 
@@ -10,6 +11,21 @@ export interface Team {
   updated_at: Date
   /** Set on an application's own team (migrations/152_app_teams.sql). */
   app_id: string | null
+  /** Set on a team an application created for its users (migrations/158_app_owned_teams.sql). */
+  owner_app_id: string | null
+  /** The owning application's own id for the team, with owner_app_id. */
+  external_id: string | null
+}
+
+/**
+ * The user can't be in the team: an application's users join only the
+ * application's own team and the teams it created, and those teams take no one
+ * else.
+ */
+export class TeamMembershipError extends Error {
+  constructor() {
+    super("An application's users belong to its own teams alone")
+  }
 }
 
 export type TeamRole = 'admin' | 'member'
@@ -127,11 +143,29 @@ export async function listTeamMembers(teamId: string): Promise<TeamMemberWithUse
   return rows as TeamMemberWithUser[]
 }
 
+/**
+ * Add the user to the team; nothing changes when they're already in it.
+ * Throws TeamMembershipError when an application's user and the team don't go
+ * together; every way into a team goes through here.
+ */
 export async function addTeamMember(
   teamId: string,
   userId: string,
   role: TeamRole = 'member',
 ): Promise<void> {
+  const { rows } = await pool.query(
+    `SELECT u.managed_by, t.app_id, t.owner_app_id
+       FROM users u, teams t
+      WHERE u.id = $1 AND t.id = $2`,
+    [userId, teamId],
+  )
+  const r = rows[0] as
+    | { managed_by: string | null; app_id: string | null; owner_app_id: string | null }
+    | undefined
+  if (r?.owner_app_id && r.managed_by !== r.owner_app_id) throw new TeamMembershipError()
+  if (r?.managed_by && r.managed_by !== r.app_id && r.managed_by !== r.owner_app_id) {
+    throw new TeamMembershipError()
+  }
   await pool.query(
     `INSERT INTO team_members (team_id, user_id, role)
      VALUES ($1, $2, $3)
@@ -157,8 +191,10 @@ export async function removeTeamMember(teamId: string, userId: string): Promise<
     teamId,
     userId,
   ])
-  // A workspace may only be shared with a team its owner is in, so the
-  // leaving member's workspaces stop being shared with this team.
+  // A workspace or folder may only be shared with a team its owner is in, so
+  // the leaving member's workspaces and folders stop being shared with this
+  // team. The mounts that loses are taken away by reconcileTeamMounts.
   await removeOwnerSharesForTeam(teamId, userId)
+  await removeOwnerAfsGrantsForTeam(teamId, userId)
   return (r.rowCount ?? 0) > 0
 }

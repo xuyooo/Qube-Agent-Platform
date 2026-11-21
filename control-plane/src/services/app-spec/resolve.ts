@@ -8,6 +8,7 @@
 // ambiguous. A prompt without a version is pinned to its current one.
 
 import { createHash } from 'node:crypto'
+import type { AfsPermission } from '../db/afs-shares'
 import { getAppOwnerId } from '../db/app-users'
 import { listVisibleToUser as listVisibleEnvironments } from '../db/environments'
 import { listVisibleToUser as listVisibleProviders } from '../db/model-providers'
@@ -58,10 +59,22 @@ export interface ResolvedAgent {
   runtime: AgentRuntime
 }
 
+/** A folder each user gets, by agent. */
+export interface ResolvedFolder {
+  owner: string
+  /** The other agents whose workspaces mount it. */
+  members: Record<string, AfsPermission>
+}
+
 export interface ResolvedSpec {
   agents: Record<string, ResolvedAgent>
   /** Origins of the MCP servers that identify their callers. */
   mcp_origins: string[]
+  /**
+   * Present only when the spec declares folders, so a spec without them
+   * hashes as it did before folders could be declared.
+   */
+  shared_folders?: Record<string, ResolvedFolder>
 }
 
 interface Named {
@@ -196,10 +209,17 @@ export async function resolveAppSpec(
   const mcpOrigins = Object.values(servers)
     .filter((s) => s.identify_caller)
     .map((s) => serverOriginFromUrl(s.url))
-  return {
-    resolved: { agents, mcp_origins: [...new Set(mcpOrigins)].sort() },
-    promptLocks,
+  const resolved: ResolvedSpec = { agents, mcp_origins: [...new Set(mcpOrigins)].sort() }
+
+  // Folders name nothing outside the spec, so they are taken as written.
+  const folders = Object.entries(spec.shared_folders ?? {})
+  if (folders.length > 0) {
+    resolved.shared_folders = {}
+    for (const [name, folder] of folders) {
+      resolved.shared_folders[name] = { owner: folder.owner, members: folder.members ?? {} }
+    }
   }
+  return { resolved, promptLocks }
 }
 
 /** JSON with object keys sorted, so equal values serialize alike. */

@@ -1,8 +1,8 @@
 // The application protocol (/apps/v1): an application registered on the
 // platform provisions its own users and acts as them, with its client id and
 // secret alone. Each of its users is a platform user that can't sign in to the
-// platform itself. The application also publishes prompts and skills, and
-// declares in its spec the agents each user gets.
+// platform itself. The application groups its users into teams, publishes
+// prompts and skills, and declares in its spec the agents each user gets.
 
 import { NapClient, NapError } from './client.js'
 
@@ -22,6 +22,16 @@ export interface AppUser {
   username: string
   display_name: string
   email: string | null
+  created_at: string
+}
+
+export interface AppTeam {
+  /** The platform's team id, as folder sharing names it. */
+  id: string
+  /** Your application's id for the team. */
+  external_id: string
+  name: string
+  description: string | null
   created_at: string
 }
 
@@ -48,6 +58,13 @@ export interface SpecPlanEntry {
   changes?: string[]
 }
 
+export interface SpecFolderPlanEntry {
+  folder: string
+  action: 'create' | 'update' | 'delete' | 'unchanged'
+  /** For an update: what changes, `owner` and/or `members`. */
+  changes?: string[]
+}
+
 export interface SpecApplyResult {
   /** The version in force after the apply, or that a dry run would create. */
   version: number
@@ -55,6 +72,7 @@ export interface SpecApplyResult {
   /** False when the spec resolves to the one already in force. */
   changed: boolean
   plan: SpecPlanEntry[]
+  shared_folders: SpecFolderPlanEntry[]
 }
 
 export interface AppliedSpec {
@@ -73,7 +91,7 @@ export interface SpecStatus {
     workspaces: number
     /** Workspaces on the agent's latest template version, with its current runtime. */
     up_to_date: number
-    /** Workspaces that can't follow the agent; `listAgents` says why. */
+    /** Workspaces that can't follow the agent or have their shared folders; `listAgents` says why. */
     blocked: number
   }>
 }
@@ -84,7 +102,10 @@ export interface AgentWorkspace {
   status: string
   template_version: number
   up_to_date: boolean
-  /** Why it can't follow its agent (skills the user can't see), while it can't. */
+  /**
+   * Why it can't follow its agent (skills the user can't see) or have its
+   * shared folders, while it can't.
+   */
   blocked: string | null
 }
 
@@ -191,6 +212,55 @@ export class AppClient {
     })
   }
 
+  // ── Teams ───────────────────────────────────────────────────────────────
+
+  /**
+   * Create a team of your users, or update its name and description.
+   * Idempotent. Users share folders with it through `as(externalId)`.
+   */
+  async upsertTeam(
+    externalId: string,
+    team: { name: string; description?: string | null },
+  ): Promise<AppTeam> {
+    const res = await this.call('PUT', `/teams/${encodeURIComponent(externalId)}`, {
+      name: team.name,
+      description: team.description ?? null,
+    })
+    return (await res.json()) as AppTeam
+  }
+
+  async listTeams(): Promise<(AppTeam & { member_count: number })[]> {
+    return (await (await this.call('GET', '/teams')).json()) as (AppTeam & {
+      member_count: number
+    })[]
+  }
+
+  /** Delete the team; folders mounted through it are unmounted. */
+  async deleteTeam(externalId: string): Promise<void> {
+    await this.call('DELETE', `/teams/${encodeURIComponent(externalId)}`)
+  }
+
+  async listTeamMembers(teamExternalId: string): Promise<AppUser[]> {
+    const res = await this.call('GET', `/teams/${encodeURIComponent(teamExternalId)}/members`)
+    return (await res.json()) as AppUser[]
+  }
+
+  /** Add a provisioned user to the team. Idempotent. */
+  async addTeamMember(teamExternalId: string, userExternalId: string): Promise<void> {
+    await this.call(
+      'PUT',
+      `/teams/${encodeURIComponent(teamExternalId)}/members/${encodeURIComponent(userExternalId)}`,
+    )
+  }
+
+  /** Remove the user; the folders they shared with or mounted through the team go too. */
+  async removeTeamMember(teamExternalId: string, userExternalId: string): Promise<void> {
+    await this.call(
+      'DELETE',
+      `/teams/${encodeURIComponent(teamExternalId)}/members/${encodeURIComponent(userExternalId)}`,
+    )
+  }
+
   // ── Content ─────────────────────────────────────────────────────────────
 
   /** Publish a prompt. Publishing the same text again keeps its version. */
@@ -240,7 +310,8 @@ export class AppClient {
   /**
    * Apply the spec: an object, or YAML text. `dryRun` returns the plan only;
    * a spec that drops agents is refused unless `prune` is given, which
-   * deletes them with their users' workspaces.
+   * deletes them with their users' workspaces. So is one that drops a shared
+   * folder or gives it another owner: `prune` revokes each user's copy.
    */
   async applySpec(
     spec: Record<string, unknown> | string,
