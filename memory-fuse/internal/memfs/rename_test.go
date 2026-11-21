@@ -14,7 +14,7 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 
-	"github.com/neutree-ai/agent-platform/memory-fuse/internal/cpclient"
+	"github.com/xuyooo/Qube-Agent-Platform/memory-fuse/internal/cpclient"
 )
 
 // fakeBackend is an in-memory path -> content store with sha preconditions.
