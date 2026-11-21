@@ -1676,8 +1676,8 @@ export const ApiScheduleSchema = z.object({
   prompt_id: z.string().nullable(),
   prompt_content: z.string().nullable(),
   enabled: z.boolean(),
-  /** 'local' = user's own; 'template' = materialized from the template (read-only except enable/disable). */
-  origin: z.enum(['local', 'template']),
+  /** 'local' = user's own; 'template' = materialized from the template (read-only except enable/disable); 'reflect' = builtin Reflect schedule (prompt is platform-managed, cannot be deleted). */
+  origin: z.enum(['local', 'template', 'reflect']),
   last_run_at: z.string().nullable(),
   completed_at: z.string().nullable(),
   created_at: z.string(),
@@ -1799,6 +1799,12 @@ export const ChatBodySchema = z.object({
    * header, defaulting to SSE.
    */
   stream: z.boolean().optional(),
+  /**
+   * Set by the scheduler when this turn is a Reflect run for the named
+   * memory store and a frozen window for the
+   * duration of the turn. Not for direct API callers to set themselves.
+   */
+  reflect_store_id: z.string().optional(),
 })
 export type ChatBody = z.infer<typeof ChatBodySchema>
 

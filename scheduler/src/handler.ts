@@ -1,8 +1,9 @@
-import type { Job, JobWithMetadata } from 'pg-boss'
+import type { Job, JobWithMetadata, PgBoss } from 'pg-boss'
 import { type TurnPlugin, runTurn } from '../../internal/sse-consumer/src'
 import * as db from './db'
 
 const QAP_API_URL = process.env.QAP_API_URL || 'http://qap-cp:3000'
+const PLATFORM_SERVICE_KEY = process.env.PLATFORM_SERVICE_KEY
 const CG_API_URL = process.env.CG_API_URL || 'http://qap-cg:3002'
 
 function getChatEndpoint(workspaceId: string): string {
@@ -63,7 +64,7 @@ function buildPrompt(opts: {
 
 // --- Main Handler ---
 
-export async function handleJob(job: JobWithMetadata<JobData>): Promise<JobResult> {
+export async function handleJob(job: JobWithMetadata<JobData>, boss: PgBoss): Promise<JobResult> {
   // Handle batch trigger: wrap execution with task status tracking
   if (job.data.trigger?.type === 'batch') {
     return handleBatchJob(job)
@@ -88,7 +89,7 @@ export async function handleJob(job: JobWithMetadata<JobData>): Promise<JobResul
 
   const execStart = Date.now()
   try {
-    const result = await executeJob(job)
+    const result = await executeJob(job, boss)
     const execSec = ((Date.now() - execStart) / 1000).toFixed(1)
     console.log(`[Scheduler] Job=${job.id} finished in ${execSec}s session=${result.session_id}`)
 
@@ -98,7 +99,10 @@ export async function handleJob(job: JobWithMetadata<JobData>): Promise<JobResul
   }
 }
 
-async function executeJob(job: Job<JobData>): Promise<JobResult> {
+async function executeJob(job: Job<JobData>, boss: PgBoss): Promise<JobResult> {
+  // Set below when this job is a Reflect schedule with a live target store.
+  // The control plane captures the window at admission and advances it after completion.
+  let reflectStoreId: string | undefined
   // Resolve cron schedule: read latest config from DB
   if (job.data.trigger?.type === 'cron') {
     const scheduleId = (job.data.trigger.payload as Record<string, unknown>)?.schedule_id as string
@@ -107,6 +111,36 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
       if (!schedule || !schedule.enabled) {
         console.log(`[Scheduler] Skipping disabled/missing schedule=${scheduleId} job=${job.id}`)
         return { session_id: '', error: 'Schedule disabled or not found' }
+      }
+      // Reflect schedules are deleted lazily, not eagerly when their store is
+      // deleted (memory-stores.ts's DELETE route stays unaware of schedules
+      // entirely — see memory-store-plan.md 3.1). This is where that delete
+      // actually catches up: if no store points back at this schedule
+      // anymore, it's an orphan — clean it up here instead of dispatching a
+      // turn against a store that no longer exists. "Run now" hits this same
+      // path, so a user who doesn't want to wait for the next cron tick has
+      // an immediate way to trigger the cleanup.
+      if (schedule.origin === 'reflect') {
+        const storeId = await db.getReflectTargetStoreId(scheduleId)
+        if (!storeId) {
+          console.log(
+            `[Scheduler] Reflect schedule=${scheduleId} orphaned (store deleted); cleaning up job=${job.id}`,
+          )
+          if (schedule.cron) await boss.unschedule('agent-session', `schedule-${scheduleId}`)
+          await db.deleteSchedule(scheduleId)
+          return { session_id: '', error: 'Reflect schedule orphaned (store deleted); cleaned up' }
+        }
+        // Reflect is housekeeping, not a reason to run: the chat endpoint
+        // auto-starts a stopped workspace, so dispatching here would wake one
+        // the owner stopped. Skip without touching last_run_at; the next
+        // Reflect after the workspace is started covers the missed window.
+        if ((await db.getWorkspaceStatus(schedule.workspace_id)) === 'stopped') {
+          console.log(
+            `[Scheduler] Reflect schedule=${scheduleId} skipped: workspace=${schedule.workspace_id} is stopped job=${job.id}`,
+          )
+          return { session_id: '', error: 'Reflect skipped: workspace is stopped' }
+        }
+        reflectStoreId = storeId
       }
       const platformToken = await db.getPlatformToken(schedule.user_id)
       if (!platformToken) {
@@ -142,7 +176,11 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
   if (!service_token) throw new Error(`Job missing service_token: ${job.id}`)
 
   const chatEndpoint = getChatEndpoint(workspace_id)
+  if (reflectStoreId && !PLATFORM_SERVICE_KEY) {
+    return { session_id: '', error: 'Reflect requires the scheduler service key' }
+  }
   const authHeaders: Record<string, string> = {
+    ...(reflectStoreId ? { 'X-Platform-Service-Key': PLATFORM_SERVICE_KEY! } : {}),
     Authorization: `Bearer ${service_token}`,
   }
 
@@ -223,6 +261,7 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
               )
           }
         : undefined
+    const onSessionStarted = bindThreadSession
 
     const failure: { message?: string } = {}
     let sseResult = await startAndConsumeSession(
@@ -235,8 +274,9 @@ async function executeJob(job: Job<JobData>): Promise<JobResult> {
       source,
       images,
       streamSink,
-      bindThreadSession,
+      onSessionStarted,
       failure,
+      reflectStoreId,
     )
 
     // If resuming failed, fallback to a fresh session
@@ -533,12 +573,14 @@ async function startAndConsumeSession(
   streamSink?: StreamSink | null,
   onSessionStarted?: (sessionId: string) => void,
   failure?: { message?: string },
+  reflectStoreId?: string,
 ): Promise<JobResult | null> {
   const body = JSON.stringify({
     message: prompt,
     ...(sessionId ? { session_id: sessionId } : {}),
     ...(source ? { source } : {}),
     ...(images?.length ? { images } : {}),
+    ...(reflectStoreId ? { reflect_store_id: reflectStoreId } : {}),
   })
   console.log(
     `[Scheduler] POST /chat workspace=${workspaceId} session=${sessionId ?? '(new)'} source=${source ?? '-'} images=${images?.length ?? 0} body_bytes=${body.length}`,

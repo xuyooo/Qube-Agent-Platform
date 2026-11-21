@@ -5,6 +5,7 @@ import { canAccessWorkspace } from '../../lib/workspace-access'
 import { UniversalEventSchema } from '../../openapi/events.schema'
 import { dispatchChatTurn } from '../../services/chat/dispatchChatTurn'
 import { getWorkspace } from '../../services/db/workspaces'
+import { eligibleReflectStore, reflectWindow } from '../../services/reflect'
 
 /**
  * Chat entry point — mounts `POST /api/workspaces/:id/chat`. Mode selection
@@ -152,11 +153,30 @@ chat.openapi(chatRoute, async (c) => {
   // the 503 if auto-start is disabled or the cold-start times out).
 
   const body = c.req.valid('json')
+  let reflectRun: { storeId: string; since: string; until: string } | undefined
+  if (body.reflect_store_id !== undefined) {
+    const serviceKey = process.env.PLATFORM_SERVICE_KEY
+    if (
+      !serviceKey ||
+      c.req.header('x-platform-service-key') !== serviceKey ||
+      workspace.user_id !== user.sub ||
+      workspace.is_system ||
+      body.source !== 'schedule' ||
+      body.session_id
+    ) {
+      return c.json({ error: 'Reflect is available to the workspace scheduler only' }, 403)
+    }
+    const store = await eligibleReflectStore(id, user.sub, body.reflect_store_id)
+    if (!store?.reflect_schedule_id) return c.json({ error: 'Reflect store not found' }, 404)
+    if (workspace.status !== 'running') return c.json({ error: 'Workspace not running' }, 503)
+    reflectRun = { storeId: store.id, ...reflectWindow(store, new Date().toISOString()) }
+  }
   return dispatchChatTurn({
     workspace,
     body,
     acceptHeader: c.req.header('Accept'),
     callerUserId: user.sub,
+    ...(reflectRun ? { reflectRun } : {}),
   })
 })
 

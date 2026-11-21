@@ -13,6 +13,8 @@ interface MemoryStoreRow {
   archived_at: string | null
   /** The workspace this store was provisioned for; it changes hands with it. */
   origin_workspace_id: string | null
+  reflect_schedule_id: string | null
+  last_reflected_at: string | null
   created_at: string
   updated_at: string
 }
@@ -64,17 +66,14 @@ function sha256(text: string): string {
 }
 
 const STORE_COLS_WITH_COUNTS = `s.id, s.owner_user_id, s.name, s.description,
-  s.archived_at, s.origin_workspace_id, s.created_at, s.updated_at,
+  s.archived_at, s.origin_workspace_id, s.reflect_schedule_id, s.last_reflected_at,
+  s.created_at, s.updated_at,
   COALESCE(c.memory_count, 0)::int AS memory_count`
 
 const STORE_COUNT_JOIN = `LEFT JOIN (
   SELECT store_id, COUNT(*) AS memory_count
     FROM memories GROUP BY store_id
 ) c ON c.store_id = s.id`
-
-// TODO(memory-reflect): Implement Reflect separately after enforcing workspace/session/store
-// ownership, exhaustive activity pagination, fixed run windows with idempotent checkpoint
-// commits, and exclusive ownership for writable stores instead of assuming attachments imply it.
 
 // ── Stores ──────────────────────────────────────────────────────────────────
 
@@ -152,6 +151,44 @@ export async function patchStore(
 export async function deleteStore(id: string): Promise<boolean> {
   const r = await pool.query('DELETE FROM memory_stores WHERE id = $1', [id])
   return (r.rowCount ?? 0) > 0
+}
+
+/** Link (or unlink, with `null`) the builtin Reflect schedule that targets this store. */
+export async function setStoreReflectSchedule(
+  storeId: string,
+  scheduleId: string | null,
+): Promise<void> {
+  await pool.query('UPDATE memory_stores SET reflect_schedule_id = $1 WHERE id = $2', [
+    scheduleId,
+    storeId,
+  ])
+}
+
+// Compare the saved start so a duplicate or late completion cannot skip a window.
+export async function advanceReflectCheckpoint(
+  storeId: string,
+  workspaceId: string,
+  sessionId: string,
+  token: string,
+): Promise<void> {
+  await pool.query(
+    `UPDATE memory_stores s
+       SET last_reflected_at = t.reflect_until
+      FROM session_tokens t, workspaces w, sessions sess
+     WHERE s.id = $1 AND w.id = $2 AND sess.id = $3 AND t.token = $4
+       AND sess.workspace_id = w.id AND t.workspace_id = w.id AND t.session_id = sess.id
+       AND t.reflect_store_id = s.id AND t.reflect_until > t.reflect_since
+       AND s.origin_workspace_id = w.id AND s.owner_user_id = w.user_id
+       AND s.archived_at IS NULL
+       AND date_trunc('milliseconds', COALESCE(s.last_reflected_at, s.created_at)) = t.reflect_since
+       AND EXISTS (SELECT 1 FROM workspace_memory_attachments a
+                    WHERE a.store_id = s.id AND a.workspace_id = w.id AND a.access = 'read_write')
+       AND NOT EXISTS (SELECT 1 FROM workspace_memory_attachments a
+                        WHERE a.access = 'read_write' AND
+                         ((a.store_id = s.id AND a.workspace_id <> w.id) OR
+                          (a.workspace_id = w.id AND a.store_id <> s.id)))`,
+    [storeId, workspaceId, sessionId, token],
+  )
 }
 
 // ── Memories ────────────────────────────────────────────────────────────────

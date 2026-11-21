@@ -5,18 +5,23 @@ import { registerBrowserTools } from './tools/browser'
 import { registerBuilderTools } from './tools/builder-mode'
 import { registerExportFileUrlTool } from './tools/export-file-url'
 import { registerMemoryTools } from './tools/memory'
+import { registerReflectTools } from './tools/reflect'
 import { registerSandboxTools } from './tools/sandbox'
 import { registerSkillsTools } from './tools/skills'
 
 /**
- * Per-request context resolved by `handleMcpRequest`. `sessionId` and
- * `taskId` come from reverse-resolving `X-Session-Token`; tools that need
- * either can read directly off this object instead of re-parsing headers.
+ * Per-request context resolved by `handleMcpRequest`. `sessionId`, `taskId`,
+ * and `reflectStoreId` all come from reverse-resolving `X-Session-Token` via
+ * `session_tokens` (see lib/session-token.ts) — tools that need any of them
+ * can read directly off this object instead of re-parsing headers or
+ * querying again.
  */
 interface McpRequestContext {
   workspaceId: string
   sessionId: string | null
   taskId: string | null
+  /** Set when this turn is a Reflect run for this memory store. */
+  reflectStoreId: string | null
   headers: Headers
 }
 
@@ -25,7 +30,11 @@ interface McpRequestContext {
  * — keep this function unaware of specific tool options.
  */
 export function registerTools(server: McpServer, ctx: McpRequestContext) {
-  const { workspaceId, taskId, sessionId, headers } = ctx
+  const { workspaceId, taskId, sessionId, reflectStoreId, headers } = ctx
+  if (reflectStoreId) {
+    registerReflectTools(server, workspaceId, reflectStoreId, sessionId)
+    return
+  }
   registerMemoryTools(server, workspaceId)
   registerAgentTools(server, workspaceId, taskId, sessionId)
   registerBrowserTools(server, workspaceId)

@@ -14,6 +14,7 @@ interface DispatchChatTurnOpts {
   callerUserId: string
   /** Teamwork coordinator turns pass the task id; plain workspace chat omits it. */
   taskId?: string | null
+  reflectRun?: { storeId: string; since: string; until: string }
 }
 
 function jsonResponse(obj: unknown, status: number): Response {
@@ -49,6 +50,7 @@ export async function dispatchChatTurn(opts: DispatchChatTurnOpts): Promise<Resp
     source: body.source,
     callerUserId,
     taskId: taskId ?? null,
+    ...(opts.reflectRun ? { reflectRun: opts.reflectRun } : {}),
   })
 
   const ct = sseResponse.headers.get('Content-Type') ?? ''

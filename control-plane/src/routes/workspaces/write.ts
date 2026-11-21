@@ -197,10 +197,15 @@ write.openapi(createRouteDef, async (c) => {
       }
     }
 
-    // Auto-provision the workspace's default memory store + attach it. Skipped
-    // for system workspaces (shared, no human owner to file the store under)
-    // and when the cluster doesn't ship the memory-fuse image (sidecar
-    // wouldn't be present — store would just be dead weight in the prompt).
+    // Auto-provision the workspace's default memory store and attach it.
+    // Its builtin Reflect schedule is NOT created here — reconcileReflectSchedule
+    // (called from startWorkspaceInstance) creates it the first time the
+    // workspace actually starts, which also covers workspaces whose store
+    // predates this feature, so there's only one code path that creates a
+    // Reflect schedule. Skipped for system workspaces (shared, no human
+    // owner to file the store under) and when the cluster doesn't ship the
+    // memory-fuse image (sidecar wouldn't be present — store would just be
+    // dead weight in the prompt).
     if (!isSystem && isMemoryFuseAvailable() && placement.supports.persistentMemory) {
       try {
         // Reuse the workspace name verbatim so the store is identifiable from
