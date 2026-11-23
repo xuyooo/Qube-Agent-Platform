@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:admin-stats": "tsx --test test/admin-stats-db.node.ts test/admin-stats-worker.node.ts"
   },
   "dependencies": {
     "pg": "^8.13.0",
