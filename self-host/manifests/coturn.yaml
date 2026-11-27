@@ -2,7 +2,8 @@
 # hostNetwork=true so external browsers and internal pods reach the same address.
 # TURN_AUTH_SECRET is read from ${APP_PREFIX}-browser-secret (already created by secrets.yaml).
 #
-# Connected variant: pulled straight from Docker Hub's public coturn image.
+# Connected default: pulled from QAP's GHCR mirror of the upstream coturn image.
+# For offline/custom-registry installs, override COTURN_IMAGE in values.env.
 #
 # install.sh patches nodeSelector at apply time and resolves TURN_HOST from this
 # pod's hostIP if the operator left it blank in values.env.
