@@ -25,6 +25,12 @@ export interface QapCallableAgent {
   is_own: boolean
 }
 
+export interface QapWorkspaceSkill {
+  id: string
+  name: string
+  description?: string
+}
+
 /** One entry of a workspace directory listing. */
 export interface QapDirEntry {
   name: string
@@ -48,6 +54,7 @@ export interface QapComposerClient {
   listCommands?: () => Promise<QapWorkspaceCommand[]>
   /** Agents the user can call (`GET /workspaces/callable`). */
   listCallableAgents?: () => Promise<QapCallableAgent[]>
+  listSkills?: () => Promise<QapWorkspaceSkill[]>
   /**
    * Entries under a workspace directory (`GET /workspaces/:id/agent/dirs`).
    * `dir` is workspace-relative without a leading slash (`''` is the root). A

@@ -3943,7 +3943,7 @@
         "systemPrompt": "系统 Prompt",
         "skills": "Skills",
         "mcpConfig": "MCP 配置",
-        "agentSettings": "Agent 设置（JSON）",
+        "agentSettings": "Agent 设置",
         "computeResources": "计算资源"
       }
     },
@@ -4151,6 +4151,7 @@
       "description": "把这个工作空间整个交给另一位用户。对方接受后，你将失去全部访问。",
       "open": "转移",
       "cancel": "撤回",
+      "copyLink": "复制链接",
       "pending": "已发给 {{name}}，等待对方接受（{{date}} 前有效）。",
       "submit": "发起转移",
       "summary": "把 {{workspace}} 转给 {{name}}（{{username}}）。对方接受后生效：",
@@ -4212,7 +4213,8 @@
       },
       "toasts": {
         "offered": "已发给 {{name}}，等待对方接受",
-        "cancelled": "已撤回转移"
+        "cancelled": "已撤回转移",
+        "linkCopied": "链接已复制，发给 {{name}}，对方打开后即可接受"
       },
       "errors": {
         "plan": "无法生成转移清单",

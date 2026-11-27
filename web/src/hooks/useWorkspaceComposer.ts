@@ -1,3 +1,4 @@
+import { enabledSkillsQueryOptions } from '@/components/workspace/skill-browser/workspace-source'
 import { dirListUrl } from '@/lib/api/agent-files'
 import { api } from '@/lib/api/client'
 import { useQapComposer } from '@/lib/composer/preset'
@@ -22,6 +23,8 @@ export function useWorkspaceComposer(workspaceId: string, agentType: string) {
           queryFn: () => api.getCallableAgents(),
           revalidateIfStale: true,
         }),
+      listSkills: async () =>
+        (await queryClient.fetchQuery(enabledSkillsQueryOptions(workspaceId))).skills ?? [],
       listDir: async (dir, query, signal) => {
         const response = await fetch(dirListUrl(workspaceId, dir || '/', query || undefined), {
           signal,
