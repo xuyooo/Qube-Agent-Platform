@@ -1,0 +1,22 @@
+name: Memory FUSE tests
+on:
+  pull_request:
+    paths:
+      - 'memory-fuse/**'
+      - '.github/workflows/memory-fuse-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: memory-fuse/go.mod
+          cache-dependency-path: memory-fuse/go.sum
+      - name: Run Go tests
+        working-directory: memory-fuse
+        run: go test ./...
