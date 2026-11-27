@@ -9,7 +9,7 @@ import {
   listUserIdentities,
 } from '../services/db/identities'
 import { ensurePlatformToken } from '../services/db/shares'
-import { getUser } from '../services/db/users'
+import { canSignIn, getUser } from '../services/db/users'
 import { getAuthorizeUrl, getUserByCode, getUserInfo, isWeComEnabled } from '../services/wecom'
 
 const wecomAuth = new Hono<AppEnv>()
@@ -54,7 +54,7 @@ wecomAuth.get('/callback', async (c) => {
       // Bind flow: manually verify JWT since callback is in the auth skip list
       const token = getCookie(c, 'token')
       const currentUser = token ? await verifyToken(token) : null
-      if (!currentUser) {
+      if (!currentUser || currentUser.app) {
         return c.redirect('/login?error=auth_required')
       }
 
@@ -85,7 +85,7 @@ wecomAuth.get('/callback', async (c) => {
       return c.redirect('/login?error=user_not_found')
     }
 
-    if (dbUser.role === 'system') {
+    if (!canSignIn(dbUser)) {
       return c.redirect('/login?error=system_account')
     }
 

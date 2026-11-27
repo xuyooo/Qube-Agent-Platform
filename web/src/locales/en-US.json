@@ -2160,6 +2160,7 @@
         "description": "Description",
         "homepageUrl": "Homepage URL",
         "redirectUris": "Redirect URIs",
+        "mcpOrigins": "MCP servers",
         "customId": "Client ID (optional)",
         "clientId": "Client ID",
         "clientSecret": "Client Secret"
@@ -2172,9 +2173,11 @@
         "customId": "Leave empty to auto-generate"
       },
       "help": {
-        "redirectUrisHint": "One URL per line. Must be http(s).",
+        "redirectUrisHint": "One URL per line. Must be http(s). Leave empty for an application that only calls the API for the users it provisions.",
+        "mcpOriginsHint": "Declared in the application's spec. Agent calls to them go through the platform, which attaches a signed statement of who is calling.",
         "storeSecurely": "The client secret will only be shown once. Store it securely before closing.",
-        "rotateWarning": "Rotating invalidates the existing secret. Existing refresh tokens remain valid."
+        "rotateWarning": "Rotating invalidates the existing secret. Existing refresh tokens remain valid.",
+        "team": "Share providers, skills, prompts and environments with the team “{{name}}” to make them available to this application's users."
       },
       "actions": {
         "create": "Create",
@@ -2186,7 +2189,6 @@
       },
       "errors": {
         "nameRequired": "Name is required",
-        "redirectUrisRequired": "At least one redirect URI is required",
         "invalidUrl": "Invalid URL — must be http(s)",
         "createFailed": "Failed to create application",
         "saveFailed": "Failed to save",
@@ -2415,7 +2417,8 @@
         "noInvites": "No active invite links. Generate one to invite people.",
         "inviteHelp": "Anyone with the link can join the team until it expires.",
         "expiresAt": "expires {{value}}",
-        "createdBy": "by {{name}}"
+        "createdBy": "by {{name}}",
+        "appTeam": "This is an application's team. It is named after the application, and the application's users join it on their own. Share providers, skills, prompts and environments with it to make them available to them."
       },
       "dialogs": {
         "createTitle": "New team",
@@ -3319,7 +3322,8 @@
           "roleAdmin": "admin",
           "authSource": {
             "password": "password",
-            "ldap": "LDAP"
+            "ldap": "LDAP",
+            "app": "app"
           }
         },
         "toasts": {
@@ -3573,6 +3577,7 @@
           "unknownOwner": "Unknown",
           "redirectUris": "Redirect URIs",
           "createdAt": "Created {{value}}",
+          "users": "{{count}} users",
           "adminOnly": "Admin only"
         },
         "toasts": {

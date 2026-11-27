@@ -8,7 +8,6 @@ import {
   createTemplateVersion,
   getTemplate,
   getTemplateForUser,
-  getTemplateVersion,
 } from '../../services/db/templates'
 import {
   getWorkspace,
@@ -16,8 +15,7 @@ import {
   updateWorkspaceConfig,
 } from '../../services/db/workspaces'
 import { skillRepo } from '../../services/skills-composition'
-import { reconcileTemplateLayout } from '../../services/template-layout'
-import { reconcileTemplateSchedules } from '../../services/template-schedules'
+import { syncWorkspaceToTemplate } from '../../services/template-workspace'
 
 const templates = new OpenAPIHono<AppEnv>()
 
@@ -206,55 +204,22 @@ templates.openapi(syncTemplateRoute, async (c) => {
     return c.json({ error: 'Already at latest version' }, 400)
   }
 
-  const latestVersion = await getTemplateVersion(config.template_id, template.latest_version)
-  if (latestVersion && latestVersion.skill_ids.length > 0) {
-    // Sync may pull in skills the workspace owner doesn't currently see (template
-    // owner could have included a private skill that's not shared). Refuse — owner
-    // should re-share or remove the skill from the template version first.
-    const notVisible = await skillRepo.findSkillIdsNotVisibleToUser(
-      latestVersion.skill_ids,
-      workspace.user_id,
-    )
-    if (notVisible.length > 0) {
-      return c.json(
-        {
-          error: `Latest template version uses skills not visible to you: ${notVisible.join(', ')}`,
-        },
-        403,
-      )
-    }
-  }
-
-  if (latestVersion) {
-    const previousVersion = config.template_version
-      ? await getTemplateVersion(config.template_id, config.template_version)
-      : null
-    const previousSkills = new Set(previousVersion?.skill_ids ?? [])
-    const ownSkills = (await skillRepo.getWorkspaceSkillIds(id)).filter(
-      (skillId) => !previousSkills.has(skillId),
-    )
-    await skillRepo.setWorkspaceSkills(id, [...new Set([...ownSkills, ...latestVersion.skill_ids])])
-  }
-
-  await updateWorkspaceConfig(id, { template_version: template.latest_version })
-
-  // Reconcile template schedules by name: add new, drop removed, refresh changed
-  // definitions while preserving the user's enable/disable toggle.
-  await reconcileTemplateSchedules({
+  // The latest version may use skills the workspace owner doesn't see (the
+  // template owner included a private skill that isn't shared). Refuse: the
+  // owner should re-share or remove the skill from the template version first.
+  const { notVisible } = await syncWorkspaceToTemplate({
     workspaceId: id,
     userId: workspace.user_id,
     templateId: config.template_id,
     version: template.latest_version,
-    enabledOverrides: c.req.valid('json')?.schedule_overrides,
+    scheduleOverrides: c.req.valid('json')?.schedule_overrides,
   })
-
-  // Refresh the template-origin layout copy; auto-adopt for pristine workspaces.
-  await reconcileTemplateLayout({
-    workspaceId: id,
-    userId: workspace.user_id,
-    templateId: config.template_id,
-    version: template.latest_version,
-  })
+  if (notVisible.length > 0) {
+    return c.json(
+      { error: `Latest template version uses skills not visible to you: ${notVisible.join(', ')}` },
+      403,
+    )
+  }
 
   const reloaded =
     workspace.status === 'running' ? await notifyAgentReload(workspace.id, ['config']) : false
