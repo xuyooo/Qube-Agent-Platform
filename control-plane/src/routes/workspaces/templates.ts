@@ -225,11 +225,18 @@ templates.openapi(syncTemplateRoute, async (c) => {
     }
   }
 
-  await updateWorkspaceConfig(id, { template_version: template.latest_version })
-
   if (latestVersion) {
-    await skillRepo.setWorkspaceSkills(id, latestVersion.skill_ids)
+    const previousVersion = config.template_version
+      ? await getTemplateVersion(config.template_id, config.template_version)
+      : null
+    const previousSkills = new Set(previousVersion?.skill_ids ?? [])
+    const ownSkills = (await skillRepo.getWorkspaceSkillIds(id)).filter(
+      (skillId) => !previousSkills.has(skillId),
+    )
+    await skillRepo.setWorkspaceSkills(id, [...new Set([...ownSkills, ...latestVersion.skill_ids])])
   }
+
+  await updateWorkspaceConfig(id, { template_version: template.latest_version })
 
   // Reconcile template schedules by name: add new, drop removed, refresh changed
   // definitions while preserving the user's enable/disable toggle.
