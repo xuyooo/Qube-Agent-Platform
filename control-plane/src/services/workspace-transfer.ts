@@ -1,6 +1,8 @@
 import type { PoolClient } from 'pg'
 import type { ApiTransferPlan, TransferCopySelection } from '../../../internal/types/api'
 import { interruptAllSessions } from '../routes/workspaces/_shared'
+import { afsEnvForWorkspace } from './afs'
+import { unmountQuietly } from './afs-shares'
 import { generateId, pool } from './db/pool'
 import { resetAllSessionsIdle } from './db/sessions'
 import { ensurePlatformToken } from './db/shares'
@@ -118,10 +120,11 @@ export async function executeTransfer(args: {
       if (copied) copiedSkills.set(s.id, copied)
     }
 
+    let severedMounts: SeveredMount[] = []
     const client = await pool.connect()
     try {
       await client.query('BEGIN')
-      await rewriteReferences(client, {
+      severedMounts = await rewriteReferences(client, {
         workspace,
         from,
         to,
@@ -149,7 +152,7 @@ export async function executeTransfer(args: {
       client.release()
     }
 
-    await afterTransfer(workspace, from, to)
+    await afterTransfer(workspace, from, to, severedMounts)
     return plan
   } catch (e) {
     for (const skillId of copiedSkills.values()) {
@@ -255,6 +258,12 @@ async function freeName(
 }
 
 /** Every rewrite the plan calls for, inside the transfer's transaction. */
+/** A workspace that lost a folder of the transferred one's, mounted at `mount_name`. */
+interface SeveredMount {
+  workspace_id: string
+  mount_name: string
+}
+
 async function rewriteReferences(
   client: PoolClient,
   ctx: {
@@ -266,7 +275,7 @@ async function rewriteReferences(
     copyPrompts: Set<string>
     copiedSkills: Map<string, string>
   },
-): Promise<void> {
+): Promise<SeveredMount[]> {
   const ws = ctx.workspace.id
   const { facts } = ctx
 
@@ -384,13 +393,25 @@ async function rewriteReferences(
   // recipient starts unshared.
   await client.query('DELETE FROM workspace_team_shares WHERE workspace_id = $1', [ws])
 
-  // Filesystem shares with other workspaces, in both directions.
+  // Folder grants. They were the sender's grants to the sender's teams; the
+  // recipient's folders start ungranted.
   await client.query(
+    `DELETE FROM afs_share_grants g
+      USING afs_shares s
+      WHERE s.id = g.share_id AND s.owner_workspace_id = $1`,
+    [ws],
+  )
+
+  // Filesystem shares with other workspaces, in both directions. The other
+  // workspaces that lose its folders are told after the commit; this one's
+  // pod is replaced.
+  const { rows: severed } = await client.query(
     `DELETE FROM afs_share_members m
       USING afs_shares s
       WHERE s.id = m.share_id
         AND ((s.owner_workspace_id = $1 AND m.workspace_id <> $1)
-          OR (m.workspace_id = $1 AND s.owner_workspace_id <> $1))`,
+          OR (m.workspace_id = $1 AND s.owner_workspace_id <> $1))
+      RETURNING m.workspace_id, m.mount_name`,
     [ws],
   )
 
@@ -425,13 +446,25 @@ async function rewriteReferences(
     ws,
     ctx.to.id,
   ])
+  return (severed as SeveredMount[]).filter((m) => m.workspace_id !== ws)
 }
 
 /**
  * After the commit: best-effort follow-ups. The transfer stands whatever
  * happens here, so failures are logged, not thrown.
  */
-async function afterTransfer(workspace: Workspace, from: User, to: User): Promise<void> {
+async function afterTransfer(
+  workspace: Workspace,
+  from: User,
+  to: User,
+  severedMounts: SeveredMount[],
+): Promise<void> {
+  // Its folders were taken from the workspaces that had them; a running pod
+  // still has them mounted until told.
+  for (const m of severedMounts) {
+    await unmountQuietly(await afsEnvForWorkspace(m.workspace_id), m.workspace_id, m.mount_name)
+  }
+
   // Schedules now fire as the recipient, with the recipient's platform token.
   await ensurePlatformToken(to.id).catch((e) =>
     console.warn(`[transfer] ensurePlatformToken user=${to.id}:`, e?.message ?? e),

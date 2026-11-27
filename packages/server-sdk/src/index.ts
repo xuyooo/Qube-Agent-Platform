@@ -5,8 +5,10 @@ export type {
   AppliedSpec,
   AppPrompt,
   AppSkill,
+  AppTeam,
   AppUser,
   SpecApplyResult,
+  SpecFolderPlanEntry,
   SpecPlanEntry,
   SpecStatus,
 } from './apps.js'

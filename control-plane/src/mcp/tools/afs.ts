@@ -1,36 +1,16 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import {
-  afsEnvForWorkspace,
-  createDir,
-  ensureDefaultFs,
-  mountAtWorkspace,
-  revokeDir,
-  unmountAtWorkspace,
-} from '../../services/afs'
-import {
-  addAfsShareMember,
-  createAfsShare,
-  deleteAfsShare,
-  getAfsShareByName,
-  listAfsShareMembers,
-} from '../../services/db/afs-shares'
+  ShareEnvironmentError,
+  ensureShare,
+  grantShare,
+  revokeShare,
+} from '../../services/afs-shares'
+import { getAfsShareByName } from '../../services/db/afs-shares'
 import { getWorkspace, resolveWorkspaceBySlug } from '../../services/db/workspaces'
 import { textResult } from './shared'
 
 const NAME_RE = /^[a-z0-9][a-z0-9-]{0,47}$/
-
-async function ensureLocalShare(workspaceId: string, name: string) {
-  let share = await getAfsShareByName(workspaceId, name)
-  if (share) return share
-  const afsEnv = await afsEnvForWorkspace(workspaceId)
-  await ensureDefaultFs(afsEnv)
-  const dir = await createDir(afsEnv)
-  share = await createAfsShare(workspaceId, name, dir.id, dir.accessKey)
-  await mountAtWorkspace(afsEnv, workspaceId, dir.id, dir.accessKey, name, false)
-  await addAfsShareMember(share.id, workspaceId, 'read_write')
-  return share
-}
 
 export function registerAfsTools(server: McpServer, workspaceId: string) {
   server.registerTool(
@@ -66,7 +46,7 @@ Name: lowercase letters/digits/hyphens, ≤48 chars, starts with letter or digit
             'Error: name must be lowercase letters/digits/hyphens (≤48 chars), starting with a letter or digit',
           )
         }
-        await ensureLocalShare(workspaceId, name)
+        await ensureShare(workspaceId, name, { mountNow: true })
         return textResult(JSON.stringify({ path: `/mnt/afs/${name}` }))
       } catch (e) {
         return textResult(`Error: ${(e as Error).message}`)
@@ -103,25 +83,15 @@ Default readonly=true is correct for most hand-off cases. Only pass readonly=fal
         const share = await getAfsShareByName(workspaceId, name)
         if (!share) return textResult(`Error: no folder named "${name}" — call share_folder first`)
 
-        // afs sharing scope is one environment; a cross-environment target could
-        // never mount this share's dir.
-        const afsEnv = await afsEnvForWorkspace(workspaceId)
-        const targetEnv = await afsEnvForWorkspace(target.id)
-        if (targetEnv.environmentId !== afsEnv.environmentId) {
-          return textResult('Error: target agent is on a different environment')
-        }
-        await mountAtWorkspace(
-          afsEnv,
-          target.id,
-          share.afs_dir_id,
-          share.access_key,
-          name,
-          readonly,
-        )
-        await addAfsShareMember(share.id, target.id, readonly ? 'read_only' : 'read_write')
+        await grantShare(share, target.id, readonly ? 'read_only' : 'read_write', {
+          mountNow: true,
+        })
 
         return textResult(JSON.stringify({ path: `/mnt/afs/${name}`, target: slug, readonly }))
       } catch (e) {
+        if (e instanceof ShareEnvironmentError) {
+          return textResult('Error: target agent is on a different environment')
+        }
         return textResult(`Error: ${(e as Error).message}`)
       }
     },
@@ -142,18 +112,8 @@ Default readonly=true is correct for most hand-off cases. Only pass readonly=fal
         const share = await getAfsShareByName(workspaceId, name)
         if (!share) return textResult(`Error: no share named "${name}"`)
 
-        const afsEnv = await afsEnvForWorkspace(workspaceId)
-        const members = await listAfsShareMembers(share.id)
-        await revokeDir(afsEnv, share.afs_dir_id, share.access_key)
-        for (const m of members) {
-          try {
-            await unmountAtWorkspace(afsEnv, m.workspace_id, name)
-          } catch {
-            // Best-effort: mount may already be gone after revoke.
-          }
-        }
-        await deleteAfsShare(share.id)
-        return textResult(JSON.stringify({ revoked: name, members: members.length }))
+        const members = await revokeShare(share)
+        return textResult(JSON.stringify({ revoked: name, members }))
       } catch (e) {
         return textResult(`Error: ${(e as Error).message}`)
       }

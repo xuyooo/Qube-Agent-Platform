@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { useDeleteWorkspace } from '@/hooks/useWorkspaces'
+import { type AfsShareSummary, listAfsShares } from '@/lib/api/agent-files'
 import type { Workspace } from '@/lib/api/types'
 import { AlertTriangle } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface DeleteWorkspaceDialogProps {
@@ -29,6 +30,19 @@ export function DeleteWorkspaceDialog({
   const { t } = useTranslation()
   const [confirmName, setConfirmName] = useState('')
   const deleteMutation = useDeleteWorkspace()
+  // Its shared folders go with it, from every workspace that has them.
+  const [shares, setShares] = useState<AfsShareSummary[]>([])
+
+  useEffect(() => {
+    if (!open) return
+    listAfsShares(workspace.id)
+      .then(setShares)
+      .catch(() => setShares([]))
+  }, [open, workspace.id])
+
+  const sharedFolders = shares.filter(
+    (s) => s.role === 'owner' && (s.other_member_count > 0 || s.grant_count > 0),
+  )
 
   return (
     <Dialog
@@ -51,6 +65,14 @@ export function DeleteWorkspaceDialog({
             <span className="font-medium text-foreground">{workspace.name}</span>
             {t('components.deleteWorkspace.description.suffix')}
           </p>
+          {sharedFolders.length > 0 && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/[0.06] px-3 py-2 text-xs text-destructive">
+              {t('components.deleteWorkspace.sharedFolders', {
+                folders: sharedFolders.length,
+                workspaces: sharedFolders.reduce((n, s) => n + s.other_member_count, 0),
+              })}
+            </p>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs text-muted-foreground">
               {t('components.deleteWorkspace.confirm.labelPrefix')}
