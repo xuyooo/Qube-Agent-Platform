@@ -496,9 +496,7 @@ function HomePage() {
                   <h3 className="text-sm font-semibold mb-2">{t('docs.sdk.heading')}</h3>
                   <p className="text-xs text-gray-600 mb-2">
                     {t('docs.sdk.install')}{' '}
-                    <code className="bg-gray-100 px-1 rounded">
-                      npm install @qap/sandbox
-                    </code>
+                    <code className="bg-gray-100 px-1 rounded">npm install @qap/sandbox</code>
                     {t('docs.sdk.installSuffix')}
                   </p>
                   <pre className="bg-gray-50 border rounded p-3 text-xs overflow-x-auto whitespace-pre">{`import { SandboxClient } from '@qap/sandbox'
@@ -573,11 +571,11 @@ curl "$BASE/api/sandboxes/${detail.id}/files?path=/etc/hostname" \\
 curl "$BASE/api/sandboxes/${detail.id}/endpoint/3000" \\
   -H "Authorization: Bearer $TOKEN"
 
-# Renew
+# Renew (add one hour to the current expiry)
 curl -X POST "$BASE/api/sandboxes/${detail.id}/renew" \\
   -H "Authorization: Bearer $TOKEN" \\
   -H "Content-Type: application/json" \\
-  -d '{"timeoutSeconds":3600}'
+  -d '{"extendSeconds":3600}'
 
 # Delete
 curl -X DELETE "$BASE/api/sandboxes/${detail.id}" \\

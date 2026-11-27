@@ -1,4 +1,5 @@
-import { Hono } from 'hono'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
+import type { Context } from 'hono'
 import type { AppEnv } from '../lib/types'
 import { canAccessWorkspace } from '../lib/workspace-access'
 import { getPlatformToken } from '../services/db/shares'
@@ -16,12 +17,129 @@ async function getOwnerToken(workspace: { user_id: string }): Promise<string> {
   return token
 }
 
-const workspaceSandboxes = new Hono<AppEnv>()
+// The owner token reaches every sandbox the owner has, across workspaces, so
+// per-sandbox routes also check the sandbox was created for this workspace.
+async function isWorkspaceSandbox(
+  token: string,
+  workspaceId: string,
+  sandboxId: string,
+): Promise<boolean> {
+  const info = await sandbox.getSandbox(token, sandboxId)
+  return info?.metadata?.workspace_id === workspaceId
+}
 
-// Create a sandbox for a workspace
-workspaceSandboxes.post('/:id/sandboxes', async (c) => {
+// Same URL shape as the sandbox_get_preview_url MCP tool.
+function publicSandboxUrl(sandboxId: string, port: number): string | undefined {
+  const raw = process.env.SANDBOX_PUBLIC_URL
+  if (!raw) return undefined
+  try {
+    const base = new URL(raw)
+    return `${base.protocol}//${sandboxId}-${port}.${base.host}/`
+  } catch {
+    return undefined
+  }
+}
+
+// Shared access + ownership check and error mapping for per-sandbox routes.
+async function withWorkspaceSandbox(
+  c: Context<AppEnv>,
+  workspaceId: string,
+  sandboxId: string,
+  action: string,
+  fn: (token: string) => Promise<unknown>,
+) {
+  const workspace = await getWorkspace(workspaceId)
+  if (!workspace || !(await canAccessWorkspace(workspace, c.get('user')))) {
+    return c.json({ error: 'Workspace not found' }, 404)
+  }
+  try {
+    const token = await getOwnerToken(workspace)
+    if (!(await isWorkspaceSandbox(token, workspaceId, sandboxId))) {
+      return c.json({ error: 'Sandbox not found' }, 404)
+    }
+    return c.json((await fn(token)) as any, 200)
+  } catch (e: any) {
+    console.error(`[sandbox] ${action} failed:`, e)
+    return c.json({ error: e.message }, 500)
+  }
+}
+
+const workspaceSandboxes = new OpenAPIHono<AppEnv>()
+
+const ErrorSchema = z.object({ error: z.string() })
+const SuccessSchema = z.object({ success: z.boolean() })
+
+const SandboxInfoSchema = z
+  .object({
+    id: z.string(),
+    status: z.any().openapi({ description: 'Sandbox status as reported by the runtime' }),
+    expiresAt: z.string().nullable().optional(),
+    metadata: z.record(z.string(), z.string()).optional(),
+  })
+  .loose()
+  .openapi('WorkspaceSandbox')
+
+const WorkspaceIdParam = z.object({
+  id: z.string().openapi({ param: { name: 'id', in: 'path' } }),
+})
+
+const SandboxParam = z.object({
+  id: z.string().openapi({ param: { name: 'id', in: 'path' } }),
+  sandboxId: z.string().openapi({ param: { name: 'sandboxId', in: 'path' } }),
+})
+
+const notFound = {
+  description: 'Workspace not found',
+  content: { 'application/json': { schema: ErrorSchema } },
+}
+const sandboxNotFound = {
+  description: 'Workspace or sandbox not found',
+  content: { 'application/json': { schema: ErrorSchema } },
+}
+const serverError = {
+  description: 'Sandbox service error',
+  content: { 'application/json': { schema: ErrorSchema } },
+}
+
+// ── POST /:id/sandboxes ────────────────────────────────────────────────────
+const createRouteDef = createRoute({
+  method: 'post',
+  path: '/{id}/sandboxes',
+  tags: ['workspaces'],
+  summary: 'Create a sandbox for a workspace. It runs as the workspace owner.',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: WorkspaceIdParam,
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            image: z.string().openapi({ example: 'node:22-bookworm' }),
+            resource: z.record(z.string(), z.string()).optional().openapi({
+              description: 'Resource limits, e.g. { "cpu": "2", "memory": "4Gi" }',
+            }),
+            timeout_seconds: z.number().int().positive().optional().openapi({
+              description: 'Lifetime in seconds from now (default 3600)',
+            }),
+            env: z.record(z.string(), z.string()).optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Created sandbox',
+      content: { 'application/json': { schema: SandboxInfoSchema } },
+    },
+    404: notFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(createRouteDef, async (c) => {
   const currentUser = c.get('user')
-  const id = c.req.param('id')
+  const { id } = c.req.valid('param')
   const workspace = await getWorkspace(id)
 
   if (!workspace || !(await canAccessWorkspace(workspace, currentUser))) {
@@ -29,12 +147,7 @@ workspaceSandboxes.post('/:id/sandboxes', async (c) => {
   }
 
   try {
-    const body = await c.req.json<{
-      image: string
-      resource?: Record<string, string>
-      timeout_seconds?: number
-      env?: Record<string, string>
-    }>()
+    const body = c.req.valid('json')
     const token = await getOwnerToken(workspace)
     const info = await sandbox.createSandbox(token, {
       image: body.image,
@@ -50,10 +163,27 @@ workspaceSandboxes.post('/:id/sandboxes', async (c) => {
   }
 })
 
-// List sandboxes for a workspace
-workspaceSandboxes.get('/:id/sandboxes', async (c) => {
+// ── GET /:id/sandboxes ─────────────────────────────────────────────────────
+const listRoute = createRoute({
+  method: 'get',
+  path: '/{id}/sandboxes',
+  tags: ['workspaces'],
+  summary: 'List the sandboxes created for a workspace',
+  security: [{ bearerAuth: [] }],
+  request: { params: WorkspaceIdParam },
+  responses: {
+    200: {
+      description: 'Sandboxes',
+      content: { 'application/json': { schema: z.object({}).loose() } },
+    },
+    404: notFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(listRoute, async (c) => {
   const currentUser = c.get('user')
-  const id = c.req.param('id')
+  const { id } = c.req.valid('param')
   const workspace = await getWorkspace(id)
 
   if (!workspace || !(await canAccessWorkspace(workspace, currentUser))) {
@@ -65,17 +195,115 @@ workspaceSandboxes.get('/:id/sandboxes', async (c) => {
     const result = await sandbox.listSandboxes(token, {
       metadata: { workspace_id: id },
     })
-    return c.json(result)
+    return c.json(result, 200)
   } catch (e: any) {
     console.error('[sandbox] list failed:', e)
     return c.json({ error: e.message }, 500)
   }
 })
 
-// Get sandbox endpoint URL for a port
-workspaceSandboxes.get('/:id/sandboxes/:sandboxId/endpoint/:port', async (c) => {
+// ── POST /:id/sandboxes/:sandboxId/renew ───────────────────────────────────
+const renewRoute = createRoute({
+  method: 'post',
+  path: '/{id}/sandboxes/{sandboxId}/renew',
+  tags: ['workspaces'],
+  summary:
+    'Extend a sandbox expiry: adds extend_seconds to the current expiry, or to now if the sandbox has already expired.',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: SandboxParam,
+    body: {
+      required: false,
+      content: {
+        'application/json': {
+          schema: z.object({
+            extend_seconds: z.number().int().positive().optional().openapi({
+              description: 'Seconds to add (default 3600)',
+              example: 3600,
+            }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'New expiry',
+      content: {
+        'application/json': {
+          schema: z.object({ sandbox_id: z.string(), expires_at: z.string() }),
+        },
+      },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(renewRoute, async (c) => {
   const currentUser = c.get('user')
-  const id = c.req.param('id')
+  const { id, sandboxId } = c.req.valid('param')
+  const workspace = await getWorkspace(id)
+
+  if (!workspace || !(await canAccessWorkspace(workspace, currentUser))) {
+    return c.json({ error: 'Workspace not found' }, 404)
+  }
+
+  try {
+    const body = c.req.valid('json') ?? {}
+    const token = await getOwnerToken(workspace)
+    if (!(await isWorkspaceSandbox(token, id, sandboxId))) {
+      return c.json({ error: 'Sandbox not found' }, 404)
+    }
+    const result = await sandbox.renewSandbox(token, sandboxId, body.extend_seconds ?? 3600)
+    return c.json({ sandbox_id: sandboxId, expires_at: result.expiresAt }, 200)
+  } catch (e: any) {
+    console.error('[sandbox] renew failed:', e)
+    return c.json({ error: e.message }, 500)
+  }
+})
+
+// ── GET /:id/sandboxes/:sandboxId/endpoint/:port ───────────────────────────
+const endpointRoute = createRoute({
+  method: 'get',
+  path: '/{id}/sandboxes/{sandboxId}/endpoint/{port}',
+  tags: ['workspaces'],
+  summary: 'Get the URL of a port exposed by a sandbox',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: SandboxParam.extend({
+      port: z.string().openapi({ param: { name: 'port', in: 'path' }, example: '3000' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Endpoint URL',
+      content: {
+        'application/json': {
+          schema: z.object({
+            sandbox_id: z.string(),
+            port: z.number(),
+            url: z.string().openapi({ description: 'Runtime-internal proxy URL' }),
+            public_url: z.string().optional().openapi({
+              description:
+                'URL reachable from outside the cluster (https://{sandboxId}-{port}.<sandbox host>/); present when the control plane has SANDBOX_PUBLIC_URL set',
+            }),
+          }),
+        },
+      },
+    },
+    400: {
+      description: 'Invalid port number',
+      content: { 'application/json': { schema: ErrorSchema } },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(endpointRoute, async (c) => {
+  const currentUser = c.get('user')
+  const { id, sandboxId } = c.req.valid('param')
   const workspace = await getWorkspace(id)
 
   if (!workspace || !(await canAccessWorkspace(workspace, currentUser))) {
@@ -84,23 +312,42 @@ workspaceSandboxes.get('/:id/sandboxes/:sandboxId/endpoint/:port', async (c) => 
 
   try {
     const token = await getOwnerToken(workspace)
-    const sandboxId = c.req.param('sandboxId')
-    const port = Number.parseInt(c.req.param('port'), 10)
+    if (!(await isWorkspaceSandbox(token, id, sandboxId))) {
+      return c.json({ error: 'Sandbox not found' }, 404)
+    }
+    const port = Number.parseInt(c.req.valid('param').port, 10)
     if (!Number.isFinite(port) || port < 1 || port > 65535) {
       return c.json({ error: 'Invalid port number' }, 400)
     }
     const url = await sandbox.getEndpoint(token, sandboxId, port)
-    return c.json({ sandbox_id: sandboxId, port, url })
+    return c.json(
+      { sandbox_id: sandboxId, port, url, public_url: publicSandboxUrl(sandboxId, port) },
+      200,
+    )
   } catch (e: any) {
     console.error('[sandbox] get endpoint failed:', e)
     return c.json({ error: e.message }, 500)
   }
 })
 
-// Kill a workspace sandbox
-workspaceSandboxes.delete('/:id/sandboxes/:sandboxId', async (c) => {
+// ── DELETE /:id/sandboxes/:sandboxId ───────────────────────────────────────
+const deleteRoute = createRoute({
+  method: 'delete',
+  path: '/{id}/sandboxes/{sandboxId}',
+  tags: ['workspaces'],
+  summary: 'Kill a workspace sandbox',
+  security: [{ bearerAuth: [] }],
+  request: { params: SandboxParam },
+  responses: {
+    200: { description: 'Killed', content: { 'application/json': { schema: SuccessSchema } } },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(deleteRoute, async (c) => {
   const currentUser = c.get('user')
-  const id = c.req.param('id')
+  const { id, sandboxId } = c.req.valid('param')
   const workspace = await getWorkspace(id)
 
   if (!workspace || !(await canAccessWorkspace(workspace, currentUser))) {
@@ -109,12 +356,271 @@ workspaceSandboxes.delete('/:id/sandboxes/:sandboxId', async (c) => {
 
   try {
     const token = await getOwnerToken(workspace)
-    await sandbox.deleteSandbox(token, c.req.param('sandboxId'))
-    return c.json({ success: true })
+    if (!(await isWorkspaceSandbox(token, id, sandboxId))) {
+      return c.json({ error: 'Sandbox not found' }, 404)
+    }
+    await sandbox.deleteSandbox(token, sandboxId)
+    return c.json({ success: true }, 200)
   } catch (e: any) {
     console.error('[sandbox] delete failed:', e)
     return c.json({ error: e.message }, 500)
   }
+})
+
+// ── Commands ───────────────────────────────────────────────────────────────
+const CommandParam = SandboxParam.extend({
+  commandId: z.string().openapi({ param: { name: 'commandId', in: 'path' } }),
+})
+
+const runCommandRoute = createRoute({
+  method: 'post',
+  path: '/{id}/sandboxes/{sandboxId}/commands',
+  tags: ['workspaces'],
+  summary:
+    'Run a shell command in a sandbox. Foreground returns stdout, stderr and exit_code; with background it returns a command_id to poll.',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: SandboxParam,
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            command: z.string().openapi({ example: 'ls -la /tmp' }),
+            cwd: z.string().optional(),
+            env: z.record(z.string(), z.string()).optional(),
+            timeout_seconds: z.number().positive().optional(),
+            background: z.boolean().optional().openapi({
+              description:
+                'Return as soon as the command starts; poll with the returned command_id',
+            }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Command result',
+      content: { 'application/json': { schema: z.object({}).loose() } },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(runCommandRoute, async (c) => {
+  const { id, sandboxId } = c.req.valid('param')
+  const body = c.req.valid('json')
+  return withWorkspaceSandbox(c, id, sandboxId, 'run command', async (token) =>
+    sandbox.runCommand(token, sandboxId, body.command, {
+      cwd: body.cwd,
+      timeoutSeconds: body.timeout_seconds,
+      env: body.env,
+      background: body.background,
+    }),
+  )
+})
+
+const commandStatusRoute = createRoute({
+  method: 'get',
+  path: '/{id}/sandboxes/{sandboxId}/commands/{commandId}',
+  tags: ['workspaces'],
+  summary: 'Get the status of a background command (running, exit_code, timing)',
+  security: [{ bearerAuth: [] }],
+  request: { params: CommandParam },
+  responses: {
+    200: {
+      description: 'Command status',
+      content: { 'application/json': { schema: z.object({}).loose() } },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(commandStatusRoute, async (c) => {
+  const { id, sandboxId, commandId } = c.req.valid('param')
+  return withWorkspaceSandbox(c, id, sandboxId, 'get command status', (token) =>
+    sandbox.getCommandStatus(token, sandboxId, commandId),
+  )
+})
+
+const commandLogsRoute = createRoute({
+  method: 'get',
+  path: '/{id}/sandboxes/{sandboxId}/commands/{commandId}/logs',
+  tags: ['workspaces'],
+  summary:
+    'Get output of a background command as { content, cursor }. Pass the returned cursor back to read only newer output.',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: CommandParam,
+    query: z.object({
+      cursor: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .openapi({
+          param: { name: 'cursor', in: 'query' },
+        }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Command logs',
+      content: { 'application/json': { schema: z.object({}).loose() } },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(commandLogsRoute, async (c) => {
+  const { id, sandboxId, commandId } = c.req.valid('param')
+  const { cursor } = c.req.valid('query')
+  return withWorkspaceSandbox(c, id, sandboxId, 'get command logs', (token) =>
+    sandbox.getCommandLogs(token, sandboxId, commandId, cursor),
+  )
+})
+
+const interruptCommandRoute = createRoute({
+  method: 'post',
+  path: '/{id}/sandboxes/{sandboxId}/commands/{commandId}/interrupt',
+  tags: ['workspaces'],
+  summary: 'Interrupt a running background command',
+  security: [{ bearerAuth: [] }],
+  request: { params: CommandParam },
+  responses: {
+    200: { description: 'Interrupted', content: { 'application/json': { schema: SuccessSchema } } },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(interruptCommandRoute, async (c) => {
+  const { id, sandboxId, commandId } = c.req.valid('param')
+  return withWorkspaceSandbox(c, id, sandboxId, 'interrupt command', async (token) => {
+    await sandbox.interruptCommand(token, sandboxId, commandId)
+    return { success: true }
+  })
+})
+
+// ── Files ──────────────────────────────────────────────────────────────────
+const writeFilesRoute = createRoute({
+  method: 'post',
+  path: '/{id}/sandboxes/{sandboxId}/files',
+  tags: ['workspaces'],
+  summary: 'Write files inside a sandbox. Parent directories are created automatically.',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: SandboxParam,
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            files: z.array(
+              z.object({
+                path: z.string().openapi({ description: 'Absolute path inside the sandbox' }),
+                content: z.string(),
+              }),
+            ),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: { description: 'Written', content: { 'application/json': { schema: SuccessSchema } } },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(writeFilesRoute, async (c) => {
+  const { id, sandboxId } = c.req.valid('param')
+  const { files } = c.req.valid('json')
+  return withWorkspaceSandbox(c, id, sandboxId, 'write files', async (token) => {
+    await sandbox.writeFiles(
+      token,
+      sandboxId,
+      files.map((f) => ({ path: f.path, data: f.content })),
+    )
+    return { success: true }
+  })
+})
+
+const readFileRoute = createRoute({
+  method: 'get',
+  path: '/{id}/sandboxes/{sandboxId}/files',
+  tags: ['workspaces'],
+  summary: 'Read a file from a sandbox',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: SandboxParam,
+    query: z.object({
+      path: z.string().openapi({ param: { name: 'path', in: 'query' } }),
+      offset: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .openapi({
+          param: { name: 'offset', in: 'query' },
+        }),
+      limit: z.coerce
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .openapi({
+          param: { name: 'limit', in: 'query' },
+        }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'File content',
+      content: { 'application/json': { schema: z.object({ content: z.string() }) } },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(readFileRoute, async (c) => {
+  const { id, sandboxId } = c.req.valid('param')
+  const { path, offset, limit } = c.req.valid('query')
+  return withWorkspaceSandbox(c, id, sandboxId, 'read file', async (token) => ({
+    content: await sandbox.readFile(token, sandboxId, path, { offset, limit }),
+  }))
+})
+
+const listDirectoryRoute = createRoute({
+  method: 'get',
+  path: '/{id}/sandboxes/{sandboxId}/directory',
+  tags: ['workspaces'],
+  summary: 'List a directory inside a sandbox',
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: SandboxParam,
+    query: z.object({ path: z.string().openapi({ param: { name: 'path', in: 'query' } }) }),
+  },
+  responses: {
+    200: {
+      description: 'Directory entries',
+      content: { 'application/json': { schema: z.object({}).loose() } },
+    },
+    404: sandboxNotFound,
+    500: serverError,
+  },
+})
+
+workspaceSandboxes.openapi(listDirectoryRoute, async (c) => {
+  const { id, sandboxId } = c.req.valid('param')
+  const { path } = c.req.valid('query')
+  return withWorkspaceSandbox(c, id, sandboxId, 'list directory', async (token) => ({
+    files: await sandbox.listDirectory(token, sandboxId, path),
+  }))
 })
 
 export default workspaceSandboxes
