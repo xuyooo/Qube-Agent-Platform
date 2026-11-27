@@ -61,10 +61,10 @@ set +a
 
 # --- Image registry --------------------------------------------------------
 # Every first-party service image lives as a sub-path under one public registry
-# path, e.g. ghcr.io/xuyooo/${APP_PREFIX}-cp:<tag>. Third-party
-# images (coturn, gotenberg, language runtimes, …) default to their public
-# upstreams (see "Third-party images" below) — an offline/mirrored install
-# overrides each to a path under ${REGISTRY}.
+# path, e.g. ghcr.io/xuyooo/${APP_PREFIX}-cp:<tag>. Third-party images other
+# than coturn default to their public upstreams (see "Third-party images"
+# below); coturn uses QAP's GHCR mirror by default. Offline/mirrored installs
+# override each image to a path under ${REGISTRY}.
 export REGISTRY="${REGISTRY:-ghcr.io/xuyooo}"
 # Tag applied to every first-party image. Default :latest; pin to a release tag
 # for reproducible installs.
@@ -94,7 +94,7 @@ export PLATFORM_IMAGE_PREFIX="${PLATFORM_IMAGE_PREFIX:-${REGISTRY}/${APP_PREFIX}
 # to a ${REGISTRY}/... path that resolves inside an air-gapped registry.
 export POSTGRES_IMAGE="${POSTGRES_IMAGE:-ghcr.io/cloudnative-pg/postgresql:16}"
 export GOTENBERG_IMAGE="${GOTENBERG_IMAGE:-docker.io/gotenberg/gotenberg:8}"
-export COTURN_IMAGE="${COTURN_IMAGE:-docker.io/coturn/coturn:4.6}"
+export COTURN_IMAGE="${COTURN_IMAGE:-ghcr.io/xuyooo/qap/coturn:4.6}"
 export NFS_SERVER_IMAGE="${NFS_SERVER_IMAGE:-ghcr.io/obeone/nfs-server:2.2.3}"
 export RUNTIME_NODE_IMAGE="${RUNTIME_NODE_IMAGE:-docker.io/library/node:22-bookworm}"
 export RUNTIME_PYTHON_IMAGE="${RUNTIME_PYTHON_IMAGE:-docker.io/library/python:3.12-bookworm}"
