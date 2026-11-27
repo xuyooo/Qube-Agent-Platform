@@ -11,11 +11,23 @@ interface SessionTokenRecord {
   token: string
   workspaceId: string
   sessionId: string | null
+  /** Set when this turn is a Reflect run for this memory store — see mint. */
+  reflectStoreId: string | null
 }
 
 interface MintOpts {
   workspaceId: string
   sessionId?: string | null
+  /**
+   * Set when this turn is a Reflect run for the named memory store. Reflect
+   * always mints a fresh token (it never resumes an existing session), so
+   * this is always known at mint time, before the session itself exists —
+   * `resolveToken` returns it on every subsequent MCP request for the turn,
+   * which is what lets tool registration swap in the Reflect-only toolset
+   * without a second, session-scoped lookup.
+   */
+  reflectStoreId?: string | null
+  reflectWindow?: { since: string; until: string }
 }
 
 /**
@@ -27,10 +39,16 @@ interface MintOpts {
 export async function mintToken(opts: MintOpts): Promise<string> {
   const sessionId = opts.sessionId ?? null
   const { rows } = await pool.query<{ token: string }>(
-    `INSERT INTO session_tokens (token, workspace_id, session_id, resolved_at)
-     VALUES (gen_random_uuid(), $1, $2, CASE WHEN $2::text IS NULL THEN NULL ELSE NOW() END)
+    `INSERT INTO session_tokens (token, workspace_id, session_id, resolved_at, reflect_store_id, reflect_since, reflect_until)
+     VALUES (gen_random_uuid(), $1, $2, CASE WHEN $2::text IS NULL THEN NULL ELSE NOW() END, $3, $4, $5)
      RETURNING token`,
-    [opts.workspaceId, sessionId],
+    [
+      opts.workspaceId,
+      sessionId,
+      opts.reflectStoreId ?? null,
+      opts.reflectWindow?.since ?? null,
+      opts.reflectWindow?.until ?? null,
+    ],
   )
   return rows[0].token
 }
@@ -54,13 +72,18 @@ export async function resolveToken(token: string): Promise<SessionTokenRecord | 
     token: string
     workspace_id: string
     session_id: string | null
-  }>('SELECT token, workspace_id, session_id FROM session_tokens WHERE token = $1 LIMIT 1', [token])
+    reflect_store_id: string | null
+  }>(
+    'SELECT token, workspace_id, session_id, reflect_store_id FROM session_tokens WHERE token = $1 LIMIT 1',
+    [token],
+  )
   const row = rows[0]
   if (!row) return null
   return {
     token: row.token,
     workspaceId: row.workspace_id,
     sessionId: row.session_id,
+    reflectStoreId: row.reflect_store_id,
   }
 }
 
@@ -78,8 +101,9 @@ export async function resolveTokenForUser(
     token: string
     workspace_id: string
     session_id: string | null
+    reflect_store_id: string | null
   }>(
-    `SELECT st.token, st.workspace_id, st.session_id
+    `SELECT st.token, st.workspace_id, st.session_id, st.reflect_store_id
        FROM session_tokens st
        JOIN workspaces w ON w.id = st.workspace_id
       WHERE st.token = $1 AND w.user_id = $2
@@ -92,6 +116,7 @@ export async function resolveTokenForUser(
     token: row.token,
     workspaceId: row.workspace_id,
     sessionId: row.session_id,
+    reflectStoreId: row.reflect_store_id,
   }
 }
 
@@ -124,4 +149,22 @@ export async function ensureTokenForSession(
   const existing = await tokenForSession(sessionId)
   if (existing) return existing
   return mintToken({ workspaceId, sessionId })
+}
+
+/** Read the window captured when the scheduled turn was admitted. */
+export async function getReflectWindow(
+  workspaceId: string,
+  sessionId: string,
+  storeId: string,
+): Promise<{ since: string; until: string } | null> {
+  const { rows } = await pool.query<{ since: string | Date; until: string | Date }>(
+    `SELECT reflect_since AS since, reflect_until AS until FROM session_tokens
+      WHERE workspace_id = $1 AND session_id = $2 AND reflect_store_id = $3
+        AND reflect_since IS NOT NULL AND reflect_until IS NOT NULL`,
+    [workspaceId, sessionId, storeId],
+  )
+  const row = rows[0]
+  return row
+    ? { since: new Date(row.since).toISOString(), until: new Date(row.until).toISOString() }
+    : null
 }

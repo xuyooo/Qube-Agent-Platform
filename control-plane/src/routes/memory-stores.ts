@@ -237,6 +237,12 @@ stores.openapi(
         409,
       )
     }
+    // Deleting a store doesn't cascade to its Reflect schedule (the FK points
+    // store -> schedule) — it's left to self-heal the next time it fires:
+    // the scheduler's reverse lookup finds no store, cancels its own timer,
+    // and deletes itself (see scheduler/src/handler.ts). This route stays
+    // unaware of schedules; "run now" gives the owner an immediate trigger
+    // if they don't want to wait for the next cron tick.
     await deleteStore(storeId)
     return c.json({ success: true }, 200)
   },

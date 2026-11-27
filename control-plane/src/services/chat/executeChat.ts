@@ -2,6 +2,7 @@ import { ensureTokenForSession, mintToken } from '../../lib/session-token'
 import { type TurnHooks, createInterceptedSSEResponse, isDraining } from '../../lib/sse'
 import { resolveAgentAddress } from '../../lib/workspace-address'
 import { resetAgentCallTurnOutcome } from '../db/agent-calls'
+import { advanceReflectCheckpoint } from '../db/memory'
 import { addMessage, insertUserMessageBlocks } from '../db/messages'
 import {
   getSession,
@@ -37,6 +38,15 @@ interface ExecuteChatOpts {
    * binding before passing this; executeChat treats it as already-trusted.
    */
   taskId?: string | null
+  /**
+   * Set when this turn is a Reflect run for this memory store — minted onto
+   * the new session_token so MCP tool registration can swap in the
+   * Reflect-only toolset on every subsequent request for this turn (see
+   * lib/session-token.ts, mcp/tools.ts). Only meaningful for a brand-new
+   * session; Reflect never resumes an existing one (the scheduler never
+   * passes sessionId for its cron trigger).
+   */
+  reflectRun?: { storeId: string; since: string; until: string }
 }
 
 /**
@@ -151,7 +161,12 @@ export async function executeChat(opts: ExecuteChatOpts): Promise<Response> {
     // transport as `X-Session-Token`.
     const sessionToken = sessionId
       ? await ensureTokenForSession(workspaceId, sessionId)
-      : await mintToken({ workspaceId })
+      : await mintToken({
+          workspaceId,
+          ...(opts.reflectRun
+            ? { reflectStoreId: opts.reflectRun.storeId, reflectWindow: opts.reflectRun }
+            : {}),
+        })
 
     const agentBody = JSON.stringify(
       buildAgentChatBody({
@@ -235,6 +250,7 @@ export async function executeChat(opts: ExecuteChatOpts): Promise<Response> {
       if (taskIdForHook) await addTeamworkSession(taskIdForHook, newSid, 'coordinator', null)
     }
 
+    const reflectRun = opts.reflectRun
     const intercepted = createInterceptedSSEResponse(response, {
       workspaceId,
       userMessageText,
@@ -262,7 +278,16 @@ export async function executeChat(opts: ExecuteChatOpts): Promise<Response> {
       // the single point that also frees the accounting for the autoscaler.
       onTurnEnd: () => slot.release(),
       onSessionSettled: releaseSession,
-      turnHooks: chatTurnHooks(workspaceId),
+      turnHooks: reflectRun
+        ? {
+            onInputRequested: async () => {},
+            afterTurn: async (sid, reason) => {
+              if (reason === 'completed') {
+                await advanceReflectCheckpoint(reflectRun.storeId, workspaceId, sid, sessionToken)
+              }
+            },
+          }
+        : chatTurnHooks(workspaceId),
     })
     handedOff = true
     return intercepted
