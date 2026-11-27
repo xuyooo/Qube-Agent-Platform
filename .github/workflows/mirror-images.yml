@@ -1,0 +1,66 @@
+name: Mirror third-party images
+
+# Publish unmodified upstream images alongside QAP's first-party packages.
+# Manual only: mutable upstream release tags are refreshed intentionally.
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Image ID from self-host/third-party-images.txt, or all"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - gotenberg
+          - coturn
+          - postgresql
+          - cnpg-operator
+          - nfs-server
+          - nfs-provisioner
+          - node
+          - python
+          - golang
+          - pause
+          - registry
+          - opensandbox-controller
+          - opensandbox-server
+          - opensandbox-execd
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: qap-third-party-image-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      MIRROR_PREFIX: ghcr.io/xuyooo/qap
+      SELECT_IMAGE: ${{ inputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+      - name: Authenticate to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | skopeo login --username "$GITHUB_ACTOR" --password-stdin ghcr.io
+      - name: Mirror and verify
+        run: bash self-host/mirror-images.sh
+      - name: Upload digest report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: third-party-image-digests
+          path: mirror-digests.tsv
+          if-no-files-found: warn
+      - name: Logout
+        if: always()
+        run: skopeo logout ghcr.io
