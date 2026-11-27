@@ -23,11 +23,11 @@
 
 1. 合并工作流后，在 Actions → Mirror third-party images → Run workflow 选择 all 或单个 ID。需要仓库 Actions 写包权限；现有包如不允许该仓库写入需先配置包访问。首次创建包后检查可见性，按需公开或配置 pull 凭证。
 2. 工作流以源 tag 解析 manifest digest，按 digest 复制全部平台，要求目标 digest 完全一致；任何镜像失败即停止，不以单架构重新打包替代。下载 third-party-image-digests 工件追踪发布证据。上游 release tag 可能移动；生产建议使用报告中的目标 digest 固定版本。
-3. 镜像均验证可拉取后，按需将 values.env.ghcr-mirrors.example 的变量合入现有 values.env。此 PR 不更改默认 REGISTRY/PLATFORM_IMAGE_PREFIX、不改已发布的一方镜像、不自动部署。
+3. 镜像均验证可拉取后，按需将 values.env.ghcr-mirrors.example 中其余变量合入现有 values.env。Coturn 是首个例外：connected 安装默认使用 QAP GHCR 镜像（镜像复制和 Digest 一致性已由 Actions 验证）；匿名拉取/包可见性仍需单独确认，私有包必须配置 ghcr.io 凭证。本次不更改默认 REGISTRY/PLATFORM_IMAGE_PREFIX、不改已发布的一方镜像、不自动部署。
 
 ## 使用范围和后续切换
 
 - 上述 env 示例覆盖现有安装器支持的 8 个第三方镜像变量。OpenSandbox 可在单独 Helm values 中设置 controller/server image.repository 与 execd_image（保留原 tag）。
 - CNPG operator 和 NFS provisioner 的 connected 安装路径仍使用上游 manifest/chart；离线模式原有 re-tag 路径保留。registry:2 仍作为本地 bootstrap 镜像。它们已纳入发布清单，但要让安装器完整默认使用 GHCR，还需单独验证 prereq 安装和离线加载路径再切换；不要将已镜像成功等同于已替换全部部署引用。
 - 使用官方镜像名创建的动态 sandbox 任务不会自动改写镜像地址。需要时由调用方显式指定对应 GHCR 地址。
-- 在默认切换前验证 AMD64/ARM64（以每个上游实际支持的平台为准）、匿名拉取或鉴权、render-only、CNPG/NFS/registry bootstrap、OpenSandbox 和离线打包恢复。当前 PR 不声明这些运行验证已完成。
+- 对其余镜像切换默认值前，仍需验证 AMD64/ARM64（以每个上游实际支持的平台为准）、匿名拉取或鉴权、render-only、CNPG/NFS/registry bootstrap、OpenSandbox 和离线打包恢复。Coturn 的 GHCR 复制与 Digest 一致性已有 Actions 证据，但本次未声明匿名拉取和端到端部署验证完成。
