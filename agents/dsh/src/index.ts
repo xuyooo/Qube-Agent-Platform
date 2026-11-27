@@ -1,8 +1,10 @@
 import { spawn } from 'node:child_process'
 import { serve } from '@hono/node-server'
+import { loadConfigAtBoot } from '../../../internal/acp-adapter/boot.js'
 import { DshBridge } from '../../../internal/dsh-adapter/index.js'
 import { writePlatformPrompt } from '../../../internal/platform-prompt/src/index.js'
 import {
+  CP_URL,
   WORKSPACE_DIR,
   WORKSPACE_ID,
   buildLaunchSpec,
@@ -28,13 +30,10 @@ process.on('unhandledRejection', (reason) => {
 
 // ── Load config from CP ──
 
-try {
-  if (await loadConfig()) {
-    console.log('[agent] Config loaded from CP')
-  }
-} catch (e) {
-  console.error('[agent] Failed to fetch config from CP:', e)
-}
+await loadConfigAtBoot(loadConfig, {
+  cpConfigured: Boolean(CP_URL && WORKSPACE_ID),
+  workspaceId: WORKSPACE_ID,
+})
 
 try {
   const { ok, failed } = await loadSkills()
