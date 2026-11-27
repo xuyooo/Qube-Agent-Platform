@@ -126,8 +126,10 @@ editing `values.env` and re-running `./install.sh` (it's idempotent).
 
 Lets agents drive a real browser that users watch live over WebRTC. QAP ships
 the browser service and a bundled TURN relay (coturn); enabling it is just
-configuration. The headful Chromium itself runs from a published image
-(`${REGISTRY}/chromium-headful`) built from the upstream
+configuration. The bundled TURN relay uses QAP's GHCR mirror
+(`ghcr.io/xuyooo/qap/coturn:4.6`); if that package is private, configure
+the `ghcr.io` registry credentials in `values.env`. The headful Chromium
+itself runs from a published image (`${REGISTRY}/chromium-headful`) built from the upstream
 [onkernel/kernel-images](https://github.com/onkernel/kernel-images) project
 (Apache-2.0; see [NOTICE](../NOTICE)) — no extra setup on your side.
 
